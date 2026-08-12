@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NSE/BSE Stock Results</title>
+    <style>
+      body { max-width: 760px; margin: 56px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
+      form { display: flex; gap: 10px; }
+      input { flex: 1; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
+      button { padding: 12px 18px; border: 0; border-radius: 6px; background: #155eef; color: white; font-size: 16px; cursor: pointer; }
+      #message { min-height: 24px; margin: 18px 0 8px; color: #526075; }
+      pre { overflow: auto; padding: 18px; border-radius: 8px; background: #101828; color: #e6edf7; white-space: pre-wrap; }
+      #interpretation { padding-left: 0; line-height: 1.55; list-style: none; }
+      #interpretation li { margin: 8px 0; }
+      #data-note { font-size: 12px; color: #667085; }
+      .positive { color: #067647; }
+      .negative { color: #b42318; }
+      .neutral { color: #526075; }
+    </style>
+  </head>
+  <body>
+    <h1>NSE/BSE Stock Results</h1>
+    <p>Enter a company name or NSE symbol.</p>
+    <form id="search-form">
+      <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
+      <button type="submit">Search</button>
+    </form>
+    <p id="message"></p>
+    <pre id="result" hidden></pre>
+    <p id="data-note" hidden></p>
+    <section id="interpretation-section" hidden>
+      <h2>Interpretation</h2>
+      <ul id="interpretation"></ul>
+    </section>
+    <script>
+      const form = document.getElementById('search-form');
+      const query = document.getElementById('query');
+      const message = document.getElementById('message');
+      const result = document.getElementById('result');
+      const dataNote = document.getElementById('data-note');
+      const interpretationSection = document.getElementById('interpretation-section');
+      const interpretation = document.getElementById('interpretation');
+      async function readJson(response) {
+        const body = await response.text();
+        try {
+          return JSON.parse(body);
+        } catch {
+          throw new Error('The server returned an unexpected response. Check the Flask terminal for details.');
+        }
+      }
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        message.textContent = 'Finding NSE symbol and financial results…';
+        result.hidden = true;
+        dataNote.hidden = true;
+          interpretationSection.hidden = true;
+        try {
+          const response = await fetch(`/search?query=${encodeURIComponent(query.value)}`);
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
+          message.textContent = `NSE symbol: ${data.symbol}`;
+          const displayData = {...data};
+          const percentageFields = new Set([
+            'yoy_revenue', 'yoy_profit', 'operating_cash_flow_yoy',
+            'free_cash_flow_yoy', 'net_debt_yoy', 'profit_margin_yoy_change'
+          ]);
+          for (const key of Object.keys(displayData)) {
+            if (percentageFields.has(key) && typeof displayData[key] === 'number') {
+              displayData[key] = `${displayData[key].toFixed(2)}%`;
+            }
+          }
+          result.textContent = JSON.stringify(displayData, null, 2);
+          result.hidden = false;
+          if (data.data_note) {
+            dataNote.textContent = data.data_note;
+            dataNote.hidden = false;
+          }
+          interpretation.replaceChildren(Object.assign(document.createElement('li'), {
+            textContent: 'Preparing interpretation from the reported financial figures…',
+            className: 'neutral'
+          }));
+          interpretationSection.hidden = false;
+          const interpretationResponse = await fetch(`/interpretation/${encodeURIComponent(data.symbol)}`);
+          const interpretationData = await readJson(interpretationResponse);
+          if (interpretationResponse.ok) {
+            const items = interpretationData.interpretation_items || [{
+              text: interpretationData.interpretation,
+              tone: 'neutral'
+            }];
+            interpretation.replaceChildren(...items.map((item) => {
+              const line = document.createElement('li');
+              const icon = item.tone === 'positive' ? '✓' : item.tone === 'negative' ? '✕' : '•';
+              line.textContent = `${icon} ${item.text}`;
+              line.className = item.tone;
+              line.style.color = item.tone === 'positive'
+                ? '#067647'
+                : item.tone === 'negative'
+                  ? '#b42318'
+                  : '#526075';
+              line.style.fontWeight = item.tone === 'neutral' ? '400' : '600';
+              return line;
+            }));
+          } else {
+            interpretation.replaceChildren(Object.assign(document.createElement('li'), {
+              textContent: interpretationData.error,
+              className: 'negative'
+            }));
+          }
+        } catch (error) {
+          message.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>
