@@ -13,7 +13,6 @@ from typing import Any, Mapping, Optional
 from xml.etree import ElementTree
 
 import requests
-from jugaad_data.nse import NSELive
 
 from models import StockData
 
@@ -35,14 +34,29 @@ class StockService:
     STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
     XBRL_REQUEST_TIMEOUT = 10
+    # `jugaad_data.NSELive()` opens the NSE quote page during construction
+    # without specifying a timeout.  When NSE does not respond, that blocks a
+    # Gunicorn worker until Gunicorn forcefully terminates it.  Keep every
+    # request made by this service bounded instead.
+    NSE_BASE_URL = "https://www.nseindia.com"
+    NSE_REQUEST_TIMEOUT = 5
     # BSE-only securities that a user may reasonably search by their commonly
     # known ticker. Upstox Fundamentals is ISIN-based and supports this path.
     BSE_ONLY_ISINS = {"NSDL": "INE301O01023"}
 
     def __init__(self, api_client=None):
-        # NSELive connects during construction, so defer it until a request is
-        # made; Flask can then start even during an NSE outage.
+        # An injected client is retained for tests. Production uses the
+        # timeout-controlled session below instead of NSELive.
         self.nse_live = api_client
+        self._nse_session = requests.Session()
+        self._nse_session.headers.update(
+            {
+                **self.XBRL_HEADERS,
+                "Accept": "application/json, text/plain, */*",
+                "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=LT",
+                "X-Requested-With": "XMLHttpRequest",
+            }
+        )
         # Cache successful Upstox responses for a day. This prevents repeated
         # searches from consuming API quota while the Flask process is running.
         self._fundamentals_cache = {}
@@ -215,9 +229,7 @@ class StockService:
         filing per date so each column represents a single quarter.
         """
         try:
-            response = self.nse_live.corporate_integrated_filing(
-                index="equities", symbol=symbol, size=30
-            )
+            response = self._corporate_integrated_filing(symbol, size=30)
             filings = response.get("data", [])
             if not isinstance(filings, list):
                 raise ValueError("NSE returned no financial filings")
@@ -952,16 +964,65 @@ class StockService:
         return result
 
     def _get_quote(self, symbol: str) -> Mapping[str, Any]:
-        if self.nse_live is None:
-            self.nse_live = NSELive()
-        return self.nse_live.stock_quote(symbol)
+        if self.nse_live is not None:
+            return self.nse_live.stock_quote(symbol)
+        payload = self._nse_json(
+            "/api/NextApi/apiClient/GetQuoteApi",
+            {
+                "functionName": "getSymbolData",
+                "marketType": "N",
+                "series": "EQ",
+                "symbol": symbol,
+            },
+        )
+        quotes = payload.get("equityResponse", [])
+        if not isinstance(quotes, list) or not quotes or not isinstance(quotes[0], Mapping):
+            raise ValueError("NSE returned no equity quote")
+        return quotes[0]
+
+    def _corporate_integrated_filing(self, symbol: str, size: int) -> Mapping[str, Any]:
+        """Fetch NSE's integrated-financial-filings feed with a short timeout."""
+        if self.nse_live is not None:
+            return self.nse_live.corporate_integrated_filing(
+                index="equities", symbol=symbol, size=size
+            )
+        return self._nse_json(
+            "/api/integrated-filing-results",
+            {
+                "type": "Integrated Filing- Financials",
+                "page": 1,
+                "size": size,
+                "index": "equities",
+                "symbol": symbol,
+            },
+        )
+
+    def _nse_json(self, path: str, params: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Read NSE JSON, retrying once after a bounded cookie warm-up.
+
+        NSE occasionally returns 401/403 until a browser-like session has a
+        cookie.  The retry is deliberately bounded, so an NSE outage produces
+        an application response rather than a dead Gunicorn worker.
+        """
+        url = f"{self.NSE_BASE_URL}{path}"
+        response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        if response.status_code in {401, 403}:
+            warmup = self._nse_session.get(
+                f"{self.NSE_BASE_URL}/get-quotes/equity?symbol=LT",
+                timeout=self.NSE_REQUEST_TIMEOUT,
+            )
+            warmup.raise_for_status()
+            response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        payload = response.json()
+        if not isinstance(payload, Mapping):
+            raise ValueError("NSE returned an unexpected JSON response")
+        return payload
 
     def _financial_filing_metrics(
         self, symbol: str, include_extended_metrics: bool = False
     ) -> tuple:
-        response = self.nse_live.corporate_integrated_filing(
-            index="equities", symbol=symbol, size=20
-        )
+        response = self._corporate_integrated_filing(symbol, size=20)
         filings = response.get("data", [])
         if not isinstance(filings, list):
             raise ValueError("NSE returned no financial filings")
