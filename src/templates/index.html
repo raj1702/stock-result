@@ -76,8 +76,26 @@
       .positive { color: #067647; }
       .negative { color: #b42318; }
       .neutral { color: #526075; }
-      @media (max-width: 1100px) { #search-results-layout { grid-template-columns: 1fr; width: 100%; } #tables { width: 100%; grid-template-columns: 1fr; } #results-panel table { width: 100%; } }
-      @media (max-width: 600px) { .chart-card { flex-basis: 100%; } }
+      /* Keep the result panels in their desktop order on narrow screens.
+         Stacking them made the comparison and chat panels push the charts far
+         down the page. A phone can scroll sideways through this compact
+         desktop-width workspace, while each results table remains scrollable
+         within its own panel. */
+      @media (max-width: 1100px) {
+        body { min-width: 944px; overflow-x: auto; margin: 20px; }
+        #search-results-layout {
+          grid-template-columns: var(--content-width) 210px;
+          width: calc(var(--content-width) + 224px);
+          max-width: none;
+        }
+        #tables {
+          width: var(--content-width);
+          max-width: none;
+          grid-template-columns: minmax(0, 1fr) max-content;
+        }
+        #results-panel table { width: 100%; }
+        #interpretation-section { max-width: none; }
+      }
     </style>
   </head>
   <body>
