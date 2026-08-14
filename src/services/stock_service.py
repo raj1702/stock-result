@@ -1431,13 +1431,18 @@ class StockService:
     @classmethod
     def _market_cap_crore(cls, quote: Mapping[str, Any]) -> float:
         """Calculate market capitalisation from NSE's live price and issued shares."""
-        trade_info = quote.get("marketDeptOrderBook", {}).get("tradeInfo", {})
+        # NSE's current NextApi quote response exposes tradeInfo at the top
+        # level. Older quote responses placed it under marketDeptOrderBook.
+        trade_info = quote.get("tradeInfo", {}) or quote.get("marketDeptOrderBook", {}).get(
+            "tradeInfo", {}
+        )
         direct_market_cap = cls._number(
             trade_info.get("totalMarketCap") or trade_info.get("marketCap")
         )
-        # NSE reports this direct field in ₹ crore when it is available.
+        # Current NSE NextApi reports totalMarketCap in rupees; the UI/API use
+        # ₹ crore throughout.
         if direct_market_cap:
-            return direct_market_cap
+            return direct_market_cap / 10_000_000
 
         price_info = quote.get("priceInfo", {})
         price = cls._number(
@@ -1450,6 +1455,7 @@ class StockService:
             security_info.get("issuedSize")
             or security_info.get("issuedCap")
             or quote.get("metadata", {}).get("issuedSize")
+            or quote.get("metaData", {}).get("issuedSize")
         )
         if isinstance(issued_size, Mapping):
             issued_size = issued_size.get("quantity") or issued_size.get("value")
