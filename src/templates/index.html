@@ -96,6 +96,33 @@
         #results-panel table { width: 100%; }
         #interpretation-section { max-width: none; }
       }
+      /* Phone layout: keep the same information and styling, but arrange it
+         for a narrow screen instead of making the complete desktop workspace
+         scroll sideways. The five-quarter table remains horizontally
+         scrollable inside its card. */
+      @media (max-width: 760px) {
+        :root { --content-width: 100%; }
+        body { min-width: 0; margin: 18px 14px; padding: 0; overflow-x: hidden; }
+        h1 { margin: 0 0 8px; font-size: 24px; }
+        body > p:first-of-type { margin-bottom: 14px; font-size: 14px; }
+        form { width: 100%; gap: 8px; }
+        input { padding: 11px; font-size: 15px; }
+        button { padding: 11px 14px; font-size: 15px; }
+        #search-results-layout { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: none; gap: 16px; }
+        #tables { grid-template-columns: minmax(0, 1fr); width: 100%; margin-top: 20px; gap: 18px; }
+        #results-panel, #comparison-panel { padding: 10px; }
+        #results-panel { overflow-x: auto; }
+        #results-panel table { min-width: 600px; }
+        #comparison-column { display: block; padding-top: 28px; }
+        #comparison-controls { top: 0; right: 0; bottom: auto; }
+        #comparison-panel { width: 100%; overflow-x: auto; }
+        #comparison-panel table { width: 100%; }
+        #question-box { height: 260px !important; min-height: 260px; }
+        #interpretation-section { width: 100%; max-width: none; margin-top: 22px; }
+        #interpretation-section h2 { font-size: 17px; }
+        #charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+        .chart-card { width: 100%; }
+      }
     </style>
   </head>
   <body>
