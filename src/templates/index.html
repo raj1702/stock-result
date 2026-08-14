@@ -8,6 +8,7 @@
       :root { --content-width: 720px; }
       body { max-width: 1400px; margin: 32px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
       h1 { text-align: left; }
+      .mobile-view-tip { display: none; }
       body > p:first-of-type { width: fit-content; max-width: 100%; margin: 0 0 16px; text-align: left; }
       form { display: flex; justify-content: flex-start; width: var(--content-width); max-width: 100%; gap: 10px; margin: 0; }
       input { flex: 1; min-width: 0; max-width: none; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
@@ -105,6 +106,7 @@
         html { overflow-x: hidden; }
         body { box-sizing: border-box; width: calc(100vw - 28px); max-width: calc(100vw - 28px); min-width: 0; margin: 18px 14px; padding: 0; overflow-x: hidden; }
         h1 { margin: 0 0 8px; font-size: 24px; }
+        .mobile-view-tip { display: block; margin-top: 4px; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.35; }
         body > p:first-of-type { margin-bottom: 14px; font-size: 14px; }
         form { width: 100%; gap: 8px; }
         input { padding: 11px; font-size: 15px; }
@@ -137,7 +139,7 @@
     </style>
   </head>
   <body>
-    <h1>NSE/BSE Stock Results</h1>
+    <h1>NSE/BSE Stock Results<span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
     <p>Enter a company name or NSE symbol.</p>
     <div id="search-results-layout">
       <div id="results-column">
@@ -294,6 +296,7 @@
         return unit === '%' ? `${rounded}%` : `₹${rounded.toLocaleString('en-IN')}`;
       }
       function formatQuarterlyValue(value, unit) {
+        if (value === null || value === undefined) return '—';
         if (!window.matchMedia('(max-width: 760px)').matches || unit === '%') {
           return formatValue(value, unit);
         }

@@ -77,10 +77,16 @@ class StockService:
         fallback = {}
         try:
             quote = self._get_quote(nse_symbol)
+            quote_metadata = self._quote_metadata(quote)
             pe_ratio = self._number(
                 quote.get("secInfo", {}).get("pdSymbolPe")
-                or quote.get("metadata", {}).get("pdSymbolPe")
+                or quote_metadata.get("pdSymbolPe")
             )
+            # NSE does not publish a trailing P/E for every security. Use the
+            # existing Yahoo fallback only when NSE leaves that valid field
+            # blank; loss-making companies can still have no meaningful P/E.
+            if not pe_ratio:
+                pe_ratio = self._yahoo_pe_ratio(nse_symbol)
             market_cap_crore = self._market_cap_crore(quote)
             market_cap_source = "NSE"
             if not market_cap_crore:
@@ -121,7 +127,11 @@ class StockService:
             # The quote response normally includes the exact ISIN. Prefer it
             # over downloading a separate NSE security-master CSV, which can
             # be intermittently unavailable or delayed after a listing.
-            quote_isin = str(quote.get("metadata", {}).get("isin", "")).strip()
+            quote_isin = str(
+                self._quote_metadata(quote).get("isin")
+                or self._quote_metadata(quote).get("isinCode")
+                or ""
+            ).strip()
             fallback = self._upstox_fundamentals(
                 nse_symbol,
                 quote_isin or known_isin or None,
@@ -762,7 +772,7 @@ class StockService:
             try:
                 direct_quote = self._get_quote(direct_symbol)
                 returned_symbol = str(
-                    direct_quote.get("metadata", {}).get("symbol")
+                    self._quote_metadata(direct_quote).get("symbol")
                     or direct_quote.get("info", {}).get("symbol", "")
                 ).upper()
                 if returned_symbol == direct_symbol:
@@ -1428,6 +1438,12 @@ class StockService:
         ).upper()
         return any(term in text for term in terms)
 
+    @staticmethod
+    def _quote_metadata(quote: Mapping[str, Any]) -> Mapping[str, Any]:
+        """Support both historical and current NSE quote response casing."""
+        metadata = quote.get("metadata") or quote.get("metaData") or {}
+        return metadata if isinstance(metadata, Mapping) else {}
+
     @classmethod
     def _market_cap_crore(cls, quote: Mapping[str, Any]) -> float:
         """Calculate market capitalisation from NSE's live price and issued shares."""
@@ -1452,10 +1468,10 @@ class StockService:
         )
         security_info = quote.get("securityInfo", {})
         issued_size = (
-            security_info.get("issuedSize")
+            trade_info.get("issuedSize")
+            or security_info.get("issuedSize")
             or security_info.get("issuedCap")
-            or quote.get("metadata", {}).get("issuedSize")
-            or quote.get("metaData", {}).get("issuedSize")
+            or cls._quote_metadata(quote).get("issuedSize")
         )
         if isinstance(issued_size, Mapping):
             issued_size = issued_size.get("quantity") or issued_size.get("value")
@@ -1476,6 +1492,20 @@ class StockService:
             return market_cap / 10_000_000 if market_cap else 0.0
         except Exception as exc:
             logger.warning("Yahoo Finance market-cap fallback failed for %s: %s", symbol, exc)
+            return 0.0
+
+    @staticmethod
+    def _yahoo_pe_ratio(symbol: str) -> float:
+        """Use Yahoo's trailing P/E only when the NSE quote omits it."""
+        try:
+            import yfinance as yf
+
+            ticker = yf.Ticker(f"{symbol}.NS")
+            return StockService._number(
+                ticker.fast_info.get("trailing_pe") or ticker.info.get("trailingPE")
+            )
+        except Exception as exc:
+            logger.warning("Yahoo Finance P/E fallback failed for %s: %s", symbol, exc)
             return 0.0
 
     @staticmethod
