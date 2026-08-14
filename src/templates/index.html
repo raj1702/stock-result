@@ -109,14 +109,22 @@
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
         #search-results-layout { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: none; gap: 16px; }
-        #tables { grid-template-columns: minmax(0, 1fr) 108px; width: 100%; margin-top: 20px; gap: 8px; }
-        #results-panel, #comparison-panel { padding: 10px; }
-        #results-panel { overflow-x: auto; }
-        #results-panel table { min-width: 600px; }
+        #tables { grid-template-columns: minmax(0, 1fr) 88px; width: 100%; margin-top: 20px; gap: 6px; }
+        #results-panel, #comparison-panel { padding: 6px; }
+        #results-panel { overflow-x: hidden; }
+        #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
+        #results-panel th, #results-panel td { padding: 5px 2px; font-size: 9px; line-height: 1.15; white-space: normal; }
+        #results-panel th:first-child, #results-panel td:first-child { width: 56px; }
+        #results-panel tbody tr, #comparison-panel tbody tr { height: 42px; }
+        #results-panel thead tr, #comparison-panel thead tr { height: 32px; }
+        #results-panel .unit { font-size: 8px; }
+        #results-panel .metric-info { display: none; }
         #comparison-column { display: flex; min-width: 0; padding-top: 0; }
         #comparison-panel { width: 100%; min-width: 0; overflow-x: hidden; }
-        #comparison-panel table { width: 100%; }
+        #comparison-panel table { width: 100%; min-width: 0; table-layout: fixed; }
+        #comparison-panel th, #comparison-panel td { padding: 5px 2px; font-size: 9px; }
         #question-box { height: 260px !important; min-height: 260px; }
+        #question-box { margin-top: 28px; }
         #interpretation-section { width: 100%; max-width: none; margin-top: 22px; }
         #interpretation-section h2 { font-size: 17px; }
         #charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -210,6 +218,7 @@
       let currentQuarterlyTable = null;
       let comparisonMode = 'qoq';
       let chatQuestionCount = 0;
+      let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -258,7 +267,15 @@
         }
       }
       positionQuestionBox();
-      window.addEventListener('resize', positionQuestionBox);
+      window.addEventListener('resize', () => {
+        positionQuestionBox();
+        const compactNow = window.matchMedia('(max-width: 760px)').matches;
+        if (compactNow !== isCompactTableView && currentQuarterlyTable) {
+          isCompactTableView = compactNow;
+          renderQuarterlyTable(currentQuarterlyTable);
+          renderMetricCharts(currentQuarterlyTable);
+        }
+      });
       async function readJson(response) {
         const body = await response.text();
         try {
@@ -273,6 +290,17 @@
         if (!Number.isFinite(number)) return '—';
         const rounded = Math.round(number);
         return unit === '%' ? `${rounded}%` : `₹${rounded.toLocaleString('en-IN')}`;
+      }
+      function formatQuarterlyValue(value, unit) {
+        if (!window.matchMedia('(max-width: 760px)').matches || unit === '%') {
+          return formatValue(value, unit);
+        }
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '—';
+        // Quarterly currency rows are already in ₹ crore. A compact "k"
+        // suffix keeps all five periods visible on a phone.
+        if (Math.abs(number) >= 1000) return `₹${Math.round(number / 1000)}k`;
+        return `₹${Math.round(number)}`;
       }
       function formatChange(value, unit) {
         if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
@@ -452,7 +480,7 @@
           return;
         }
         currentQuarterlyTable = table;
-        renderRows(resultsHead, resultsBody, quarters, rows, formatValue, true);
+        renderRows(resultsHead, resultsBody, quarters, rows, formatQuarterlyValue, true);
         renderComparisonTable();
         tables.hidden = false;
       }
