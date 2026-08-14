@@ -14,6 +14,9 @@
       input { flex: 1; min-width: 0; max-width: none; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
       button { padding: 12px 18px; border: 0; border-radius: 6px; background: #155eef; color: white; font-size: 16px; cursor: pointer; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
+      #message.loading { display: flex; align-items: center; gap: 8px; }
+      #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
+      @keyframes loading-spin { to { transform: rotate(360deg); } }
       #search-results-layout { display: grid; grid-template-columns: var(--content-width) 210px; width: fit-content; max-width: 100%; gap: 14px; align-items: stretch; }
       #results-column { min-width: 0; }
       #question-box { box-sizing: border-box; display: flex; flex-direction: column; align-self: stretch; overflow: hidden; padding: 14px; border: 1px solid #b2ddff; border-radius: 8px; background: #f5faff; color: #175cd3; }
@@ -223,6 +226,7 @@
       let comparisonMode = 'qoq';
       let chatQuestionCount = 0;
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
+      let hasSuccessfulSearch = false;
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -556,6 +560,8 @@
       });
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!hasSuccessfulSearch) questionBox.hidden = true;
+        message.classList.add('loading');
         message.textContent = 'Finding NSE symbol and financial results…';
         tables.hidden = true;
         dataNote.hidden = true;
@@ -573,6 +579,7 @@
           }
           message.textContent = summary.join(' | ');
           renderQuarterlyTable(data.quarterly_results);
+          hasSuccessfulSearch = true;
           questionBox.hidden = false;
           syncQuestionBoxHeight();
           if (data.data_note) {
@@ -582,6 +589,8 @@
           renderMetricCharts(data.quarterly_results);
         } catch (error) {
           message.textContent = error.message;
+        } finally {
+          message.classList.remove('loading');
         }
       });
     </script>

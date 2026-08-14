@@ -43,6 +43,9 @@ class StockService:
     # BSE-only securities that a user may reasonably search by their commonly
     # known ticker. Upstox Fundamentals is ISIN-based and supports this path.
     BSE_ONLY_ISINS = {"NSDL": "INE301O01023"}
+    # NSE can still return a quote shell for historical, suspended symbols.
+    # Preserve common search names that now trade under their successor ticker.
+    SYMBOL_ALIASES = {"HDFC": "HDFCBANK"}
 
     def __init__(self, api_client=None):
         # An injected client is retained for tests. Production uses the
@@ -763,6 +766,8 @@ class StockService:
             return None
         if lookup in self.BSE_ONLY_ISINS:
             return lookup
+        if lookup in self.SYMBOL_ALIASES:
+            return self.SYMBOL_ALIASES[lookup]
 
         # A compact, single-word query is often an NSE ticker. Verify it with
         # NSE before doing fuzzy name matching, so NSDL cannot be redirected
@@ -775,7 +780,7 @@ class StockService:
                     self._quote_metadata(direct_quote).get("symbol")
                     or direct_quote.get("info", {}).get("symbol", "")
                 ).upper()
-                if returned_symbol == direct_symbol:
+                if returned_symbol == direct_symbol and self._is_active_equity_quote(direct_quote):
                     return direct_symbol
             except Exception:
                 pass
@@ -1443,6 +1448,12 @@ class StockService:
         """Support both historical and current NSE quote response casing."""
         metadata = quote.get("metadata") or quote.get("metaData") or {}
         return metadata if isinstance(metadata, Mapping) else {}
+
+    @staticmethod
+    def _is_active_equity_quote(quote: Mapping[str, Any]) -> bool:
+        """Reject NSE's quote shells for suspended or delisted securities."""
+        status = str(quote.get("secInfo", {}).get("secStatus", "")).upper()
+        return not any(term in status for term in ("SUSPEND", "DELIST", "INACTIVE"))
 
     @classmethod
     def _market_cap_crore(cls, quote: Mapping[str, Any]) -> float:
