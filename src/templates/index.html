@@ -109,19 +109,20 @@
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
         #search-results-layout { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: none; gap: 16px; }
-        #tables { grid-template-columns: minmax(0, 1fr); width: 100%; margin-top: 20px; gap: 18px; }
+        #tables { grid-template-columns: minmax(0, 1fr) 108px; width: 100%; margin-top: 20px; gap: 8px; }
         #results-panel, #comparison-panel { padding: 10px; }
         #results-panel { overflow-x: auto; }
         #results-panel table { min-width: 600px; }
-        #comparison-column { display: block; padding-top: 28px; }
-        #comparison-controls { top: 0; right: 0; bottom: auto; }
-        #comparison-panel { width: 100%; overflow-x: auto; }
+        #comparison-column { display: flex; min-width: 0; padding-top: 0; }
+        #comparison-panel { width: 100%; min-width: 0; overflow-x: hidden; }
         #comparison-panel table { width: 100%; }
         #question-box { height: 260px !important; min-height: 260px; }
         #interpretation-section { width: 100%; max-width: none; margin-top: 22px; }
         #interpretation-section h2 { font-size: 17px; }
-        #charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-        .chart-card { width: 100%; }
+        #charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .chart-card { width: 100%; padding: 8px; }
+        .chart-title { margin-bottom: 5px; font-size: 12px; }
+        .chart-unit { font-size: 10px; }
       }
     </style>
   </head>
@@ -205,6 +206,7 @@
       const questionForm = document.getElementById('question-form');
       const chatInput = document.getElementById('chat-input');
       const chatMessages = document.getElementById('chat-messages');
+      const questionBoxDesktopParent = questionBox.parentElement;
       let currentQuarterlyTable = null;
       let comparisonMode = 'qoq';
       let chatQuestionCount = 0;
@@ -232,12 +234,31 @@
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
       function syncQuestionBoxHeight() {
+        if (window.matchMedia('(max-width: 760px)').matches) {
+          questionBox.style.removeProperty('height');
+          return;
+        }
         // Prevent old chat content from affecting the grid-row measurement.
         questionBox.style.height = '0px';
         requestAnimationFrame(() => {
           questionBox.style.height = `${resultsColumn.getBoundingClientRect().height}px`;
         });
       }
+      function positionQuestionBox() {
+        if (window.matchMedia('(max-width: 760px)').matches) {
+          // On a phone, charts are more useful immediately after the data;
+          // place the optional chat after them rather than between data and
+          // interpretation. On desktop it remains the right-side panel.
+          if (questionBox.parentElement !== document.body) {
+            interpretationSection.insertAdjacentElement('afterend', questionBox);
+          }
+        } else if (questionBox.parentElement !== questionBoxDesktopParent) {
+          questionBoxDesktopParent.append(questionBox);
+          syncQuestionBoxHeight();
+        }
+      }
+      positionQuestionBox();
+      window.addEventListener('resize', positionQuestionBox);
       async function readJson(response) {
         const body = await response.text();
         try {
