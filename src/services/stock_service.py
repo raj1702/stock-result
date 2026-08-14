@@ -3,6 +3,7 @@
 import logging
 import csv
 import os
+from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from difflib import SequenceMatcher
 from io import StringIO
@@ -31,6 +32,7 @@ class StockService:
     EQUITY_MASTER_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
+    STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
     XBRL_REQUEST_TIMEOUT = 10
     # BSE-only securities that a user may reasonably search by their commonly
@@ -47,10 +49,16 @@ class StockService:
         self._fundamentals_cache_lock = Lock()
         self._xbrl_cache = {}
         self._xbrl_cache_lock = Lock()
+        self._stock_cache = {}
+        self._stock_cache_lock = Lock()
 
     def fetch_stock_data(self, symbol: str) -> StockData:
         """Return NSE quote, valuation, margin, revenue-growth, and profit-growth metrics."""
         nse_symbol = self._normalise_symbol(symbol)
+        with self._stock_cache_lock:
+            cached = self._stock_cache.get(nse_symbol)
+            if cached and datetime.utcnow() - cached[0] < self.STOCK_CACHE_TTL:
+                return deepcopy(cached[1])
         known_isin = self.BSE_ONLY_ISINS.get(nse_symbol)
         fallback = {}
         try:
@@ -195,6 +203,8 @@ class StockService:
         if not quarterly_results["quarters"] and fallback.get("quarterly_results"):
             quarterly_results = fallback["quarterly_results"]
         metrics["quarterly_results"] = quarterly_results
+        with self._stock_cache_lock:
+            self._stock_cache[nse_symbol] = (datetime.utcnow(), deepcopy(metrics))
         return metrics
 
     def _quarterly_results(self, symbol: str, include_financial_rows: bool) -> dict:
@@ -916,7 +926,7 @@ class StockService:
             loan_book_previous,
             interest_income_latest,
             interest_income_previous,
-        ) = self._financial_filing_metrics(symbol)
+        ) = self._financial_filing_metrics(symbol, include_extended_metrics=True)
         pairs = {
             "revenue": (latest, previous, "revenue"),
             "profit": (latest, previous, "profit"),
@@ -947,7 +957,7 @@ class StockService:
         return self.nse_live.stock_quote(symbol)
 
     def _financial_filing_metrics(
-        self, symbol: str
+        self, symbol: str, include_extended_metrics: bool = False
     ) -> tuple:
         response = self.nse_live.corporate_integrated_filing(
             index="equities", symbol=symbol, size=20
@@ -989,23 +999,36 @@ class StockService:
                     metrics_cache[url] = {}
             return metrics_cache[url]
 
-        latest_metrics = metrics_for(latest_filing)
-        previous_metrics = metrics_for(previous_filing)
-        ocf_latest, ocf_previous = self._latest_metric_pair(
-            candidates, metrics_for, "operating_cash_flow"
-        )
-        fcf_latest, fcf_previous = self._latest_metric_pair(
-            candidates, metrics_for, "free_cash_flow"
-        )
-        net_debt_latest, net_debt_previous = self._latest_metric_pair(
-            candidates, metrics_for, "net_debt"
-        )
-        loan_book_latest, loan_book_previous = self._latest_metric_pair(
-            candidates, metrics_for, "loan_book"
-        )
-        interest_income_latest, interest_income_previous = self._latest_metric_pair(
-            candidates, metrics_for, "interest_income"
-        )
+        # The normal search page needs only the current and prior-year filing.
+        # Download those two independent XBRLs concurrently. Older cash-flow
+        # and debt scans are reserved for the legacy interpretation endpoint.
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            latest_task = executor.submit(metrics_for, latest_filing)
+            previous_task = executor.submit(metrics_for, previous_filing)
+            latest_metrics = latest_task.result()
+            previous_metrics = previous_task.result()
+        if include_extended_metrics:
+            ocf_latest, ocf_previous = self._latest_metric_pair(
+                candidates, metrics_for, "operating_cash_flow"
+            )
+            fcf_latest, fcf_previous = self._latest_metric_pair(
+                candidates, metrics_for, "free_cash_flow"
+            )
+            net_debt_latest, net_debt_previous = self._latest_metric_pair(
+                candidates, metrics_for, "net_debt"
+            )
+            loan_book_latest, loan_book_previous = self._latest_metric_pair(
+                candidates, metrics_for, "loan_book"
+            )
+            interest_income_latest, interest_income_previous = self._latest_metric_pair(
+                candidates, metrics_for, "interest_income"
+            )
+        else:
+            ocf_latest = ocf_previous = {}
+            fcf_latest = fcf_previous = {}
+            net_debt_latest = net_debt_previous = {}
+            loan_book_latest = loan_book_previous = {}
+            interest_income_latest = interest_income_previous = {}
         return (
             latest_metrics,
             previous_metrics,
