@@ -3,6 +3,7 @@
 import logging
 import csv
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from difflib import SequenceMatcher
 from io import StringIO
 from datetime import datetime, timedelta
@@ -30,6 +31,8 @@ class StockService:
     EQUITY_MASTER_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
+    XBRL_CACHE_TTL = timedelta(hours=12)
+    XBRL_REQUEST_TIMEOUT = 10
     # BSE-only securities that a user may reasonably search by their commonly
     # known ticker. Upstox Fundamentals is ISIN-based and supports this path.
     BSE_ONLY_ISINS = {"NSDL": "INE301O01023"}
@@ -42,6 +45,8 @@ class StockService:
         # searches from consuming API quota while the Flask process is running.
         self._fundamentals_cache = {}
         self._fundamentals_cache_lock = Lock()
+        self._xbrl_cache = {}
+        self._xbrl_cache_lock = Lock()
 
     def fetch_stock_data(self, symbol: str) -> StockData:
         """Return NSE quote, valuation, margin, revenue-growth, and profit-growth metrics."""
@@ -54,6 +59,11 @@ class StockService:
                 quote.get("secInfo", {}).get("pdSymbolPe")
                 or quote.get("metadata", {}).get("pdSymbolPe")
             )
+            market_cap_crore = self._market_cap_crore(quote)
+            market_cap_source = "NSE"
+            if not market_cap_crore:
+                market_cap_crore = self._yahoo_market_cap_crore(nse_symbol)
+                market_cap_source = "Yahoo Finance" if market_cap_crore else ""
         except Exception as exc:
             logger.warning("Unable to fetch NSE quote for %s: %s", nse_symbol, exc)
             if not known_isin:
@@ -62,6 +72,8 @@ class StockService:
             # the ISIN-based Upstox Fundamentals fallback instead.
             quote = {}
             pe_ratio = 0.0
+            market_cap_crore = 0.0
+            market_cap_source = ""
 
         try:
             (
@@ -89,7 +101,9 @@ class StockService:
             # be intermittently unavailable or delayed after a listing.
             quote_isin = str(quote.get("metadata", {}).get("isin", "")).strip()
             fallback = self._upstox_fundamentals(
-                nse_symbol, quote_isin or known_isin or None
+                nse_symbol,
+                quote_isin or known_isin or None,
+                include_financial_rows=self._is_lender(quote),
             )
             latest, previous = fallback.get("latest", {}), fallback.get("previous", {})
             ocf_latest, ocf_previous = fallback.get("ocf_latest", {}), fallback.get("ocf_previous", {})
@@ -127,6 +141,8 @@ class StockService:
         metrics = {
             "symbol": nse_symbol,
             "pe_ratio": round(pe_ratio, 2),
+            "market_cap_crore": round(market_cap_crore, 2),
+            "market_cap_source": market_cap_source,
             "profit_margin": round(profit_margin, 2),
             "profit_margin_yoy_change": round(profit_margin_yoy_change, 2),
             "yoy_revenue": round(yoy_revenue, 2),
@@ -168,9 +184,158 @@ class StockService:
                 ),
                 2,
             )
+        # The page uses period-level values rather than the YoY summary above.
+        # Keep the API summary fields for existing API consumers, but include a
+        # presentation-ready table for the web page.
+        quarterly_results = self._quarterly_results(
+            nse_symbol, include_financial_rows=self._is_lender(quote)
+        )
+        # Upstox is used only when NSE's filing data was unavailable. Reuse its
+        # reported quarterly history so this page remains useful in that case.
+        if not quarterly_results["quarters"] and fallback.get("quarterly_results"):
+            quarterly_results = fallback["quarterly_results"]
+        metrics["quarterly_results"] = quarterly_results
         return metrics
 
-    def _upstox_fundamentals(self, symbol: str, isin: Optional[str] = None) -> dict:
+    def _quarterly_results(self, symbol: str, include_financial_rows: bool) -> dict:
+        """Return the five most recent NSE reporting periods as table rows.
+
+        NSE's filing feed can include both standalone and consolidated entries
+        for one reporting date. Prefer consolidated statements and keep one
+        filing per date so each column represents a single quarter.
+        """
+        try:
+            response = self.nse_live.corporate_integrated_filing(
+                index="equities", symbol=symbol, size=30
+            )
+            filings = response.get("data", [])
+            if not isinstance(filings, list):
+                raise ValueError("NSE returned no financial filings")
+            consolidated = [item for item in filings if item.get("consolidated") == "Consolidated"]
+            candidates = consolidated or filings
+            unique_filings = {}
+            for filing in candidates:
+                period = self._filing_date(filing)
+                if period:
+                    unique_filings.setdefault(period.date(), filing)
+            filings_by_recency = sorted(unique_filings.items(), reverse=True)
+            # The UI displays five quarters but its QoQ/YoY panel compares
+            # only the newest quarter. We therefore need those five filings
+            # plus just the same quarter one year earlier—not nine files.
+            displayed_by_recency = filings_by_recency[:5]
+            if displayed_by_recency:
+                newest_period = displayed_by_recency[0][0]
+                prior_year = next(
+                    (
+                        item for item in filings_by_recency[5:]
+                        if item[0].month == newest_period.month
+                        and item[0].year == newest_period.year - 1
+                    ),
+                    None,
+                )
+                selected_filings = displayed_by_recency + ([prior_year] if prior_year else [])
+            else:
+                selected_filings = []
+            # Tables read naturally from the oldest period at left to the
+            # newest reported period at right.
+            latest_five = list(reversed(displayed_by_recency))
+            if not latest_five:
+                return {"quarters": [], "rows": []}
+
+            periods = []
+            metrics_by_period = {}
+            values_by_metric = {
+                "profit": [],
+                "revenue": [],
+                "operating_profit": [],
+                "net_interest_income": [],
+                "loan_book": [],
+            }
+            # NSE XBRL files are independent. Fetch a small bounded batch in
+            # parallel, instead of serially waiting up to 10 seconds per file.
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                pending = {
+                    executor.submit(self._xbrl_metrics, filing): period
+                    for period, filing in selected_filings
+                }
+                for task in as_completed(pending):
+                    period = pending[task]
+                    try:
+                        metrics_by_period[period] = task.result()
+                    except (requests.RequestException, ElementTree.ParseError, ValueError) as exc:
+                        logger.warning("Unable to read NSE XBRL filing for table %s: %s", symbol, exc)
+                        metrics_by_period[period] = {}
+            for period, _filing in latest_five:
+                filing_values = metrics_by_period[period]
+                periods.append({"label": self._quarter_label(period), "date": period.isoformat()})
+                for metric in values_by_metric:
+                    value = filing_values.get(metric)
+                    # None represents an unavailable line item. It must not be
+                    # displayed as ₹0.00 crore, which would be misleading.
+                    values_by_metric[metric].append(
+                        round(self._number(value) / 10_000_000, 2) if value else None
+                    )
+
+            rows = [
+                {"key": "profit", "label": "PAT", "unit": "₹ crore", "values": values_by_metric["profit"]},
+                {"key": "revenue", "label": "Revenue", "unit": "₹ crore", "values": values_by_metric["revenue"]},
+            ]
+            if not include_financial_rows:
+                rows.extend([
+                    {"key": "operating_profit", "label": "EBITDA", "unit": "₹ crore", "values": values_by_metric["operating_profit"]},
+                    {
+                        "key": "operating_margin", "label": "Operating margin", "unit": "%",
+                        "values": [
+                            round((operating_profit / revenue) * 100, 2)
+                            if operating_profit is not None and revenue not in (None, 0) else None
+                            for operating_profit, revenue in zip(values_by_metric["operating_profit"], values_by_metric["revenue"])
+                        ],
+                    },
+                ])
+            rows.append({
+                "key": "profit_margin", "label": "Profit margin", "unit": "%",
+                "values": [
+                    round((profit / revenue) * 100, 2)
+                    if profit is not None and revenue not in (None, 0) else None
+                    for profit, revenue in zip(values_by_metric["profit"], values_by_metric["revenue"])
+                ],
+            })
+            if include_financial_rows:
+                rows.extend([
+                    {
+                        "key": "net_interest_income", "label": "NII",
+                        "unit": "₹ crore", "values": values_by_metric["net_interest_income"],
+                    },
+                    {
+                        "key": "loan_book", "label": "Loan book",
+                        "unit": "₹ crore", "values": values_by_metric["loan_book"],
+                    },
+                ])
+            return {
+                "quarters": periods,
+                "rows": rows,
+                "comparisons": self._quarterly_comparisons(
+                    metrics_by_period, [period for period, _ in latest_five], include_financial_rows
+                ),
+            }
+        except Exception as exc:
+            logger.warning("Unable to create quarterly table for %s: %s", symbol, exc)
+            return {"quarters": [], "rows": []}
+
+    @staticmethod
+    def _quarter_label(period) -> str:
+        """Format an NSE reporting date in India's April–March financial year."""
+        # India financial years run Apr–Mar, rather than Jan–Dec. Therefore:
+        # Jun = Q1, Sep = Q2, Dec = Q3, and Mar = Q4. The label uses the
+        # financial year's ending year (e.g. Jun 2026 is Q1 2027).
+        quarter_by_month = {3: 4, 6: 1, 9: 2, 12: 3}
+        quarter = quarter_by_month.get(period.month, ((period.month - 1) // 3) + 1)
+        financial_year = period.year + 1 if period.month >= 4 else period.year
+        return f"Q{quarter} {financial_year}"
+
+    def _upstox_fundamentals(
+        self, symbol: str, isin: Optional[str] = None, include_financial_rows: bool = False
+    ) -> dict:
         """Fetch deterministic raw fundamentals from Upstox and calculate locally."""
         cache_key = f"upstox:{symbol}"
         with self._fundamentals_cache_lock:
@@ -196,6 +361,7 @@ class StockService:
             ratios = self._upstox_get(isin, "key-ratios")
 
             income_data = income["data"]
+            quarterly_income_data = income_data
             revenue = self._upstox_category_pair(income_data.get("income_statement", []), "revenue")
             profit = self._upstox_category_pair(income_data.get("income_statement", []), "net_profit")
             statement_period = "quarterly"
@@ -257,6 +423,9 @@ class StockService:
                     "net_debt": borrowings[1] - cash[1]
                 } if borrowings and cash else {},
                 "pe_ratio": pe_ratio,
+                "quarterly_results": self._upstox_quarterly_results(
+                    quarterly_income_data, include_financial_rows=include_financial_rows
+                ),
             }
             with self._fundamentals_cache_lock:
                 self._fundamentals_cache[cache_key] = (datetime.utcnow(), result)
@@ -264,6 +433,184 @@ class StockService:
         except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
             logger.warning("Upstox fundamentals failed for %s: %s", symbol, exc)
             return {"error": str(exc)[:180]}
+
+    def _upstox_quarterly_results(
+        self, income_data: Mapping[str, Any], include_financial_rows: bool = False
+    ) -> dict:
+        """Turn Upstox's period history into the same table contract as NSE."""
+        def history_for(categories, category):
+            desired = "".join(character for character in category.lower() if character.isalnum())
+            return next(
+                (
+                    item.get("history", []) for item in categories
+                    if desired in "".join(
+                        character
+                        for character in str(item.get("category", "")).lower()
+                        if character.isalnum()
+                    )
+                ),
+                [],
+            )[:5]
+
+        revenue_history = list(reversed(history_for(income_data.get("income_statement", []), "revenue")))
+        profit_history = list(reversed(history_for(income_data.get("income_statement", []), "net_profit")))
+        operating_profit_history = list(reversed(history_for(income_data.get("income_statement", []), "operating_profit")))
+        if not revenue_history or not profit_history:
+            return {"quarters": [], "rows": []}
+        # Align every row to revenue's latest-first reporting periods. Upstox
+        # labels figures in ₹ crore, while our table contract also uses crore.
+        periods = [str(item.get("period", "")) for item in revenue_history]
+
+        def values_for(history):
+            # Individual Upstox endpoints can vary the spelling/case of a
+            # period (for example, "Mar 2026" versus "MAR-2026"). Match the
+            # actual month/year rather than the presentation text.
+            by_period = {
+                self._upstox_period_key(item.get("period")): self._number(item.get("value"))
+                for item in history if self._upstox_period_key(item.get("period"))
+            }
+            return [
+                round(by_period[key], 2) if key in by_period else None
+                for key in (self._upstox_period_key(period) for period in periods)
+            ]
+
+        revenue = values_for(revenue_history)
+        profit = values_for(profit_history)
+        operating_profit = values_for(operating_profit_history)
+        labels = []
+        for period in periods:
+            try:
+                parsed = datetime.strptime(period, "%b %Y")
+                labels.append({"label": self._quarter_label(parsed), "date": parsed.date().isoformat()})
+            except ValueError:
+                labels.append({"label": period, "date": period})
+        metrics_by_period = {}
+        for index, period in enumerate(periods):
+            key = self._upstox_period_key(period)
+            if not key:
+                continue
+            try:
+                metrics_by_period[datetime.strptime(key, "%Y-%m").date()] = {
+                    "revenue": revenue[index], "profit": profit[index],
+                    "operating_profit": operating_profit[index],
+                }
+            except (ValueError, IndexError):
+                continue
+        display_periods = sorted(metrics_by_period)[-5:]
+        rows = [
+            {"key": "profit", "label": "PAT", "unit": "₹ crore", "values": profit},
+            {"key": "revenue", "label": "Revenue", "unit": "₹ crore", "values": revenue},
+        ]
+        if not include_financial_rows:
+            rows.extend([
+                {"key": "operating_profit", "label": "EBITDA", "unit": "₹ crore", "values": operating_profit},
+                {
+                    "key": "operating_margin", "label": "Operating margin", "unit": "%",
+                    "values": [round((p / r) * 100, 2) if p is not None and r else None for p, r in zip(operating_profit, revenue)],
+                },
+            ])
+        rows.append({
+            "key": "profit_margin", "label": "Profit margin", "unit": "%",
+            "values": [round((p / r) * 100, 2) if r else None for p, r in zip(profit, revenue)],
+        })
+        if include_financial_rows:
+            rows.extend([
+                {"key": "net_interest_income", "label": "NII", "unit": "₹ crore", "values": [None] * len(periods)},
+                {"key": "loan_book", "label": "Loan book", "unit": "₹ crore", "values": [None] * len(periods)},
+            ])
+        return {
+            "quarters": labels,
+            "rows": rows,
+            "comparisons": self._quarterly_comparisons(
+                metrics_by_period, display_periods, include_financial_rows=include_financial_rows
+            ),
+        }
+
+    def _quarterly_comparisons(
+        self, metrics_by_period: Mapping[Any, Mapping[str, Any]], display_periods: list,
+        include_financial_rows: bool,
+    ) -> dict:
+        """Create QoQ/YoY percentage tables for the displayed reporting periods."""
+        def prior_metrics(period, month_offset):
+            total_months = period.year * 12 + (period.month - 1) + month_offset
+            year, month_index = divmod(total_months, 12)
+            month = month_index + 1
+            return next(
+                (
+                    values for candidate, values in metrics_by_period.items()
+                    if candidate.year == year and candidate.month == month
+                ),
+                {},
+            )
+
+        def value(values, key):
+            numeric = self._number(values.get(key))
+            return numeric if numeric else None
+
+        def margin(values):
+            revenue, profit = value(values, "revenue"), value(values, "profit")
+            return (profit / revenue) * 100 if revenue else None
+
+        row_definitions = [
+            ("profit", "PAT", "%"),
+            ("revenue", "Revenue", "%"),
+            ("profit_margin", "Profit margin", "%"),
+        ]
+        if not include_financial_rows:
+            row_definitions[2:2] = [
+                ("operating_profit", "EBITDA", "%"),
+                ("operating_margin", "Operating margin", "%"),
+            ]
+        if include_financial_rows:
+            row_definitions.extend([
+                ("net_interest_income", "NII", "%"),
+                ("loan_book", "Loan book", "%"),
+            ])
+
+        def rows_for(month_offset):
+            rows = []
+            for key, label, unit in row_definitions:
+                changes = []
+                for period in display_periods:
+                    current = metrics_by_period.get(period, {})
+                    prior = prior_metrics(period, month_offset)
+                    if key in {"profit_margin", "operating_margin"}:
+                        current_value, prior_value = margin(current), margin(prior)
+                        if key == "operating_margin":
+                            current_value = (
+                                value(current, "operating_profit") / value(current, "revenue") * 100
+                                if value(current, "operating_profit") is not None and value(current, "revenue") else None
+                            )
+                            prior_value = (
+                                value(prior, "operating_profit") / value(prior, "revenue") * 100
+                                if value(prior, "operating_profit") is not None and value(prior, "revenue") else None
+                            )
+                        change = (
+                            round(self._growth(current_value, prior_value), 2)
+                            if current_value is not None and prior_value is not None else None
+                        )
+                    else:
+                        current_value, prior_value = value(current, key), value(prior, key)
+                        change = (
+                            round(self._growth(current_value, prior_value), 2)
+                            if current_value is not None and prior_value is not None else None
+                        )
+                    changes.append(change)
+                rows.append({"key": key, "label": label, "unit": unit, "values": changes})
+            return rows
+
+        return {"qoq": rows_for(-3), "yoy": rows_for(-12)}
+
+    @staticmethod
+    def _upstox_period_key(period: Any) -> Optional[str]:
+        """Normalise an Upstox reporting-period label to YYYY-MM."""
+        value = str(period or "").strip().replace("-", " ")
+        for date_format in ("%b %Y", "%B %Y", "%Y %m", "%Y/%m/%d"):
+            try:
+                return datetime.strptime(value.title(), date_format).strftime("%Y-%m")
+            except ValueError:
+                pass
+        return None
 
     def _upstox_get(self, isin: str, endpoint: str, params: Optional[dict] = None) -> Mapping[str, Any]:
         response = requests.get(
@@ -290,7 +637,11 @@ class StockService:
 
     def _upstox_category_pair(self, categories: list, category: str):
         history = next(
-            (item.get("history", []) for item in categories if item.get("category") == category), []
+            (
+                item.get("history", []) for item in categories
+                if category in str(item.get("category", "")).strip().lower()
+            ),
+            [],
         )
         return self._upstox_history_pair(history)
 
@@ -700,7 +1051,13 @@ class StockService:
         xbrl_url = filing.get("xbrl")
         if not xbrl_url:
             raise ValueError("Financial filing has no XBRL document")
-        response = requests.get(xbrl_url, headers=self.XBRL_HEADERS, timeout=20)
+        with self._xbrl_cache_lock:
+            cached = self._xbrl_cache.get(xbrl_url)
+            if cached and datetime.utcnow() - cached[0] < self.XBRL_CACHE_TTL:
+                return dict(cached[1])
+        response = requests.get(
+            xbrl_url, headers=self.XBRL_HEADERS, timeout=self.XBRL_REQUEST_TIMEOUT
+        )
         response.raise_for_status()
         root = ElementTree.fromstring(response.content)
 
@@ -709,10 +1066,22 @@ class StockService:
         # XML order is not a financial-data rule, so never use the first tag.
         # Select facts whose XBRL context belongs to this filing's reported
         # period instead.
-        values = self._period_values(root, self._filing_date(filing))
+        reported_values = self._period_values(root, self._filing_date(filing))
+        operating_profit = self._operating_profit(reported_values)
         metric_tags = {
             "RevenueFromOperations",
             "OperatingIncome",
+            "OperatingProfit",
+            "ProfitLossFromOperatingActivities",
+            "ProfitBeforeDepreciationInterestAndTax",
+            "ProfitBeforeDepreciationAndInterest",
+            "ProfitBeforeInterestTaxDepreciationAndAmortisation",
+            "EarningsBeforeInterestTaxesDepreciationAndAmortisation",
+            "EarningsBeforeInterestTaxDepreciationAndAmortization",
+            "ProfitLossBeforeTax",
+            "DepreciationDepletionAndAmortisationExpense",
+            "DepreciationAndAmortisationExpense",
+            "DepreciationExpense",
             "Income",
             "GrossPremiumIncome",
             "ProfitLossForPeriod",
@@ -735,10 +1104,16 @@ class StockService:
             "Loans",
             "Advances",
             "InterestEarned",
+            "InterestIncome",
+            "InterestExpended",
+            "InterestExpense",
+            "FinanceCosts",
         }
-        values = {name: value for name, value in values.items() if name in metric_tags}
+        values = {
+            name: value for name, value in reported_values.items() if name in metric_tags
+        }
 
-        return {
+        metrics = {
             "revenue": (
                 values.get("RevenueFromOperations", 0.0)
                 or values.get("OperatingIncome", 0.0)
@@ -755,6 +1130,7 @@ class StockService:
                 or values.get("ProfitLossAfterTaxAndExtraordinaryItems", 0.0)
                 or values.get("ProfitLossAfterTaxBeforeExtraordinaryItems", 0.0)
             ),
+            "operating_profit": operating_profit,
             "eps": (
                 values.get("BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations")
                 or values.get("BasicEarningsLossPerShareFromContinuingOperations", 0.0)
@@ -772,7 +1148,27 @@ class StockService:
             ),
             "equity": values.get("Equity", 0.0),
             "loan_book": values.get("Loans", 0.0) or values.get("Advances", 0.0),
-            "interest_income": values.get("InterestEarned", 0.0),
+            "interest_income": values.get("InterestEarned", 0.0) or values.get("InterestIncome", 0.0),
+            "interest_expense": (
+                values.get("InterestExpended", 0.0)
+                or values.get("InterestExpense", 0.0)
+                or values.get("FinanceCosts", 0.0)
+            ),
+            "net_interest_income": (
+                (values.get("InterestEarned", 0.0) or values.get("InterestIncome", 0.0))
+                - (
+                    values.get("InterestExpended", 0.0)
+                    or values.get("InterestExpense", 0.0)
+                    or values.get("FinanceCosts", 0.0)
+                )
+            ) if (
+                (values.get("InterestEarned", 0.0) or values.get("InterestIncome", 0.0))
+                and (
+                    values.get("InterestExpended", 0.0)
+                    or values.get("InterestExpense", 0.0)
+                    or values.get("FinanceCosts", 0.0)
+                )
+            ) else 0.0,
             "net_debt": (
                 (
                     values.get("Borrowings", 0.0)
@@ -782,6 +1178,61 @@ class StockService:
                 - values.get("CashAndCashEquivalents", 0.0)
             ),
         }
+        with self._xbrl_cache_lock:
+            self._xbrl_cache[xbrl_url] = (datetime.utcnow(), metrics)
+        return dict(metrics)
+
+    @staticmethod
+    def _operating_profit(reported_values: Mapping[str, float]) -> float:
+        """Read EBITDA/operating-profit tags, including company extension tags."""
+        direct_names = {
+            "EarningsBeforeInterestTaxesDepreciationAndAmortisation",
+            "EarningsBeforeInterestTaxDepreciationAndAmortization",
+            "OperatingProfit",
+            "ProfitLossFromOperatingActivities",
+            "ProfitBeforeDepreciationInterestAndTax",
+            "ProfitBeforeDepreciationAndInterest",
+            "ProfitBeforeInterestTaxDepreciationAndAmortisation",
+        }
+        for name, raw_value in reported_values.items():
+            normalised = "".join(character.lower() for character in name if character.isalnum())
+            is_ebitda = "ebitda" in normalised
+            is_pre_depreciation_profit = (
+                "profitbefore" in normalised
+                and "depreciation" in normalised
+                and "interest" in normalised
+            )
+            if name in direct_names or is_ebitda or is_pre_depreciation_profit:
+                return StockService._number(raw_value)
+
+        normalised_values = {
+            "".join(character.lower() for character in name if character.isalnum()): raw_value
+            for name, raw_value in reported_values.items()
+        }
+
+        def first_value(predicate):
+            return next(
+                (StockService._number(raw_value) for name, raw_value in normalised_values.items() if predicate(name)),
+                0.0,
+            )
+
+        # Many NSE filings use company-specific extension names rather than
+        # the standard tags above. Derive EBITDA only when all the ingredients
+        # have a clear income-statement meaning.
+        pbt = first_value(
+            lambda name: name in {"profitbeforetax", "profitlossbeforetax"}
+            or ("profit" in name and "before" in name and "tax" in name)
+        )
+        finance_cost = first_value(
+            lambda name: "financecost" in name
+            or ("interestexpense" in name and "interestincome" not in name)
+        )
+        depreciation = first_value(
+            lambda name: "depreciation" in name
+            and ("expense" in name or "amortisation" in name or "amortization" in name)
+        )
+        # Do not call PBT itself EBITDA when the required add-backs are absent.
+        return pbt + finance_cost + depreciation if pbt and (finance_cost or depreciation) else 0.0
 
     def _period_values(
         self, root: ElementTree.Element, report_date: Optional[datetime]
@@ -893,6 +1344,50 @@ class StockService:
         ).upper()
         return any(term in text for term in terms)
 
+    @classmethod
+    def _market_cap_crore(cls, quote: Mapping[str, Any]) -> float:
+        """Calculate market capitalisation from NSE's live price and issued shares."""
+        trade_info = quote.get("marketDeptOrderBook", {}).get("tradeInfo", {})
+        direct_market_cap = cls._number(
+            trade_info.get("totalMarketCap") or trade_info.get("marketCap")
+        )
+        # NSE reports this direct field in ₹ crore when it is available.
+        if direct_market_cap:
+            return direct_market_cap
+
+        price_info = quote.get("priceInfo", {})
+        price = cls._number(
+            price_info.get("lastPrice")
+            or price_info.get("close")
+            or price_info.get("previousClose")
+        )
+        security_info = quote.get("securityInfo", {})
+        issued_size = (
+            security_info.get("issuedSize")
+            or security_info.get("issuedCap")
+            or quote.get("metadata", {}).get("issuedSize")
+        )
+        if isinstance(issued_size, Mapping):
+            issued_size = issued_size.get("quantity") or issued_size.get("value")
+        shares = cls._number(issued_size)
+        # ₹1 crore equals 10,000,000 rupees.
+        return (price * shares) / 10_000_000 if price and shares else 0.0
+
+    @staticmethod
+    def _yahoo_market_cap_crore(symbol: str) -> float:
+        """Use Yahoo Finance only when NSE omits issued shares/market cap."""
+        try:
+            import yfinance as yf
+
+            ticker = yf.Ticker(f"{symbol}.NS")
+            market_cap = StockService._number(ticker.fast_info.get("market_cap"))
+            if not market_cap:
+                market_cap = StockService._number(ticker.info.get("marketCap"))
+            return market_cap / 10_000_000 if market_cap else 0.0
+        except Exception as exc:
+            logger.warning("Yahoo Finance market-cap fallback failed for %s: %s", symbol, exc)
+            return 0.0
+
     @staticmethod
     def _normalise_symbol(symbol: str) -> str:
         return symbol.strip().upper().removesuffix(".NS")
@@ -922,6 +1417,8 @@ class StockService:
         return {
             "symbol": symbol,
             "pe_ratio": 0.0,
+            "market_cap_crore": 0.0,
+            "market_cap_source": "",
             "profit_margin": 0.0,
             "profit_margin_yoy_change": 0.0,
             "yoy_revenue": 0.0,

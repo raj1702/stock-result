@@ -5,42 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>NSE/BSE Stock Results</title>
     <style>
-      body { max-width: 760px; margin: 56px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
-      form { display: flex; gap: 10px; }
-      input { flex: 1; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
+      :root { --content-width: 720px; }
+      body { max-width: 1400px; margin: 32px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
+      h1 { text-align: left; }
+      body > p:first-of-type { width: fit-content; max-width: 100%; margin: 0 0 16px; text-align: left; }
+      form { display: flex; justify-content: flex-start; width: var(--content-width); max-width: 100%; gap: 10px; margin: 0; }
+      input { flex: 1; min-width: 0; max-width: none; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
       button { padding: 12px 18px; border: 0; border-radius: 6px; background: #155eef; color: white; font-size: 16px; cursor: pointer; }
-      #message { min-height: 24px; margin: 18px 0 8px; color: #526075; }
-      pre { overflow: auto; padding: 18px; border-radius: 8px; background: #101828; color: #e6edf7; white-space: pre-wrap; }
-      #interpretation { padding-left: 0; line-height: 1.55; list-style: none; }
-      #interpretation li { margin: 8px 0; }
+      #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
+      #search-results-layout { display: grid; grid-template-columns: var(--content-width) 210px; width: fit-content; max-width: 100%; gap: 14px; align-items: stretch; }
+      #results-column { min-width: 0; }
+      #question-box { box-sizing: border-box; display: flex; flex-direction: column; align-self: stretch; overflow: hidden; padding: 14px; border: 1px solid #b2ddff; border-radius: 8px; background: #f5faff; color: #175cd3; }
+      #question-box[hidden] { display: none; }
+      #chat-messages { display: grid; flex: 1 1 auto; min-height: 0; align-content: start; gap: 9px; overflow-y: auto; }
+      .assistant-bubble { display: flex; gap: 9px; align-items: flex-start; }
+      .assistant-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: #155eef; color: white; font-size: 13px; font-weight: 700; }
+      .assistant-copy { margin: 2px 0 0; font-size: 13px; line-height: 1.4; }
+      .chat-message { padding: 8px 9px; border-radius: 7px; font-size: 12px; line-height: 1.4; }
+      .chat-message.assistant { background: #e0f2fe; color: #175cd3; }
+      .chat-message.user { margin-left: 18px; background: white; color: #344054; }
+      #question-form { display: flex; gap: 6px; margin-top: auto; padding-top: 12px; }
+      #chat-input { flex: 1; min-width: 0; padding: 8px; border: 1px solid #b2ddff; border-radius: 6px; font: inherit; font-size: 12px; }
+      #question-form button { padding: 8px 10px; font-size: 12px; }
+      #chat-input:disabled, #question-form button:disabled { cursor: not-allowed; opacity: .55; }
+      #tables { display: grid; grid-template-columns: minmax(0, 1fr) max-content; width: var(--content-width); max-width: 100%; gap: 14px; align-items: stretch; margin: 28px 0 0; }
+      #tables[hidden] { display: none; }
+      #results-panel, #comparison-panel { box-sizing: border-box; height: 100%; overflow-x: auto; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; color: #172033; }
+      #comparison-column { position: relative; display: flex; min-width: 0; align-self: stretch; }
+      #comparison-panel { flex: 0 0 auto; align-self: stretch; width: max-content; height: auto; overflow: visible; }
+      #results-panel { min-width: 0; }
+      #results-panel table { width: 100%; min-width: 0; }
+      #comparison-panel table { width: auto; min-width: 0; }
+      .table-heading { display: flex; align-items: center; justify-content: space-between; height: 18px; gap: 12px; margin: 0 0 10px; }
+      .table-heading h2 { margin: 0; color: #101828; font-size: 15px; }
+      #comparison-panel .table-heading { visibility: hidden; width: 0; overflow: hidden; }
+      .comparison-toggle { display: flex; gap: 14px; color: #344054; font-size: 13px; }
+      #comparison-controls { position: absolute; right: 0; bottom: calc(100% + 8px); display: flex; justify-content: flex-end; }
+      .comparison-option { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+      .comparison-option button { width: 15px; height: 15px; padding: 0; border: 2px solid #98a2b3; border-radius: 50%; background: white; }
+      .comparison-option.active button { border-color: #067647; background: #067647; box-shadow: inset 0 0 0 3px white; }
+      table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 8px 10px; border-right: 1px solid #d0d5dd; border-bottom: 1px solid #d0d5dd; text-align: right; white-space: nowrap; }
+      th:last-child, td:last-child { border-right: 0; }
+      thead th { color: #101828; background: #f2f4f7; font-weight: 700; }
+      th:first-child, td:first-child { position: sticky; left: 0; text-align: left; background: #fffcf5; }
+      thead th:first-child { background: #f2f4f7; }
+      #comparison-panel th:first-child, #comparison-panel td:first-child { position: static; text-align: right; }
+      #comparison-panel td:first-child { background: transparent; }
+      #results-panel tbody tr, #comparison-panel tbody tr { height: 47px; }
+      #results-panel thead tr, #comparison-panel thead tr { height: 35px; }
+      #comparison-panel tbody td { vertical-align: middle; }
+      tbody th { color: #101828; font-weight: 600; }
+      .unit { display: block; margin-top: 1px; color: #667085; font-size: 10px; font-weight: 400; }
+      .metric-info { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-left: 5px; border: 1px solid #98a2b3; border-radius: 50%; color: #475467; font-size: 10px; font-style: normal; font-weight: 700; cursor: help; vertical-align: 1px; }
+      .metric-info::after { content: attr(data-tooltip); position: absolute; z-index: 5; left: 0; bottom: calc(100% + 7px); width: 235px; padding: 8px 9px; border-radius: 6px; background: #101828; color: #fff; font-size: 12px; font-weight: 400; line-height: 1.35; text-align: left; white-space: normal; opacity: 0; pointer-events: none; transform: translateY(3px); transition: opacity .12s ease, transform .12s ease; }
+      .metric-info:hover::after, .metric-info:focus::after { opacity: 1; transform: translateY(0); }
+      .positive-number { color: #067647; font-weight: 700; }
+      .negative-number { color: #b42318; font-weight: 700; }
+      #interpretation-section { width: var(--content-width); max-width: 100%; margin-top: 28px; }
+      #interpretation-section h2 { margin: 0 0 12px; font-size: 18px; }
+      #charts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+      .chart-card { box-sizing: border-box; position: relative; flex: 0 1 calc((100% - 24px) / 3); min-width: 0; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; }
+      .chart-card.trend-positive { border-color: #abefc6; background: #ecfdf3; }
+      .chart-card.trend-negative { border-color: #fecdca; background: #fef3f2; }
+      .chart-title { margin: 0 0 8px; color: #101828; font-size: 13px; font-weight: 700; }
+      .chart-unit { margin-left: 4px; color: #667085; font-size: 11px; font-weight: 400; }
+      .chart-svg { display: block; width: 100%; height: auto; }
+      .chart-tooltip { position: absolute; z-index: 6; max-width: 150px; padding: 6px 8px; border-radius: 5px; background: #101828; color: #fff; font-size: 11px; line-height: 1.3; pointer-events: none; white-space: nowrap; }
       #data-note { font-size: 12px; color: #667085; }
       .positive { color: #067647; }
       .negative { color: #b42318; }
       .neutral { color: #526075; }
+      @media (max-width: 1100px) { #search-results-layout { grid-template-columns: 1fr; width: 100%; } #tables { width: 100%; grid-template-columns: 1fr; } #results-panel table { width: 100%; } }
+      @media (max-width: 600px) { .chart-card { flex-basis: 100%; } }
     </style>
   </head>
   <body>
     <h1>NSE/BSE Stock Results</h1>
     <p>Enter a company name or NSE symbol.</p>
-    <form id="search-form">
-      <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
-      <button type="submit">Search</button>
-    </form>
-    <p id="message"></p>
-    <pre id="result" hidden></pre>
+    <div id="search-results-layout">
+      <div id="results-column">
+        <form id="search-form">
+          <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
+          <button type="submit">Search</button>
+        </form>
+        <p id="message"></p>
+        <div id="tables" hidden>
+      <section id="results-panel">
+        <div class="table-heading"><h2>Quarterly results</h2></div>
+        <table aria-label="Quarterly financial results">
+          <thead id="results-head"></thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </section>
+      <div id="comparison-column">
+        <div id="comparison-controls">
+          <div class="comparison-toggle" role="group" aria-label="Comparison period">
+            <div class="comparison-option active" data-comparison-mode="qoq">
+              <button type="button" aria-label="Select QoQ comparison"></button><span>QoQ</span>
+            </div>
+            <div class="comparison-option" data-comparison-mode="yoy">
+              <button type="button" aria-label="Select YoY comparison"></button><span>YoY</span>
+            </div>
+          </div>
+        </div>
+        <section id="comparison-panel">
+          <div class="table-heading">
+            <h2 id="comparison-title">Quarter-on-quarter change</h2>
+          </div>
+          <table aria-label="Quarterly comparison results">
+            <thead id="comparison-head"></thead>
+            <tbody id="comparison-body"></tbody>
+          </table>
+        </section>
+      </div>
+        </div>
+      </div>
+      <aside id="question-box" hidden aria-label="Questions assistant">
+        <div id="chat-messages" aria-live="polite">
+          <div class="assistant-bubble">
+            <span class="assistant-icon">?</span>
+            <p class="assistant-copy">Got more questions?<br>I’m here to answer.</p>
+          </div>
+        </div>
+        <form id="question-form">
+          <input id="chat-input" placeholder="Ask a question" aria-label="Ask a question" required>
+          <button type="submit">Send</button>
+        </form>
+      </aside>
+    </div>
     <p id="data-note" hidden></p>
     <section id="interpretation-section" hidden>
       <h2>Interpretation</h2>
-      <ul id="interpretation"></ul>
+      <div id="charts"></div>
     </section>
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
       const message = document.getElementById('message');
-      const result = document.getElementById('result');
+      const tables = document.getElementById('tables');
+      const resultsPanel = document.getElementById('results-panel');
+      const resultsHead = document.getElementById('results-head');
+      const resultsBody = document.getElementById('results-body');
+      const comparisonPanel = document.getElementById('comparison-panel');
+      const comparisonHead = document.getElementById('comparison-head');
+      const comparisonBody = document.getElementById('comparison-body');
+      const comparisonOptions = document.querySelectorAll('.comparison-option');
+      const comparisonTitle = document.getElementById('comparison-title');
       const dataNote = document.getElementById('data-note');
       const interpretationSection = document.getElementById('interpretation-section');
-      const interpretation = document.getElementById('interpretation');
+      const charts = document.getElementById('charts');
+      const questionBox = document.getElementById('question-box');
+      const resultsColumn = document.getElementById('results-column');
+      const questionForm = document.getElementById('question-form');
+      const chatInput = document.getElementById('chat-input');
+      const chatMessages = document.getElementById('chat-messages');
+      let currentQuarterlyTable = null;
+      let comparisonMode = 'qoq';
+      let chatQuestionCount = 0;
+      const metricHelp = {
+        profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
+        revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
+        operating_profit: 'EBITDA: operating earnings before interest, tax, depreciation and amortisation. Compare its growth and margin with peers.',
+        operating_margin: 'Operating margin: EBITDA as a percentage of revenue. Higher or improving margins usually indicate better operating efficiency.',
+        profit_margin: 'Profit margin: PAT as a percentage of revenue. A stable or rising margin means more revenue is turning into profit.',
+        net_interest_income: 'NII: interest earned minus interest paid. For banks/NBFCs, growing NII with controlled credit costs is generally positive.',
+        loan_book: 'Loan book: total outstanding loans/advances. Growth is positive only when asset quality and collections remain healthy.',
+      };
+      function createInfoIcon(helpText) {
+        const info = Object.assign(document.createElement('span'), {
+          className: 'metric-info', textContent: 'i', tabIndex: 0,
+        });
+        info.dataset.tooltip = helpText;
+        info.setAttribute('aria-label', helpText);
+        return info;
+      }
+      function appendChatMessage(text, sender) {
+        chatMessages.append(Object.assign(document.createElement('div'), {
+          className: `chat-message ${sender}`, textContent: text,
+        }));
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+      function syncQuestionBoxHeight() {
+        // Prevent old chat content from affecting the grid-row measurement.
+        questionBox.style.height = '0px';
+        requestAnimationFrame(() => {
+          questionBox.style.height = `${resultsColumn.getBoundingClientRect().height}px`;
+        });
+      }
       async function readJson(response) {
         const body = await response.text();
         try {
@@ -49,64 +201,286 @@
           throw new Error('The server returned an unexpected response. Check the Flask terminal for details.');
         }
       }
+      function formatValue(value, unit) {
+        if (value === null || value === undefined) return '—';
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '—';
+        const rounded = Math.round(number);
+        return unit === '%' ? `${rounded}%` : `₹${rounded.toLocaleString('en-IN')}`;
+      }
+      function formatChange(value, unit) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+        const number = Number(value);
+        const sign = number > 0 ? '+' : '';
+        return unit === 'pp' ? `${sign}${number.toFixed(2)} pp` : `${sign}${number.toFixed(2)}%`;
+      }
+      function renderRows(head, body, quarters, rows, valueFormatter, colorByDirection = false, includeMetric = true) {
+        const headerRow = document.createElement('tr');
+        if (includeMetric) {
+          headerRow.append(Object.assign(document.createElement('th'), { textContent: 'Metric', scope: 'col' }));
+        }
+        quarters.forEach((quarter) => {
+          const header = Object.assign(document.createElement('th'), { scope: 'col' });
+          header.append(document.createTextNode(quarter.label));
+          if (quarter.help) header.append(createInfoIcon(quarter.help));
+          if (quarter.date) header.title = quarter.date;
+          headerRow.append(header);
+        });
+        head.replaceChildren(headerRow);
+        body.replaceChildren(...rows.map((row) => {
+          const tr = document.createElement('tr');
+          if (includeMetric) {
+            const label = Object.assign(document.createElement('th'), { scope: 'row' });
+            label.append(document.createTextNode(row.label));
+            const helpText = metricHelp[row.key];
+            if (helpText) {
+              label.append(createInfoIcon(helpText));
+            }
+            label.append(Object.assign(document.createElement('span'), { className: 'unit', textContent: row.unit }));
+            tr.append(label);
+          }
+          row.values.forEach((value) => {
+            const cell = document.createElement('td');
+            cell.textContent = valueFormatter(value, row.unit);
+            if (colorByDirection && Number.isFinite(Number(value))) {
+              cell.className = Number(value) > 0 ? 'positive-number' : Number(value) < 0 ? 'negative-number' : '';
+            }
+            tr.append(cell);
+          });
+          return tr;
+        }));
+      }
+      function svgElement(name, attributes = {}, textContent = '') {
+        const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+        if (textContent) element.textContent = textContent;
+        return element;
+      }
+      function chartQuarterLabel(quarter) {
+        const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
+        return match ? `${match[1]} FY${match[2].slice(-2)}` : quarter?.label || '';
+      }
+      function formatChartAxis(value, unit) {
+        const rounded = Math.round(value);
+        return unit === '%' ? `${rounded}%` : `₹${rounded.toLocaleString('en-IN')}`;
+      }
+      function renderMetricCharts(table) {
+        const quarters = table?.quarters || [];
+        const rows = table?.rows || [];
+        charts.replaceChildren();
+        if (!quarters.length || !rows.length) {
+          interpretationSection.hidden = true;
+          return;
+        }
+        rows.forEach((row) => {
+          const hasAllQuarterValues = row.values.length === quarters.length
+            && row.values.every((value) => value !== null && value !== undefined && Number.isFinite(Number(value)));
+          // A partial series can make a trend look stronger or weaker than it
+          // really is. Do not draw it until all five quarters are reported.
+          if (!hasAllQuarterValues) return;
+          const card = Object.assign(document.createElement('article'), { className: 'chart-card' });
+          const title = Object.assign(document.createElement('h3'), { className: 'chart-title', textContent: row.label });
+          title.append(Object.assign(document.createElement('span'), { className: 'chart-unit', textContent: row.unit }));
+          card.append(title);
+          const tooltip = Object.assign(document.createElement('div'), { className: 'chart-tooltip' });
+          tooltip.hidden = true;
+          const observations = row.values
+            .map((value, index) => ({ value: Number(value), index }))
+            .filter((item) => Number.isFinite(item.value));
+          let risingSegments = 0;
+          let fallingSegments = 0;
+          observations.forEach((point, index) => {
+            const previous = observations[index - 1];
+            if (!previous || previous.index !== point.index - 1) return;
+            if (point.value > previous.value) risingSegments += 1;
+            if (point.value < previous.value) fallingSegments += 1;
+          });
+          if (risingSegments > fallingSegments) card.classList.add('trend-positive');
+          else if (fallingSegments > risingSegments) card.classList.add('trend-negative');
+          else if (risingSegments || fallingSegments) {
+            const latest = observations[observations.length - 1];
+            const prior = observations[observations.length - 2];
+            if (latest.value > prior.value) card.classList.add('trend-positive');
+            else if (latest.value < prior.value) card.classList.add('trend-negative');
+          }
+
+          const svg = svgElement('svg', {
+            class: 'chart-svg', viewBox: '0 0 300 170', role: 'img',
+            'aria-label': `${row.label} by quarter`,
+          });
+          const plot = { left: 47, right: 12, top: 13, bottom: 38 };
+          const width = 300 - plot.left - plot.right;
+          const height = 170 - plot.top - plot.bottom;
+          const rawMin = Math.min(...observations.map((item) => item.value));
+          const rawMax = Math.max(...observations.map((item) => item.value));
+          const padding = rawMax === rawMin ? Math.max(Math.abs(rawMax) * 0.12, 1) : (rawMax - rawMin) * 0.12;
+          const minimum = rawMin - padding;
+          const maximum = rawMax + padding;
+          const x = (index) => plot.left + (quarters.length <= 1 ? width / 2 : (index / (quarters.length - 1)) * width);
+          const y = (value) => plot.top + ((maximum - value) / (maximum - minimum)) * height;
+          const showTooltip = (event, point) => {
+            tooltip.textContent = `${chartQuarterLabel(quarters[point.index])}: ${formatValue(point.value, row.unit)}`;
+            tooltip.hidden = false;
+            const cardBounds = card.getBoundingClientRect();
+            const left = Math.min(Math.max(event.clientX - cardBounds.left + 8, 4), cardBounds.width - 145);
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${Math.max(event.clientY - cardBounds.top - 30, 4)}px`;
+          };
+          const hideTooltip = () => { tooltip.hidden = true; };
+
+          for (let tick = 0; tick < 3; tick += 1) {
+            const value = maximum - ((maximum - minimum) * tick / 2);
+            const position = y(value);
+            svg.append(svgElement('line', { x1: plot.left, y1: position, x2: plot.left + width, y2: position, stroke: '#eaecf0', 'stroke-width': '1' }));
+            svg.append(svgElement('text', { x: plot.left - 6, y: position + 4, fill: '#667085', 'font-size': '9', 'text-anchor': 'end' }, formatChartAxis(value, row.unit)));
+          }
+          svg.append(svgElement('line', { x1: plot.left, y1: plot.top, x2: plot.left, y2: plot.top + height, stroke: '#98a2b3', 'stroke-width': '1' }));
+          svg.append(svgElement('line', { x1: plot.left, y1: plot.top + height, x2: plot.left + width, y2: plot.top + height, stroke: '#98a2b3', 'stroke-width': '1' }));
+          quarters.forEach((quarter, index) => {
+            svg.append(svgElement('text', { x: x(index), y: plot.top + height + 16, fill: '#667085', 'font-size': '9', 'text-anchor': 'middle' }, chartQuarterLabel(quarter)));
+          });
+          observations.forEach((point, index) => {
+            const previous = observations[index - 1];
+            const directionColor = !previous
+              ? '#155eef'
+              : point.value > previous.value
+                ? '#067647'
+                : point.value < previous.value
+                  ? '#b42318'
+                  : '#667085';
+            if (previous && previous.index === point.index - 1) {
+              svg.append(svgElement('line', {
+                x1: x(previous.index), y1: y(previous.value),
+                x2: x(point.index), y2: y(point.value),
+                stroke: directionColor, 'stroke-width': '2.5',
+              }));
+            }
+            const dot = svgElement('circle', {
+              cx: x(point.index), cy: y(point.value), r: '4', fill: directionColor,
+              tabindex: '0', role: 'img',
+              'aria-label': `${chartQuarterLabel(quarters[point.index])}: ${formatValue(point.value, row.unit)}`,
+            });
+            dot.addEventListener('pointerenter', (event) => showTooltip(event, point));
+            dot.addEventListener('pointermove', (event) => showTooltip(event, point));
+            dot.addEventListener('pointerleave', hideTooltip);
+            dot.addEventListener('focus', () => {
+              const cardBounds = card.getBoundingClientRect();
+              showTooltip({ clientX: cardBounds.left + x(point.index), clientY: cardBounds.top + y(point.value) }, point);
+            });
+            dot.addEventListener('blur', hideTooltip);
+            svg.append(dot);
+          });
+          card.append(svg);
+          card.append(tooltip);
+          charts.append(card);
+        });
+        interpretationSection.hidden = charts.childElementCount === 0;
+      }
+      function renderQuarterlyTable(table) {
+        const quarters = table?.quarters || [];
+        const rows = table?.rows || [];
+        if (!quarters.length || !rows.length) {
+          resultsHead.replaceChildren();
+          resultsBody.replaceChildren();
+          tables.hidden = true;
+          return;
+        }
+        currentQuarterlyTable = table;
+        renderRows(resultsHead, resultsBody, quarters, rows, formatValue, true);
+        renderComparisonTable();
+        tables.hidden = false;
+      }
+      function renderComparisonTable() {
+        const comparisonRows = currentQuarterlyTable?.comparisons?.[comparisonMode] || [];
+        if (!currentQuarterlyTable || !comparisonRows.length) {
+          comparisonPanel.hidden = true;
+          return;
+        }
+        comparisonPanel.hidden = false;
+        const quarters = currentQuarterlyTable.quarters;
+        const latestQuarter = quarters[quarters.length - 1];
+        const previousQuarter = quarters[quarters.length - 2];
+        const shortQuarter = (quarter) => {
+          const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
+          return match ? `${match[1]} FY${match[2].slice(-2)}` : quarter?.label || 'Latest';
+        };
+        let comparisonLabel = comparisonMode === 'qoq'
+          ? `${shortQuarter(latestQuarter)} vs ${shortQuarter(previousQuarter)}`
+          : `${shortQuarter(latestQuarter)} vs prior FY`;
+        const yearMatch = latestQuarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
+        if (comparisonMode === 'yoy' && yearMatch) {
+          comparisonLabel = `${shortQuarter(latestQuarter)} vs ${yearMatch[1]} FY${String(Number(yearMatch[2]) - 1).slice(-2)}`;
+        }
+        const comparisonName = comparisonMode === 'qoq' ? 'QoQ' : 'YoY';
+        const latestRows = comparisonRows.map((row) => ({
+          ...row,
+          values: [row.values[row.values.length - 1]],
+        }));
+        renderRows(
+          comparisonHead,
+          comparisonBody,
+          [{
+            label: comparisonName,
+            date: '',
+            help: `${comparisonName}: ${comparisonLabel}`,
+          }],
+          latestRows,
+          formatChange,
+          true,
+          false,
+        );
+      }
+      comparisonOptions.forEach((option) => option.addEventListener('click', () => {
+        comparisonMode = option.dataset.comparisonMode;
+        comparisonOptions.forEach((item) => item.classList.toggle('active', item === option));
+        renderComparisonTable();
+      }));
+      questionForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const question = chatInput.value.trim();
+        if (!question) return;
+        appendChatMessage(question, 'user');
+        chatQuestionCount += 1;
+        if (chatQuestionCount === 1) {
+          appendChatMessage('I am still learning, ask me later.', 'assistant');
+        } else if (chatQuestionCount === 2) {
+          appendChatMessage('As of now, please rely on the data shown. I will try to learn faster.', 'assistant');
+        } else if (chatQuestionCount === 3) {
+          appendChatMessage('Please don’t waste time on me.', 'assistant');
+        } else {
+          chatInput.disabled = true;
+          questionForm.querySelector('button').disabled = true;
+          chatInput.placeholder = 'Chat is unavailable for now';
+        }
+        chatInput.value = '';
+        if (!chatInput.disabled) chatInput.focus();
+      });
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         message.textContent = 'Finding NSE symbol and financial results…';
-        result.hidden = true;
+        tables.hidden = true;
         dataNote.hidden = true;
-          interpretationSection.hidden = true;
+        interpretationSection.hidden = true;
         try {
           const response = await fetch(`/search?query=${encodeURIComponent(query.value)}`);
           const data = await readJson(response);
           if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
-          message.textContent = `NSE symbol: ${data.symbol}`;
-          const displayData = {...data};
-          const percentageFields = new Set([
-            'yoy_revenue', 'yoy_profit', 'operating_cash_flow_yoy',
-            'free_cash_flow_yoy', 'net_debt_yoy', 'profit_margin_yoy_change'
-          ]);
-          for (const key of Object.keys(displayData)) {
-            if (percentageFields.has(key) && typeof displayData[key] === 'number') {
-              displayData[key] = `${displayData[key].toFixed(2)}%`;
-            }
+          const summary = [`NSE Symbol: ${data.symbol}`];
+          const pe = Number(data.pe_ratio);
+          const marketCapCrore = Number(data.market_cap_crore);
+          if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
+          if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
+            summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
           }
-          result.textContent = JSON.stringify(displayData, null, 2);
-          result.hidden = false;
+          message.textContent = summary.join(' | ');
+          renderQuarterlyTable(data.quarterly_results);
+          questionBox.hidden = false;
+          syncQuestionBoxHeight();
           if (data.data_note) {
             dataNote.textContent = data.data_note;
             dataNote.hidden = false;
           }
-          interpretation.replaceChildren(Object.assign(document.createElement('li'), {
-            textContent: 'Preparing interpretation from the reported financial figures…',
-            className: 'neutral'
-          }));
-          interpretationSection.hidden = false;
-          const interpretationResponse = await fetch(`/interpretation/${encodeURIComponent(data.symbol)}`);
-          const interpretationData = await readJson(interpretationResponse);
-          if (interpretationResponse.ok) {
-            const items = interpretationData.interpretation_items || [{
-              text: interpretationData.interpretation,
-              tone: 'neutral'
-            }];
-            interpretation.replaceChildren(...items.map((item) => {
-              const line = document.createElement('li');
-              const icon = item.tone === 'positive' ? '✓' : item.tone === 'negative' ? '✕' : '•';
-              line.textContent = `${icon} ${item.text}`;
-              line.className = item.tone;
-              line.style.color = item.tone === 'positive'
-                ? '#067647'
-                : item.tone === 'negative'
-                  ? '#b42318'
-                  : '#526075';
-              line.style.fontWeight = item.tone === 'neutral' ? '400' : '600';
-              return line;
-            }));
-          } else {
-            interpretation.replaceChildren(Object.assign(document.createElement('li'), {
-              textContent: interpretationData.error,
-              className: 'negative'
-            }));
-          }
+          renderMetricCharts(data.quarterly_results);
         } catch (error) {
           message.textContent = error.message;
         }

@@ -3,6 +3,8 @@ from typing import TypedDict
 class StockData(TypedDict):
     symbol: str
     pe_ratio: float
+    market_cap_crore: float
+    market_cap_source: str
     profit_margin: float
     profit_margin_yoy_change: float
     yoy_revenue: float
