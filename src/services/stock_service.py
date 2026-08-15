@@ -2,6 +2,7 @@
 
 import logging
 import csv
+import math
 import os
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -153,6 +154,12 @@ class StockService:
             loan_book_latest, loan_book_previous = {}, {}
             interest_income_latest, interest_income_previous = {}, {}
             pe_ratio = self._number(fallback.get("pe_ratio")) or pe_ratio
+
+        # Yahoo does not report PEG for many Indian small caps. Fall back to
+        # one transparent definition instead of mixing third-party formulas:
+        # trailing P/E divided by annualised 3-year EPS growth from NSE XBRL.
+        if not peg_ratio and pe_ratio:
+            peg_ratio = self._calculated_peg_ratio(nse_symbol, pe_ratio)
 
         current_revenue = self._number(latest.get("revenue"))
         current_profit = self._number(latest.get("profit"))
@@ -1164,6 +1171,100 @@ class StockService:
             interest_income_previous,
         )
 
+    def _nse_peg_ratio(self, symbol: str, pe_ratio: float) -> float:
+        """Calculate PEG from trailing P/E and comparable annual NSE EPS.
+
+        The calculation needs positive EPS for the latest annual filing and
+        the same annual filing three years earlier. Returning zero means PEG
+        is not meaningful or cannot be calculated from reported data.
+        """
+        try:
+            response = self._corporate_integrated_filing(symbol, size=50)
+            filings = response.get("data", [])
+            if not isinstance(filings, list):
+                return 0.0
+            candidates = self._preferred_filings(filings)
+            annual_filings = [
+                filing for filing in candidates
+                if (filing_date := self._filing_date(filing)) and filing_date.month == 3
+            ]
+            if not annual_filings:
+                return 0.0
+            latest_filing = annual_filings[0]
+            latest_date = self._filing_date(latest_filing)
+            prior_filing = next(
+                (
+                    filing for filing in annual_filings[1:]
+                    if (filing_date := self._filing_date(filing))
+                    and latest_date
+                    and latest_date.year - filing_date.year >= 3
+                ),
+                None,
+            )
+            if not latest_date or not prior_filing:
+                return 0.0
+            prior_date = self._filing_date(prior_filing)
+            years = latest_date.year - prior_date.year if prior_date else 0
+            if years < 3:
+                return 0.0
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                latest_task = executor.submit(self._xbrl_metrics, latest_filing)
+                prior_task = executor.submit(self._xbrl_metrics, prior_filing)
+                latest_eps = self._number(latest_task.result().get("eps"))
+                prior_eps = self._number(prior_task.result().get("eps"))
+            if latest_eps <= 0 or prior_eps <= 0:
+                return 0.0
+            eps_cagr_percent = ((latest_eps / prior_eps) ** (1 / years) - 1) * 100
+            return pe_ratio / eps_cagr_percent if eps_cagr_percent > 0 else 0.0
+        except (requests.RequestException, ElementTree.ParseError, ValueError, TypeError) as exc:
+            logger.warning("Unable to calculate NSE PEG fallback for %s: %s", symbol, exc)
+            return 0.0
+
+    def _calculated_peg_ratio(self, symbol: str, pe_ratio: float) -> float:
+        """Use NSE history first, then Yahoo annual statements if NSE is short."""
+        return self._nse_peg_ratio(symbol, pe_ratio) or self._yahoo_eps_peg_ratio(symbol, pe_ratio)
+
+    def _yahoo_eps_peg_ratio(self, symbol: str, pe_ratio: float) -> float:
+        """Calculate the same 3-year EPS-CAGR PEG from annual statements."""
+        try:
+            import yfinance as yf
+
+            statement = yf.Ticker(f"{symbol}.NS").financials
+            if statement is None or statement.empty:
+                return 0.0
+            periods = list(statement.columns)
+            if not periods:
+                return 0.0
+            latest_period = periods[0]
+            prior_period = next(
+                (period for period in periods[1:] if latest_period.year - period.year >= 3),
+                None,
+            )
+            if prior_period is None:
+                return 0.0
+
+            def annual_eps(period) -> float:
+                net_income = self._number(statement.at["Net Income", period])
+                shares = self._number(
+                    statement.at["Diluted Average Shares", period]
+                    if "Diluted Average Shares" in statement.index
+                    else statement.at["Basic Average Shares", period]
+                    if "Basic Average Shares" in statement.index
+                    else 0
+                )
+                return net_income / shares if net_income > 0 and shares > 0 else 0.0
+
+            latest_eps = annual_eps(latest_period)
+            prior_eps = annual_eps(prior_period)
+            years = latest_period.year - prior_period.year
+            if latest_eps <= 0 or prior_eps <= 0 or years < 3:
+                return 0.0
+            eps_cagr_percent = ((latest_eps / prior_eps) ** (1 / years) - 1) * 100
+            return pe_ratio / eps_cagr_percent if eps_cagr_percent > 0 else 0.0
+        except Exception as exc:
+            logger.warning("Unable to calculate Yahoo EPS PEG fallback for %s: %s", symbol, exc)
+            return 0.0
+
     def _latest_metric_pair(self, filings, metrics_for, metric_name):
         """Find the newest same-period filing pair that reports a given metric."""
         latest_available = {}
@@ -1592,7 +1693,8 @@ class StockService:
         if value is None or value == "":
             return 0.0
         try:
-            return float(str(value).replace(",", ""))
+            number = float(str(value).replace(",", ""))
+            return number if math.isfinite(number) else 0.0
         except (TypeError, ValueError):
             return 0.0
 
