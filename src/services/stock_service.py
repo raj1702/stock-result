@@ -981,19 +981,23 @@ class StockService:
     def _get_quote(self, symbol: str) -> Mapping[str, Any]:
         if self.nse_live is not None:
             return self.nse_live.stock_quote(symbol)
-        payload = self._nse_json(
-            "/api/NextApi/apiClient/GetQuoteApi",
-            {
-                "functionName": "getSymbolData",
-                "marketType": "N",
-                "series": "EQ",
-                "symbol": symbol,
-            },
-        )
-        quotes = payload.get("equityResponse", [])
-        if not isinstance(quotes, list) or not quotes or not isinstance(quotes[0], Mapping):
-            raise ValueError("NSE returned no equity quote")
-        return quotes[0]
+        # Many smaller stocks trade in the BE (trade-to-trade) series rather
+        # than EQ. NSE returns an empty quote when the wrong series is passed,
+        # so retry BE before treating the symbol as unavailable.
+        for series in ("EQ", "BE"):
+            payload = self._nse_json(
+                "/api/NextApi/apiClient/GetQuoteApi",
+                {
+                    "functionName": "getSymbolData",
+                    "marketType": "N",
+                    "series": series,
+                    "symbol": symbol,
+                },
+            )
+            quotes = payload.get("equityResponse", [])
+            if isinstance(quotes, list) and quotes and isinstance(quotes[0], Mapping):
+                return quotes[0]
+        raise ValueError("NSE returned no equity quote")
 
     def _corporate_integrated_filing(self, symbol: str, size: int) -> Mapping[str, Any]:
         """Fetch NSE's integrated-financial-filings feed with a short timeout."""
