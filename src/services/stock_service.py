@@ -246,8 +246,7 @@ class StockService:
             filings = response.get("data", [])
             if not isinstance(filings, list):
                 raise ValueError("NSE returned no financial filings")
-            consolidated = [item for item in filings if item.get("consolidated") == "Consolidated"]
-            candidates = consolidated or filings
+            candidates = self._preferred_filings(filings)
             unique_filings = {}
             for filing in candidates:
                 period = self._filing_date(filing)
@@ -985,19 +984,55 @@ class StockService:
         # than EQ. NSE returns an empty quote when the wrong series is passed,
         # so retry BE before treating the symbol as unavailable.
         for series in ("EQ", "BE"):
-            payload = self._nse_json(
-                "/api/NextApi/apiClient/GetQuoteApi",
-                {
-                    "functionName": "getSymbolData",
-                    "marketType": "N",
-                    "series": series,
-                    "symbol": symbol,
-                },
-            )
+            try:
+                payload = self._nse_json(
+                    "/api/NextApi/apiClient/GetQuoteApi",
+                    {
+                        "functionName": "getSymbolData",
+                        "marketType": "N",
+                        "series": series,
+                        "symbol": symbol,
+                    },
+                )
+            except requests.HTTPError as exc:
+                # Some BE-only symbols return HTTP 404 rather than an empty
+                # shell when queried as EQ. Continue to their BE quote.
+                status_code = exc.response.status_code if exc.response is not None else None
+                if series == "EQ" and status_code == 404:
+                    continue
+                raise
             quotes = payload.get("equityResponse", [])
             if isinstance(quotes, list) and quotes and isinstance(quotes[0], Mapping):
-                return quotes[0]
+                quote = quotes[0]
+                # An unsupported series can return a shell object whose
+                # sections are all null. Accept only an actual NSE symbol,
+                # then continue to the BE retry for trade-to-trade stocks.
+                if self._quote_metadata(quote).get("symbol"):
+                    return quote
         raise ValueError("NSE returned no equity quote")
+
+    def _preferred_filings(self, filings: list[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+        """Choose one consistent reporting basis with usable quarterly history.
+
+        A company can begin filing consolidated results recently while its
+        earlier quarters remain standalone. A one-record consolidated subset
+        is less useful than the complete standalone series for the table and
+        comparable-period calculations.
+        """
+        consolidated = [item for item in filings if item.get("consolidated") == "Consolidated"]
+        standalone = [item for item in filings if item.get("consolidated") != "Consolidated"]
+
+        def period_count(items: list[Mapping[str, Any]]) -> int:
+            dates = {self._filing_date(item).date() for item in items if self._filing_date(item)}
+            return len(dates)
+
+        consolidated_periods = period_count(consolidated)
+        standalone_periods = period_count(standalone)
+        if consolidated_periods >= 5 or not standalone:
+            return consolidated
+        if standalone_periods > consolidated_periods:
+            return standalone
+        return consolidated or standalone
 
     def _corporate_integrated_filing(self, symbol: str, size: int) -> Mapping[str, Any]:
         """Fetch NSE's integrated-financial-filings feed with a short timeout."""
@@ -1046,8 +1081,7 @@ class StockService:
         if not isinstance(filings, list):
             raise ValueError("NSE returned no financial filings")
 
-        consolidated = [f for f in filings if f.get("consolidated") == "Consolidated"]
-        candidates = consolidated or filings
+        candidates = self._preferred_filings(filings)
         latest_filing = candidates[0] if candidates else None
         if not latest_filing:
             raise ValueError("No financial filing found")
@@ -1464,9 +1498,8 @@ class StockService:
         """Calculate market capitalisation from NSE's live price and issued shares."""
         # NSE's current NextApi quote response exposes tradeInfo at the top
         # level. Older quote responses placed it under marketDeptOrderBook.
-        trade_info = quote.get("tradeInfo", {}) or quote.get("marketDeptOrderBook", {}).get(
-            "tradeInfo", {}
-        )
+        order_book = quote.get("marketDeptOrderBook") or {}
+        trade_info = quote.get("tradeInfo") or order_book.get("tradeInfo") or {}
         direct_market_cap = cls._number(
             trade_info.get("totalMarketCap") or trade_info.get("marketCap")
         )
@@ -1475,13 +1508,13 @@ class StockService:
         if direct_market_cap:
             return direct_market_cap / 10_000_000
 
-        price_info = quote.get("priceInfo", {})
+        price_info = quote.get("priceInfo") or {}
         price = cls._number(
             price_info.get("lastPrice")
             or price_info.get("close")
             or price_info.get("previousClose")
         )
-        security_info = quote.get("securityInfo", {})
+        security_info = quote.get("securityInfo") or {}
         issued_size = (
             trade_info.get("issuedSize")
             or security_info.get("issuedSize")
