@@ -572,11 +572,13 @@
           if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
           const summary = [`NSE Symbol: ${data.symbol}`];
           const pe = Number(data.pe_ratio);
+          const peg = Number(data.peg_ratio);
           const marketCapCrore = Number(data.market_cap_crore);
           if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
           if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
             summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
           }
+          summary.push(`PEG: ${Number.isFinite(peg) && peg > 0 ? peg.toFixed(2) : '—'}`);
           message.textContent = summary.join(' | ');
           renderQuarterlyTable(data.quarterly_results);
           hasSuccessfulSearch = true;

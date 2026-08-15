@@ -33,6 +33,7 @@ class StockService:
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
     STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
+    YAHOO_VALUATION_CACHE_TTL = timedelta(hours=6)
     XBRL_REQUEST_TIMEOUT = 10
     # `jugaad_data.NSELive()` opens the NSE quote page during construction
     # without specifying a timeout.  When NSE does not respond, that blocks a
@@ -68,6 +69,8 @@ class StockService:
         self._xbrl_cache_lock = Lock()
         self._stock_cache = {}
         self._stock_cache_lock = Lock()
+        self._yahoo_valuation_cache = {}
+        self._yahoo_valuation_cache_lock = Lock()
 
     def fetch_stock_data(self, symbol: str) -> StockData:
         """Return NSE quote, valuation, margin, revenue-growth, and profit-growth metrics."""
@@ -90,6 +93,7 @@ class StockService:
             # blank; loss-making companies can still have no meaningful P/E.
             if not pe_ratio:
                 pe_ratio = self._yahoo_pe_ratio(nse_symbol)
+            peg_ratio = self._yahoo_peg_ratio(nse_symbol)
             market_cap_crore = self._market_cap_crore(quote)
             market_cap_source = "NSE"
             if not market_cap_crore:
@@ -103,6 +107,7 @@ class StockService:
             # the ISIN-based Upstox Fundamentals fallback instead.
             quote = {}
             pe_ratio = 0.0
+            peg_ratio = 0.0
             market_cap_crore = 0.0
             market_cap_source = ""
 
@@ -176,6 +181,7 @@ class StockService:
         metrics = {
             "symbol": nse_symbol,
             "pe_ratio": round(pe_ratio, 2),
+            "peg_ratio": round(peg_ratio, 2),
             "market_cap_crore": round(market_cap_crore, 2),
             "market_cap_source": market_cap_source,
             "profit_margin": round(profit_margin, 2),
@@ -1527,34 +1533,44 @@ class StockService:
         # ₹1 crore equals 10,000,000 rupees.
         return (price * shares) / 10_000_000 if price and shares else 0.0
 
-    @staticmethod
-    def _yahoo_market_cap_crore(symbol: str) -> float:
-        """Use Yahoo Finance only when NSE omits issued shares/market cap."""
+    def _yahoo_valuation(self, symbol: str) -> Mapping[str, float]:
+        """Cache Yahoo valuation fields used only when NSE does not report them."""
+        with self._yahoo_valuation_cache_lock:
+            cached = self._yahoo_valuation_cache.get(symbol)
+            if cached and datetime.utcnow() - cached[0] < self.YAHOO_VALUATION_CACHE_TTL:
+                return dict(cached[1])
         try:
             import yfinance as yf
 
             ticker = yf.Ticker(f"{symbol}.NS")
-            market_cap = StockService._number(ticker.fast_info.get("market_cap"))
+            fast_info = ticker.fast_info
+            info = ticker.info
+            market_cap = self._number(fast_info.get("market_cap"))
             if not market_cap:
-                market_cap = StockService._number(ticker.info.get("marketCap"))
-            return market_cap / 10_000_000 if market_cap else 0.0
+                market_cap = self._number(info.get("marketCap"))
+            result = {
+                "market_cap_crore": market_cap / 10_000_000 if market_cap else 0.0,
+                "pe_ratio": self._number(fast_info.get("trailing_pe") or info.get("trailingPE")),
+                "peg_ratio": self._number(info.get("pegRatio")),
+            }
         except Exception as exc:
-            logger.warning("Yahoo Finance market-cap fallback failed for %s: %s", symbol, exc)
-            return 0.0
+            logger.warning("Yahoo Finance valuation fallback failed for %s: %s", symbol, exc)
+            result = {"market_cap_crore": 0.0, "pe_ratio": 0.0, "peg_ratio": 0.0}
+        with self._yahoo_valuation_cache_lock:
+            self._yahoo_valuation_cache[symbol] = (datetime.utcnow(), result)
+        return dict(result)
 
-    @staticmethod
-    def _yahoo_pe_ratio(symbol: str) -> float:
+    def _yahoo_market_cap_crore(self, symbol: str) -> float:
+        """Use Yahoo Finance only when NSE omits issued shares/market cap."""
+        return self._number(self._yahoo_valuation(symbol).get("market_cap_crore"))
+
+    def _yahoo_pe_ratio(self, symbol: str) -> float:
         """Use Yahoo's trailing P/E only when the NSE quote omits it."""
-        try:
-            import yfinance as yf
+        return self._number(self._yahoo_valuation(symbol).get("pe_ratio"))
 
-            ticker = yf.Ticker(f"{symbol}.NS")
-            return StockService._number(
-                ticker.fast_info.get("trailing_pe") or ticker.info.get("trailingPE")
-            )
-        except Exception as exc:
-            logger.warning("Yahoo Finance P/E fallback failed for %s: %s", symbol, exc)
-            return 0.0
+    def _yahoo_peg_ratio(self, symbol: str) -> float:
+        """Use Yahoo's provider-reported PEG instead of deriving it from one quarter."""
+        return self._number(self._yahoo_valuation(symbol).get("peg_ratio"))
 
     @staticmethod
     def _normalise_symbol(symbol: str) -> str:
@@ -1585,6 +1601,7 @@ class StockService:
         return {
             "symbol": symbol,
             "pe_ratio": 0.0,
+            "peg_ratio": 0.0,
             "market_cap_crore": 0.0,
             "market_cap_source": "",
             "profit_margin": 0.0,
