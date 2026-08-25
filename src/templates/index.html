@@ -214,8 +214,8 @@
         button { padding: 11px 14px; font-size: 15px; }
         #search-results-layout { width: 100%; min-width: 0; max-width: 100%; }
         #results-column, #tables { min-width: 0; max-width: 100%; }
-        #tables { grid-template-columns: minmax(0, 1fr) 88px; width: 100%; margin-top: 20px; gap: 6px; }
-        #results-panel, #comparison-panel { padding: 6px; }
+        #tables { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(74px, 82px); width: 100%; margin-top: 20px; gap: 5px; }
+        #results-panel, #comparison-panel { min-width: 0; max-width: 100%; padding: 5px; border-radius: 8px; box-shadow: 0 4px 12px rgba(16, 24, 40, .07); }
         #results-panel { overflow-x: hidden; }
         #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
         #results-panel th, #results-panel td { padding: 5px 2px; font-size: 9px; line-height: 1.15; white-space: normal; }
@@ -224,7 +224,12 @@
         #results-panel thead tr, #comparison-panel thead tr { height: 32px; }
         #results-panel .unit { font-size: 8px; }
         #results-panel .metric-info { display: none; }
-        #comparison-column { display: flex; min-width: 0; padding-top: 0; }
+        #comparison-column { display: flex; width: 100%; min-width: 0; max-width: 82px; padding-top: 0; }
+        #comparison-controls { right: 0; max-width: 100%; bottom: calc(100% + 5px); }
+        .comparison-toggle { gap: 1px; padding: 2px; font-size: 9px; box-shadow: 0 1px 4px rgba(16, 24, 40, .07); }
+        .comparison-option { gap: 2px; padding: 3px 4px; }
+        .comparison-option button { width: 8px; height: 8px; border-width: 1px; }
+        .comparison-option.active button { box-shadow: inset 0 0 0 1.5px white; }
         #comparison-panel { width: 100%; min-width: 0; overflow-x: hidden; }
         #comparison-panel table { width: 100%; min-width: 0; table-layout: fixed; }
         #comparison-panel th, #comparison-panel td { padding: 5px 2px; font-size: 9px; }
@@ -238,7 +243,7 @@
         #charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .chart-card { width: 100%; padding: 8px; }
         .chart-card.combined-chart { grid-column: 1 / -1; padding: 10px; }
-        .chart-summary { padding: 8px 9px; }
+        .chart-summary { box-sizing: border-box; width: 100%; padding: 8px 9px; }
         .chart-summary-value { font-size: 17px; }
         .chart-legend { gap: 5px 10px; }
         .chart-title { margin-bottom: 5px; font-size: 12px; }
