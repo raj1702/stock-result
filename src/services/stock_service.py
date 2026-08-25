@@ -280,10 +280,27 @@ class StockService:
         quarterly_results = self._quarterly_results(
             nse_symbol, include_financial_rows=self._is_lender(quote)
         )
-        # Upstox is used only when NSE's filing data was unavailable. Reuse its
-        # reported quarterly history so this page remains useful in that case.
-        if not quarterly_results["quarters"] and fallback.get("quarterly_results"):
-            quarterly_results = fallback["quarterly_results"]
+        # The NSE summary and NSE quarterly-history feeds can fail
+        # independently. If the summary worked but the history did not, fetch
+        # Upstox here as a second source instead of treating an upcoming,
+        # unreported quarter as though it should already exist. The table must
+        # always be based on the five latest *reported* quarters.
+        if not quarterly_results["quarters"]:
+            quarterly_fallback = fallback
+            if not quarterly_fallback.get("quarterly_results"):
+                quote_isin = str(
+                    self._quote_metadata(quote).get("isin")
+                    or self._quote_metadata(quote).get("isinCode")
+                    or known_isin
+                    or ""
+                ).strip()
+                quarterly_fallback = self._upstox_fundamentals(
+                    nse_symbol,
+                    quote_isin or None,
+                    include_financial_rows=self._is_lender(quote),
+                )
+            if quarterly_fallback.get("quarterly_results", {}).get("quarters"):
+                quarterly_results = quarterly_fallback["quarterly_results"]
         metrics["quarterly_results"] = quarterly_results
         # The recommendation must use the same latest-quarter YoY PAT value
         # that the user sees in the comparison table. A separate filing-level
@@ -390,7 +407,10 @@ class StockService:
         }
         quarters = quarterly_results.get("quarters", [])
         if not quarters:
-            analysis["error"] = "Latest reporting quarter is unavailable."
+            analysis["error"] = (
+                "Quarterly result history is not yet available for this stock. "
+                "Analysis will appear after reported quarterly data is published."
+            )
             return analysis
         try:
             latest_quarter = datetime.fromisoformat(str(quarters[-1]["date"])).date()
