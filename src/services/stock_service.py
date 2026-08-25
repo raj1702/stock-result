@@ -31,11 +31,14 @@ class StockService:
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     }
     EQUITY_MASTER_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+    NIFTY_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_nifty50list.csv"
+    NIFTY_NEXT_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftynext50list.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
     STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
     YAHOO_VALUATION_CACHE_TTL = timedelta(hours=6)
+    NIFTY_50_CACHE_TTL = timedelta(hours=1)
     XBRL_REQUEST_TIMEOUT = 10
     # `jugaad_data.NSELive()` opens the NSE quote page during construction
     # without specifying a timeout.  When NSE does not respond, that blocks a
@@ -78,6 +81,46 @@ class StockService:
         self._stock_cache_lock = Lock()
         self._yahoo_valuation_cache = {}
         self._yahoo_valuation_cache_lock = Lock()
+        self._index_constituents_cache = {}
+        self._index_constituents_cache_lock = Lock()
+
+    def nifty_50_constituents(self) -> list[dict]:
+        """Return the current NIFTY 50 equity constituents from NSE."""
+        return self._index_constituents("nifty-50", self.NIFTY_50_CONSTITUENTS_URL)
+
+    def nifty_next_50_constituents(self) -> list[dict]:
+        """Return the current NIFTY Next 50 equity constituents from NSE."""
+        return self._index_constituents(
+            "nifty-next-50", self.NIFTY_NEXT_50_CONSTITUENTS_URL
+        )
+
+    def _index_constituents(self, cache_key: str, source_url: str) -> list[dict]:
+        with self._index_constituents_cache_lock:
+            cached = self._index_constituents_cache.get(cache_key)
+            if cached and datetime.utcnow() - cached[0] < self.NIFTY_50_CACHE_TTL:
+                return deepcopy(cached[1])
+        response = requests.get(
+            source_url,
+            headers=self.XBRL_HEADERS,
+            timeout=20,
+        )
+        response.raise_for_status()
+        constituents = []
+        seen = set()
+        for row in csv.DictReader(StringIO(response.text)):
+            normalised = {str(key).strip().upper(): value for key, value in row.items()}
+            symbol = str(normalised.get("SYMBOL") or "").strip().upper()
+            if not symbol or symbol in seen:
+                continue
+            company = str(normalised.get("COMPANY NAME") or symbol).strip()
+            seen.add(symbol)
+            constituents.append({"symbol": symbol, "company": company})
+        if not constituents:
+            raise ValueError("NSE returned no index constituents")
+        constituents.sort(key=lambda item: item["company"].upper())
+        with self._index_constituents_cache_lock:
+            self._index_constituents_cache[cache_key] = (datetime.utcnow(), constituents)
+        return deepcopy(constituents)
 
     def fetch_stock_data(self, symbol: str) -> StockData:
         """Return NSE quote, valuation, margin, revenue-growth, and profit-growth metrics."""

@@ -23,6 +23,26 @@ def search_stock():
         return jsonify({"error": f"Stock search failed: {exc}"}), 502
 
 
+@app.route('/nifty-50', methods=['GET'])
+def get_nifty_50():
+    try:
+        stocks = stock_service.nifty_50_constituents()
+        return jsonify({"stocks": stocks, "count": len(stocks)}), 200
+    except Exception as exc:
+        app.logger.exception("NIFTY 50 constituent lookup failed")
+        return jsonify({"error": f"Unable to load the current NIFTY 50 list: {exc}"}), 502
+
+
+@app.route('/nifty-next-50', methods=['GET'])
+def get_nifty_next_50():
+    try:
+        stocks = stock_service.nifty_next_50_constituents()
+        return jsonify({"stocks": stocks, "count": len(stocks)}), 200
+    except Exception as exc:
+        app.logger.exception("NIFTY Next 50 constituent lookup failed")
+        return jsonify({"error": f"Unable to load the current NIFTY Next 50 list: {exc}"}), 502
+
+
 @app.route('/interpretation/<symbol>', methods=['GET'])
 def get_interpretation(symbol):
     try:

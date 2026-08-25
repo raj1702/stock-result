@@ -13,6 +13,18 @@
       form { display: flex; justify-content: flex-start; width: var(--content-width); max-width: 100%; gap: 10px; margin: 0; }
       input { flex: 1; min-width: 0; max-width: none; padding: 12px; border: 1px solid #aeb8c8; border-radius: 6px; font-size: 16px; }
       button { padding: 12px 18px; border: 0; border-radius: 6px; background: #155eef; color: white; font-size: 16px; cursor: pointer; }
+      #nifty-screening { width: var(--content-width); max-width: 100%; margin-top: 9px; }
+      .screening-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+      .index-screening-button { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid #b2ccff; border-radius: 999px; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 700; box-shadow: 0 2px 6px rgba(21, 94, 239, .08); }
+      .index-screening-button:hover, .index-screening-button:focus-visible { border-color: #528bff; background: #dbe8ff; outline: none; }
+      .index-screening-button[aria-expanded="true"] { border-color: #004eeb; background: linear-gradient(135deg, #175cd3, #004eeb); color: #fff; box-shadow: 0 4px 10px rgba(0, 78, 235, .25); }
+      .index-screening-button[aria-expanded="true"] .screening-info { background: #fff; color: #175cd3; }
+      .index-screening-button:disabled { cursor: wait; opacity: .65; }
+      .screening-info { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #155eef; color: #fff; font-family: Georgia, serif; font-size: 11px; font-style: italic; }
+      #nifty-picker { box-sizing: border-box; display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
+      #nifty-picker[hidden] { display: none; }
+      #nifty-picker label { flex: 0 0 auto; color: #475467; font-size: 11px; font-weight: 700; }
+      #nifty-select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #101828; font: inherit; font-size: 12px; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
@@ -212,6 +224,11 @@
         form { width: 100%; gap: 8px; }
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
+        #nifty-screening { width: 100%; }
+        .screening-buttons { gap: 5px; }
+        .index-screening-button { max-width: 100%; padding: 7px 8px; font-size: 10px; }
+        #nifty-picker { align-items: stretch; flex-direction: column; gap: 5px; }
+        #nifty-select { box-sizing: border-box; width: 100%; }
         #search-results-layout { width: 100%; min-width: 0; max-width: 100%; }
         #results-column, #tables { min-width: 0; max-width: 100%; }
         #tables { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(74px, 82px); width: 100%; margin-top: 20px; gap: 5px; }
@@ -260,6 +277,22 @@
           <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
           <button type="submit">Search</button>
         </form>
+        <div id="nifty-screening">
+          <div class="screening-buttons">
+            <button class="index-screening-button" type="button" data-index-endpoint="/nifty-50" data-index-label="Nifty 50" aria-expanded="false" aria-controls="nifty-picker">
+              <span class="screening-info">i</span><span>Select from Nifty 50</span>
+            </button>
+            <button class="index-screening-button" type="button" data-index-endpoint="/nifty-next-50" data-index-label="Nifty Next 50" aria-expanded="false" aria-controls="nifty-picker">
+              <span class="screening-info">i</span><span>Select from Nifty Next 50</span>
+            </button>
+          </div>
+          <div id="nifty-picker" hidden>
+            <label id="index-picker-label" for="nifty-select">Current constituents</label>
+            <select id="nifty-select" aria-label="Select a current Nifty 50 stock">
+              <option value="">Choose a stock…</option>
+            </select>
+          </div>
+        </div>
         <p id="message"></p>
         <div id="tables" hidden>
       <section id="results-panel">
@@ -302,6 +335,10 @@
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
+      const indexScreeningButtons = document.querySelectorAll('.index-screening-button');
+      const niftyPicker = document.getElementById('nifty-picker');
+      const niftySelect = document.getElementById('nifty-select');
+      const indexPickerLabel = document.getElementById('index-picker-label');
       const message = document.getElementById('message');
       const tables = document.getElementById('tables');
       const resultsPanel = document.getElementById('results-panel');
@@ -321,6 +358,8 @@
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
       let chartRotationTimer = null;
       let chartResumeTimer = null;
+      const indexStocksCache = new Map();
+      let visibleIndexEndpoint = '';
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -843,6 +882,56 @@
         comparisonOptions.forEach((item) => item.classList.toggle('active', item === option));
         renderComparisonTable();
       }));
+      function showIndexStocks(endpoint, label, stocks, button) {
+        const options = stocks.map((stock) => Object.assign(document.createElement('option'), {
+          value: stock.symbol,
+          textContent: `${stock.company} — ${stock.symbol}`,
+        }));
+        niftySelect.replaceChildren(
+          Object.assign(document.createElement('option'), { value: '', textContent: 'Choose a stock…' }),
+          ...options,
+        );
+        indexPickerLabel.textContent = `${label} constituents`;
+        visibleIndexEndpoint = endpoint;
+        niftyPicker.hidden = false;
+        indexScreeningButtons.forEach((item) => item.setAttribute('aria-expanded', String(item === button)));
+        niftySelect.focus();
+      }
+      indexScreeningButtons.forEach((button) => button.addEventListener('click', async () => {
+        const endpoint = button.dataset.indexEndpoint;
+        const label = button.dataset.indexLabel;
+        if (visibleIndexEndpoint === endpoint && !niftyPicker.hidden) {
+          niftyPicker.hidden = true;
+          visibleIndexEndpoint = '';
+          button.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        if (indexStocksCache.has(endpoint)) {
+          showIndexStocks(endpoint, label, indexStocksCache.get(endpoint), button);
+          return;
+        }
+        button.disabled = true;
+        const buttonLabel = button.lastElementChild;
+        const originalLabel = buttonLabel.textContent;
+        buttonLabel.textContent = `Loading ${label}…`;
+        try {
+          const response = await fetch(endpoint);
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || `Unable to load ${label} stocks.`);
+          indexStocksCache.set(endpoint, data.stocks);
+          showIndexStocks(endpoint, label, data.stocks, button);
+        } catch (error) {
+          message.textContent = error.message;
+        } finally {
+          buttonLabel.textContent = originalLabel;
+          button.disabled = false;
+        }
+      }));
+      niftySelect.addEventListener('change', () => {
+        if (!niftySelect.value) return;
+        query.value = niftySelect.value;
+        form.requestSubmit();
+      });
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (chartRotationTimer) {
