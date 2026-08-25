@@ -35,10 +35,6 @@ class StockService:
     NIFTY_NEXT_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftynext50list.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
-    # Full-index screening can revisit the same constituent several times.
-    # Reuse its complete analysis for 24 hours rather than calling every
-    # upstream quote, filing, valuation, and price endpoint again.
-    STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
     YAHOO_VALUATION_CACHE_TTL = timedelta(hours=6)
     NIFTY_50_CACHE_TTL = timedelta(hours=1)
@@ -80,8 +76,6 @@ class StockService:
         self._fundamentals_cache_lock = Lock()
         self._xbrl_cache = {}
         self._xbrl_cache_lock = Lock()
-        self._stock_cache = {}
-        self._stock_cache_lock = Lock()
         self._yahoo_valuation_cache = {}
         self._yahoo_valuation_cache_lock = Lock()
         self._index_constituents_cache = {}
@@ -128,10 +122,6 @@ class StockService:
     def fetch_stock_data(self, symbol: str) -> StockData:
         """Return NSE quote, valuation, margin, revenue-growth, and profit-growth metrics."""
         nse_symbol = self._normalise_symbol(symbol)
-        with self._stock_cache_lock:
-            cached = self._stock_cache.get(nse_symbol)
-            if cached and datetime.utcnow() - cached[0] < self.STOCK_CACHE_TTL:
-                return deepcopy(cached[1])
         known_isin = self.BSE_ONLY_ISINS.get(nse_symbol)
         fallback = {}
         try:
@@ -335,8 +325,6 @@ class StockService:
             yoy_pat_available=yoy_pat_available,
             profit_margin_yoy_change=profit_margin_yoy_change,
         )
-        with self._stock_cache_lock:
-            self._stock_cache[nse_symbol] = (datetime.utcnow(), deepcopy(metrics))
         return metrics
 
     def _recommendation_analysis(

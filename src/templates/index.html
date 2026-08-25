@@ -58,6 +58,9 @@
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       #screening-results-body tr[hidden] { display: none; }
+      #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
+      #back-to-screening[hidden] { display: none; }
+      #back-to-screening:hover, #back-to-screening:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
@@ -258,6 +261,7 @@
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
         #nifty-screening { width: 100%; }
+        #back-to-screening { position: sticky; z-index: 10; top: 8px; width: 100%; box-sizing: border-box; justify-content: center; padding: 9px; }
         .screening-buttons { gap: 5px; }
         .index-screening-button { max-width: 100%; padding: 7px 8px; font-size: 10px; }
         #nifty-picker { align-items: stretch; flex-direction: column; gap: 5px; }
@@ -348,6 +352,7 @@
             </select>
           </div>
         </div>
+        <button id="back-to-screening" type="button" hidden>← Back to screening results</button>
         <p id="message"></p>
         <div id="tables" hidden>
       <section id="results-panel">
@@ -426,6 +431,7 @@
       const screeningProgressBar = document.getElementById('screening-progress-bar');
       const screeningResultsBody = document.getElementById('screening-results-body');
       const screeningFilterButtons = document.querySelectorAll('.screening-filter');
+      const backToScreeningButton = document.getElementById('back-to-screening');
       const message = document.getElementById('message');
       const tables = document.getElementById('tables');
       const resultsPanel = document.getElementById('results-panel');
@@ -1038,9 +1044,15 @@
       }
       function openStockDetails(symbol) {
         closeFullScreening();
+        backToScreeningButton.hidden = false;
         query.value = symbol;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         form.requestSubmit();
+      }
+      function returnToScreeningResults() {
+        screeningOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        screeningClose.focus();
       }
       async function runFullIndexScreening() {
         if (!visibleIndexStocks.length) return;
@@ -1121,6 +1133,7 @@
         }
       }
       fullIndexScreeningButton.addEventListener('click', runFullIndexScreening);
+      backToScreeningButton.addEventListener('click', returnToScreeningResults);
       screeningClose.addEventListener('click', closeFullScreening);
       screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {
         activeScreeningFilter = button.dataset.screeningFilter;
