@@ -21,10 +21,43 @@
       .index-screening-button[aria-expanded="true"] .screening-info { background: #fff; color: #175cd3; }
       .index-screening-button:disabled { cursor: wait; opacity: .65; }
       .screening-info { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #155eef; color: #fff; font-family: Georgia, serif; font-size: 11px; font-style: italic; }
-      #nifty-picker { box-sizing: border-box; display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
+      #nifty-picker { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
       #nifty-picker[hidden] { display: none; }
       #nifty-picker label { flex: 0 0 auto; color: #475467; font-size: 11px; font-weight: 700; }
+      .index-picker-heading { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      #full-index-screening-button { padding: 7px 10px; border: 1px solid #7f56d9; border-radius: 6px; background: linear-gradient(135deg, #7f56d9, #6941c6); color: #fff; font-size: 11px; font-weight: 750; box-shadow: 0 3px 8px rgba(105, 65, 198, .22); }
+      #full-index-screening-button:hover, #full-index-screening-button:focus-visible { background: #53389e; outline: none; }
       #nifty-select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #101828; font: inherit; font-size: 12px; }
+      #screening-overlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; padding: 20px; background: rgba(248, 250, 252, .98); backdrop-filter: blur(8px); }
+      #screening-overlay[hidden] { display: none; }
+      .screening-overlay-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; width: 100%; margin: 0 auto 12px; }
+      .screening-overlay-header h2 { margin: 0; color: #101828; font-size: 22px; }
+      #screening-close { padding: 8px 11px; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-size: 13px; }
+      #screening-progress { max-width: 1200px; width: 100%; margin: 0 auto 10px; color: #475467; font-size: 12px; font-weight: 700; }
+      .screening-progress-track { max-width: 1200px; width: 100%; height: 6px; margin: 0 auto 12px; overflow: hidden; border-radius: 999px; background: #e4e7ec; }
+      #screening-progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #155eef, #7f56d9); transition: width .25s ease; }
+      #screening-filters { display: flex; flex-wrap: wrap; gap: 7px; max-width: 1200px; width: 100%; margin: 0 auto 10px; }
+      .screening-filter { padding: 6px 9px; border: 1px solid #d0d5dd; border-radius: 999px; background: #fff; color: #475467; font-size: 11px; font-weight: 700; }
+      .screening-filter.active { border-color: #155eef; background: #155eef; color: #fff; }
+      .screening-table-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; max-width: 1200px; width: 100%; margin: 0 auto 8px; }
+      .screening-table-heading strong { color: #101828; font-size: 13px; }
+      .screening-results-wrap { max-width: 1200px; width: 100%; min-height: 0; margin: 0 auto; overflow: auto; border: 1px solid #d0d5dd; border-radius: 10px; background: #fff; box-shadow: 0 8px 24px rgba(16, 24, 40, .1); }
+      #screening-results-table { min-width: 720px; font-size: 12px; }
+      #screening-results-table thead th { position: sticky; z-index: 2; top: 0; background: #eff4ff; color: #194185; text-align: left; }
+      #screening-results-table th:first-child, #screening-results-table td:first-child { position: sticky; left: 0; width: 220px; background: #fff; text-align: left; }
+      #screening-results-table thead th:first-child { z-index: 3; background: #eff4ff; }
+      #screening-results-table td { text-align: left; white-space: normal; line-height: 1.45; }
+      #screening-results-table th:last-child, #screening-results-table td:last-child { width: 118px; text-align: center; }
+      .screening-stock-symbol { display: block; color: #667085; font-size: 10px; }
+      .screening-row-status { color: #667085; font-style: italic; }
+      .screening-row-status.complete { color: #344054; font-style: normal; }
+      .screening-row-status.error { color: #b42318; }
+      .screening-row-status.undervalued { background: #ecfdf3; color: #05603a; }
+      .screening-row-status.overvalued { background: #fef3f2; color: #912018; }
+      .screening-row-status.neutral { background: #f2f4f7; color: #344054; }
+      .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
+      .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
+      #screening-results-body tr[hidden] { display: none; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
@@ -228,7 +261,26 @@
         .screening-buttons { gap: 5px; }
         .index-screening-button { max-width: 100%; padding: 7px 8px; font-size: 10px; }
         #nifty-picker { align-items: stretch; flex-direction: column; gap: 5px; }
+        #nifty-picker { display: flex; }
+        .index-picker-heading { align-items: stretch; flex-direction: column; }
+        #full-index-screening-button { width: 100%; }
         #nifty-select { box-sizing: border-box; width: 100%; }
+        #screening-overlay { padding: 12px; }
+        .screening-overlay-header h2 { font-size: 18px; }
+        #screening-close { padding: 7px 9px; font-size: 12px; }
+        #screening-filters { gap: 5px; }
+        .screening-filter { padding: 5px 7px; font-size: 10px; }
+        .screening-table-heading { align-items: flex-start; }
+        .screening-results-wrap { border: 0; background: transparent; box-shadow: none; }
+        #screening-results-table { display: block; min-width: 0; background: transparent; }
+        #screening-results-table thead { display: none; }
+        #screening-results-table tbody { display: grid; gap: 8px; }
+        #screening-results-table tr { display: block; overflow: hidden; border: 1px solid #d0d5dd; border-radius: 9px; background: #fff; box-shadow: 0 3px 10px rgba(16, 24, 40, .07); }
+        #screening-results-table th:first-child, #screening-results-table td:first-child { position: static; box-sizing: border-box; width: 100%; }
+        #screening-results-table tbody th { display: block; padding: 9px 10px; border: 0; border-bottom: 1px solid #eaecf0; background: #fff; font-size: 12px; }
+        #screening-results-table tbody td { display: block; box-sizing: border-box; width: 100%; padding: 10px; border: 0; font-size: 11px; }
+        #screening-results-table th:last-child, #screening-results-table td:last-child { width: 100%; text-align: right; }
+        #screening-results-table .screening-details-cell { padding-top: 0; background: inherit; }
         #search-results-layout { width: 100%; min-width: 0; max-width: 100%; }
         #results-column, #tables { min-width: 0; max-width: 100%; }
         #tables { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(74px, 82px); width: 100%; margin-top: 20px; gap: 5px; }
@@ -287,7 +339,10 @@
             </button>
           </div>
           <div id="nifty-picker" hidden>
-            <label id="index-picker-label" for="nifty-select">Current constituents</label>
+            <div class="index-picker-heading">
+              <label id="index-picker-label" for="nifty-select">Current constituents</label>
+              <button id="full-index-screening-button" type="button">Run full index screening</button>
+            </div>
             <select id="nifty-select" aria-label="Select a current Nifty 50 stock">
               <option value="">Choose a stock…</option>
             </select>
@@ -332,6 +387,30 @@
       <article id="analysis-box" hidden aria-live="polite"></article>
       <div id="charts"></div>
     </section>
+    <section id="screening-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="screening-title">
+      <div class="screening-overlay-header">
+        <h2 id="screening-title">Index stock screening</h2>
+        <button id="screening-close" type="button">Close</button>
+      </div>
+      <p id="screening-progress">Preparing screening…</p>
+      <div class="screening-progress-track"><div id="screening-progress-bar"></div></div>
+      <div id="screening-filters" role="group" aria-label="Filter screening results">
+        <button class="screening-filter active" type="button" data-screening-filter="all">All (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="undervalued">Undervalued (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="overvalued">Overvalued (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="neutral">Neutral (0)</button>
+      </div>
+      <div class="screening-table-heading">
+        <strong>Screening interpretations</strong>
+        <span class="ai-calculated-badge">AI Smart Signal</span>
+      </div>
+      <div class="screening-results-wrap">
+        <table id="screening-results-table" aria-label="Index stock screening results">
+          <thead><tr><th>Stock</th><th>Interpretation</th><th>Details</th></tr></thead>
+          <tbody id="screening-results-body"></tbody>
+        </table>
+      </div>
+    </section>
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
@@ -339,6 +418,14 @@
       const niftyPicker = document.getElementById('nifty-picker');
       const niftySelect = document.getElementById('nifty-select');
       const indexPickerLabel = document.getElementById('index-picker-label');
+      const fullIndexScreeningButton = document.getElementById('full-index-screening-button');
+      const screeningOverlay = document.getElementById('screening-overlay');
+      const screeningTitle = document.getElementById('screening-title');
+      const screeningClose = document.getElementById('screening-close');
+      const screeningProgress = document.getElementById('screening-progress');
+      const screeningProgressBar = document.getElementById('screening-progress-bar');
+      const screeningResultsBody = document.getElementById('screening-results-body');
+      const screeningFilterButtons = document.querySelectorAll('.screening-filter');
       const message = document.getElementById('message');
       const tables = document.getElementById('tables');
       const resultsPanel = document.getElementById('results-panel');
@@ -359,7 +446,13 @@
       let chartRotationTimer = null;
       let chartResumeTimer = null;
       const indexStocksCache = new Map();
+      const stockResultCache = new Map();
+      const stockResultCacheTtlMs = 2 * 60 * 60 * 1000;
       let visibleIndexEndpoint = '';
+      let visibleIndexLabel = '';
+      let visibleIndexStocks = [];
+      let screeningRunId = 0;
+      let activeScreeningFilter = 'all';
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -892,17 +985,158 @@
           ...options,
         );
         indexPickerLabel.textContent = `${label} constituents`;
+        fullIndexScreeningButton.textContent = `Run full ${label} screening`;
         visibleIndexEndpoint = endpoint;
+        visibleIndexLabel = label;
+        visibleIndexStocks = stocks;
         niftyPicker.hidden = false;
         indexScreeningButtons.forEach((item) => item.setAttribute('aria-expanded', String(item === button)));
         niftySelect.focus();
       }
+      function screeningInterpretation(data) {
+        const analysis = data?.analysis;
+        if (!analysis) return { text: 'Interpretation unavailable.', category: 'other' };
+        if (analysis.high_risk) return { text: analysis.message, category: 'other' };
+        if (!analysis.available) return {
+          text: analysis.error || 'Prediction unavailable; review the reported metrics.',
+          category: 'other',
+        };
+        const potential = Number(analysis.net_upside_percent);
+        const potentialText = potential > 0
+          ? `${formatNumber(potential)}% potential upside`
+          : potential < 0
+            ? `${formatNumber(Math.abs(potential))}% potential downside`
+            : 'no remaining upside or downside';
+        const category = String(analysis.valuation || '').toLowerCase();
+        return {
+          text: `${analysis.valuation} (${analysis.recommendation}). Expected future growth is ${formatNumber(analysis.expected_growth_percent)}%; the stock moved ${formatNumber(analysis.stock_change_percent)}%, leaving ${potentialText}.`,
+          category: ['undervalued', 'overvalued', 'neutral'].includes(category) ? category : 'other',
+        };
+      }
+      function applyScreeningFilter() {
+        screeningResultsBody.querySelectorAll('tr').forEach((row) => {
+          row.hidden = activeScreeningFilter !== 'all' && row.dataset.category !== activeScreeningFilter;
+        });
+        screeningFilterButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.screeningFilter === activeScreeningFilter);
+        });
+      }
+      function updateScreeningFilterCounts() {
+        const rows = [...screeningResultsBody.querySelectorAll('tr')];
+        const labels = { all: 'All', undervalued: 'Undervalued', overvalued: 'Overvalued', neutral: 'Neutral' };
+        screeningFilterButtons.forEach((button) => {
+          const filter = button.dataset.screeningFilter;
+          const count = filter === 'all' ? rows.length : rows.filter((row) => row.dataset.category === filter).length;
+          button.textContent = `${labels[filter]} (${count})`;
+        });
+      }
+      function closeFullScreening() {
+        screeningRunId += 1;
+        screeningOverlay.hidden = true;
+        document.body.style.removeProperty('overflow');
+        fullIndexScreeningButton.focus();
+      }
+      function openStockDetails(symbol) {
+        closeFullScreening();
+        query.value = symbol;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        form.requestSubmit();
+      }
+      async function runFullIndexScreening() {
+        if (!visibleIndexStocks.length) return;
+        const runId = ++screeningRunId;
+        const stocks = visibleIndexStocks.slice();
+        const indexLabel = visibleIndexLabel;
+        screeningTitle.textContent = `${indexLabel} stock screening`;
+        screeningProgress.textContent = `Screened 0 of ${stocks.length} stocks`;
+        screeningProgressBar.style.width = '0%';
+        activeScreeningFilter = 'all';
+        screeningOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        screeningClose.focus();
+        const resultCells = [];
+        screeningResultsBody.replaceChildren(...stocks.map((stock) => {
+          const row = document.createElement('tr');
+          row.dataset.category = 'pending';
+          const stockCell = document.createElement('th');
+          stockCell.scope = 'row';
+          stockCell.append(
+            document.createTextNode(stock.company),
+            Object.assign(document.createElement('span'), {
+              className: 'screening-stock-symbol', textContent: stock.symbol,
+            }),
+          );
+          const resultCell = Object.assign(document.createElement('td'), {
+            className: 'screening-row-status', textContent: 'Waiting…',
+          });
+          const detailsCell = Object.assign(document.createElement('td'), { className: 'screening-details-cell' });
+          const detailsButton = Object.assign(document.createElement('button'), {
+            className: 'screening-details-button', type: 'button', textContent: 'More details →',
+            title: `Open the full ${stock.symbol} analysis`,
+          });
+          detailsButton.addEventListener('click', () => openStockDetails(stock.symbol));
+          detailsCell.append(detailsButton);
+          resultCells.push(resultCell);
+          row.append(stockCell, resultCell, detailsCell);
+          return row;
+        }));
+        updateScreeningFilterCounts();
+        applyScreeningFilter();
+        let nextIndex = 0;
+        let completed = 0;
+        const worker = async () => {
+          while (runId === screeningRunId) {
+            const index = nextIndex;
+            nextIndex += 1;
+            if (index >= stocks.length) return;
+            const stock = stocks[index];
+            const cell = resultCells[index];
+            cell.textContent = 'Analysing…';
+            try {
+              const response = await fetch(`/stock/${encodeURIComponent(stock.symbol)}`);
+              const data = await readJson(response);
+              if (!response.ok) throw new Error(data.error || 'Analysis unavailable');
+              if (runId !== screeningRunId) return;
+              stockResultCache.set(stock.symbol, { cachedAt: Date.now(), data });
+              const interpretation = screeningInterpretation(data);
+              cell.textContent = interpretation.text;
+              cell.className = `screening-row-status complete ${interpretation.category}`;
+              cell.parentElement.dataset.category = interpretation.category;
+            } catch (error) {
+              if (runId !== screeningRunId) return;
+              cell.textContent = error.message;
+              cell.className = 'screening-row-status error';
+              cell.parentElement.dataset.category = 'other';
+            }
+            completed += 1;
+            updateScreeningFilterCounts();
+            applyScreeningFilter();
+            screeningProgress.textContent = `Screened ${completed} of ${stocks.length} stocks`;
+            screeningProgressBar.style.width = `${(completed / stocks.length) * 100}%`;
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(5, stocks.length) }, worker));
+        if (runId === screeningRunId) {
+          screeningProgress.textContent = `Screening complete · ${completed} stocks analysed`;
+        }
+      }
+      fullIndexScreeningButton.addEventListener('click', runFullIndexScreening);
+      screeningClose.addEventListener('click', closeFullScreening);
+      screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {
+        activeScreeningFilter = button.dataset.screeningFilter;
+        applyScreeningFilter();
+      }));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !screeningOverlay.hidden) closeFullScreening();
+      });
       indexScreeningButtons.forEach((button) => button.addEventListener('click', async () => {
         const endpoint = button.dataset.indexEndpoint;
         const label = button.dataset.indexLabel;
         if (visibleIndexEndpoint === endpoint && !niftyPicker.hidden) {
           niftyPicker.hidden = true;
           visibleIndexEndpoint = '';
+          visibleIndexLabel = '';
+          visibleIndexStocks = [];
           button.setAttribute('aria-expanded', 'false');
           return;
         }
@@ -932,6 +1166,25 @@
         query.value = niftySelect.value;
         form.requestSubmit();
       });
+      function renderFullStockData(data) {
+        const summary = [`NSE Symbol: ${data.symbol}`];
+        const pe = Number(data.pe_ratio);
+        const peg = Number(data.peg_ratio);
+        const marketCapCrore = Number(data.market_cap_crore);
+        if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
+        if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
+          summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
+        }
+        summary.push(`PEG: ${Number.isFinite(peg) && peg > 0 ? peg.toFixed(2) : '—'}`);
+        message.textContent = summary.join(' | ');
+        renderQuarterlyTable(data.quarterly_results);
+        renderAnalysis(data.analysis);
+        if (data.data_note) {
+          dataNote.textContent = data.data_note;
+          dataNote.hidden = false;
+        }
+        renderMetricCharts(data.quarterly_results);
+      }
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (chartRotationTimer) {
@@ -949,26 +1202,21 @@
         interpretationSection.hidden = true;
         renderAnalysis(null);
         try {
-          const response = await fetch(`/search?query=${encodeURIComponent(query.value)}`);
-          const data = await readJson(response);
-          if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
-          const summary = [`NSE Symbol: ${data.symbol}`];
-          const pe = Number(data.pe_ratio);
-          const peg = Number(data.peg_ratio);
-          const marketCapCrore = Number(data.market_cap_crore);
-          if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
-          if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
-            summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
+          const cacheKey = query.value.trim().toUpperCase().replace(/\.NS$/, '');
+          const cached = stockResultCache.get(cacheKey);
+          let data;
+          if (cached && Date.now() - cached.cachedAt < stockResultCacheTtlMs) {
+            data = cached.data;
+          } else {
+            if (cached) stockResultCache.delete(cacheKey);
+            const response = await fetch(`/search?query=${encodeURIComponent(query.value)}`);
+            data = await readJson(response);
+            if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
+            const entry = { cachedAt: Date.now(), data };
+            stockResultCache.set(cacheKey, entry);
+            stockResultCache.set(String(data.symbol).toUpperCase(), entry);
           }
-          summary.push(`PEG: ${Number.isFinite(peg) && peg > 0 ? peg.toFixed(2) : '—'}`);
-          message.textContent = summary.join(' | ');
-          renderQuarterlyTable(data.quarterly_results);
-          renderAnalysis(data.analysis);
-          if (data.data_note) {
-            dataNote.textContent = data.data_note;
-            dataNote.hidden = false;
-          }
-          renderMetricCharts(data.quarterly_results);
+          renderFullStockData(data);
         } catch (error) {
           message.textContent = error.message;
         } finally {
