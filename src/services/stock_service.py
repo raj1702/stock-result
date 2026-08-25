@@ -36,9 +36,9 @@ class StockService:
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
     # Full-index screening can revisit the same constituent several times.
-    # Reuse its complete analysis for two hours rather than calling every
+    # Reuse its complete analysis for 24 hours rather than calling every
     # upstream quote, filing, valuation, and price endpoint again.
-    STOCK_CACHE_TTL = timedelta(hours=2)
+    STOCK_CACHE_TTL = timedelta(minutes=15)
     XBRL_CACHE_TTL = timedelta(hours=12)
     YAHOO_VALUATION_CACHE_TTL = timedelta(hours=6)
     NIFTY_50_CACHE_TTL = timedelta(hours=1)
