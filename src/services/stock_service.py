@@ -11,6 +11,7 @@ from io import StringIO
 from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Mapping, Optional
+from urllib.parse import quote as url_quote
 from xml.etree import ElementTree
 
 import requests
@@ -243,9 +244,203 @@ class StockService:
         if not quarterly_results["quarters"] and fallback.get("quarterly_results"):
             quarterly_results = fallback["quarterly_results"]
         metrics["quarterly_results"] = quarterly_results
+        # The recommendation must use the same latest-quarter YoY PAT value
+        # that the user sees in the comparison table. A separate filing-level
+        # summary can exist even when that particular quarter has no valid
+        # prior-year comparison (as with MCX Q1 FY2027).
+        yoy_pat_row = next(
+            (
+                row for row in quarterly_results.get("comparisons", {}).get("yoy", [])
+                if row.get("key") == "profit"
+            ),
+            {},
+        )
+        yoy_pat_values = yoy_pat_row.get("values", [])
+        latest_yoy_pat = yoy_pat_values[-1] if yoy_pat_values else None
+        yoy_pat_available = (
+            latest_yoy_pat is not None
+            and math.isfinite(self._number(latest_yoy_pat))
+        )
+        if yoy_pat_available:
+            # Keep the calculation identical to the value displayed for the
+            # latest quarter, rather than mixing two financial data scopes.
+            yoy_profit = self._number(latest_yoy_pat)
+            metrics["yoy_profit"] = round(yoy_profit, 2)
+        quote_isin = str(
+            self._quote_metadata(quote).get("isin")
+            or self._quote_metadata(quote).get("isinCode")
+            or known_isin
+            or ""
+        ).strip()
+        metrics["analysis"] = self._recommendation_analysis(
+            nse_symbol,
+            quote_isin or None,
+            quarterly_results,
+            pe_ratio=pe_ratio,
+            peg_ratio=peg_ratio,
+            yoy_profit=yoy_profit,
+            yoy_revenue=yoy_revenue,
+            profit_margin=profit_margin,
+            yoy_pat_available=yoy_pat_available,
+        )
         with self._stock_cache_lock:
             self._stock_cache[nse_symbol] = (datetime.utcnow(), deepcopy(metrics))
         return metrics
+
+    def _recommendation_analysis(
+        self, symbol: str, isin: Optional[str], quarterly_results: Mapping[str, Any],
+        *, pe_ratio: float, peg_ratio: float, yoy_profit: float,
+        yoy_revenue: float, profit_margin: float, yoy_pat_available: bool = True,
+    ) -> dict:
+        """Build the requested valuation signal from growth and price movement.
+
+        The price benchmark is the first trading close on or after the first
+        day two months after the latest quarter end, shifted one year back:
+        Q1 FY2027 (Jun 2026) therefore uses Aug 1, 2025; Q2 FY2027 uses Nov 1,
+        2025. The comparison close is the latest completed trading day, never
+        an intraday quote.
+        """
+        pe = self._number(pe_ratio)
+        peg = self._number(peg_ratio)
+        pat_growth = self._number(yoy_profit)
+        revenue_growth = self._number(yoy_revenue)
+        margin = self._number(profit_margin)
+        if pe > 0 and peg > 0:
+            expected_growth = pe / peg
+            growth_source = "P/E divided by PEG"
+        elif pat_growth > revenue_growth and margin > 0:
+            expected_growth = pat_growth
+            growth_source = "YoY PAT growth (P/E or PEG unavailable)"
+        else:
+            expected_growth = revenue_growth
+            growth_source = "YoY revenue growth (P/E or PEG unavailable)"
+
+        analysis = {
+            "available": False,
+            "recommendation": "UNAVAILABLE",
+            "valuation": "Price comparison unavailable",
+            "expected_growth_percent": round(expected_growth, 2),
+            "expected_growth_source": growth_source,
+            "yoy_pat_percent": round(pat_growth, 2),
+            "yoy_pat_available": bool(yoy_pat_available),
+            "yoy_revenue_percent": round(revenue_growth, 2),
+            "profit_margin_percent": round(margin, 2),
+            "neutral_band_percent": 10.0,
+        }
+        quarters = quarterly_results.get("quarters", [])
+        if not quarters:
+            analysis["error"] = "Latest reporting quarter is unavailable."
+            return analysis
+        try:
+            latest_quarter = datetime.fromisoformat(str(quarters[-1]["date"])).date()
+            latest_quarter_label = str(quarters[-1].get("label") or latest_quarter.isoformat())
+        except (KeyError, TypeError, ValueError):
+            analysis["error"] = "Latest reporting-quarter date is invalid."
+            return analysis
+
+        # First move to the post-result benchmark month (Jun -> Aug, Sep ->
+        # Nov, Dec -> Feb, Mar -> May), then go back exactly one year.
+        total_months = latest_quarter.year * 12 + latest_quarter.month - 1 + 2 - 12
+        benchmark_year, benchmark_month_index = divmod(total_months, 12)
+        benchmark_date = datetime(benchmark_year, benchmark_month_index + 1, 1).date()
+        latest_allowed_date = datetime.now().date() - timedelta(days=1)
+        analysis["benchmark_target_date"] = benchmark_date.isoformat()
+        if benchmark_date > latest_allowed_date:
+            analysis["error"] = "The benchmark date has not occurred yet."
+            return analysis
+        try:
+            price_data = self._upstox_price_change(
+                symbol, isin, benchmark_date, latest_allowed_date
+            )
+        except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
+            logger.warning("Upstox price comparison failed for %s: %s", symbol, exc)
+            analysis["error"] = f"Upstox closing prices unavailable: {str(exc)[:160]}"
+            return analysis
+
+        stock_change = price_data["change_percent"]
+        # When valuation ratios supply expected growth but the YoY PAT
+        # comparison is absent, do not silently treat missing PAT as 0% and
+        # imply that it participated in the formula.
+        growth_potential = (
+            pat_growth + expected_growth
+            if yoy_pat_available
+            else expected_growth
+        )
+        net_upside = growth_potential - stock_change
+        raw_target_price = price_data["current_close"] * (1 + (net_upside / 100))
+        # Display a practical price level rather than false decimal precision.
+        target_price = max(0, int(math.floor((raw_target_price / 5) + 0.5)) * 5)
+        if abs(net_upside) <= 10:
+            recommendation, valuation = "NEUTRAL", "Neutral"
+        elif net_upside > 0:
+            recommendation, valuation = "BUY", "Undervalued"
+        else:
+            recommendation, valuation = "SELL", "Overvalued"
+        analysis.update({
+            "available": True,
+            "recommendation": recommendation,
+            "valuation": valuation,
+            "latest_quarter_label": latest_quarter_label,
+            "benchmark_close": price_data["benchmark_close"],
+            "benchmark_date": price_data["benchmark_date"],
+            "current_close": price_data["current_close"],
+            "current_close_date": price_data["current_close_date"],
+            "stock_change_percent": stock_change,
+            "growth_potential_percent": round(growth_potential, 2),
+            "net_upside_percent": round(net_upside, 2),
+            "target_price": target_price,
+        })
+        return analysis
+
+    def _upstox_price_change(
+        self, symbol: str, isin: Optional[str], benchmark_date, latest_date
+    ) -> dict:
+        """Return first/last completed daily closes across the benchmark range."""
+        token = os.getenv("UPSTOX_ACCESS_TOKEN")
+        if not token:
+            raise ValueError("UPSTOX_ACCESS_TOKEN is not set")
+        resolved_isin = isin or self._isin_for_symbol(symbol)
+        if not resolved_isin:
+            raise ValueError(f"No ISIN found for {symbol}")
+        exchange = "BSE_EQ" if symbol in self.BSE_ONLY_ISINS else "NSE_EQ"
+        instrument_key = f"{exchange}|{resolved_isin}"
+        endpoint = (
+            "https://api.upstox.com/v3/historical-candle/"
+            f"{url_quote(instrument_key, safe='')}/days/1/"
+            f"{latest_date.isoformat()}/{benchmark_date.isoformat()}"
+        )
+        response = requests.get(
+            endpoint,
+            headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("status") != "success":
+            raise ValueError(str(payload))
+        candles = payload.get("data", {}).get("candles", [])
+        valid = []
+        for candle in candles:
+            if not isinstance(candle, list) or len(candle) < 5:
+                continue
+            try:
+                candle_date = datetime.fromisoformat(str(candle[0])).date()
+                close = float(candle[4])
+            except (TypeError, ValueError):
+                continue
+            if math.isfinite(close) and close > 0:
+                valid.append((candle_date, close))
+        if not valid:
+            raise ValueError("Upstox returned no completed daily candles")
+        valid.sort(key=lambda item: item[0])
+        first, last = valid[0], valid[-1]
+        return {
+            "benchmark_date": first[0].isoformat(),
+            "benchmark_close": round(first[1], 2),
+            "current_close_date": last[0].isoformat(),
+            "current_close": round(last[1], 2),
+            "change_percent": round(((last[1] - first[1]) / first[1]) * 100, 2),
+        }
 
     def _quarterly_results(self, symbol: str, include_financial_rows: bool) -> dict:
         """Return the five most recent NSE reporting periods as table rows.

@@ -29,6 +29,13 @@ cd stock-results-skill
 pip install -r requirements.txt
 ```
 
+Set an Upstox access token before starting the app. It is used for the
+fundamentals fallback and the recommendation card's historical closing prices:
+
+```bash
+export UPSTOX_ACCESS_TOKEN="your-access-token"
+```
+
 ## Usage
 
 To run the application, execute the following command:
