@@ -8,6 +8,8 @@
       :root { --content-width: 720px; }
       body { max-width: 1400px; margin: 32px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
       h1 { text-align: left; }
+      .beta-badge { position: relative; top: -3px; display: inline-flex; align-items: center; margin-left: 8px; padding: 3px 7px; overflow: hidden; border: 1px solid #b692f6; border-radius: 999px; background: repeating-linear-gradient(105deg, #f4ebff 0, #f4ebff 18px, #d6bbfb 34px, #fff 43px, #d6bbfb 53px, #f4ebff 72px); background-size: 90px 100%; color: #6941c6; font-size: 9px; font-weight: 850; letter-spacing: .1em; line-height: 1.2; vertical-align: middle; animation: beta-glitter 3.4s linear infinite, beta-glow 2.8s ease-in-out infinite; }
+      .beta-badge::before { content: "✦"; margin-right: 3px; font-size: 8px; animation: ai-sparkle 2.4s ease-in-out infinite; }
       .mobile-view-tip { display: none; }
       body > p:first-of-type { width: fit-content; max-width: 100%; margin: 0 0 16px; text-align: left; }
       form { display: flex; justify-content: flex-start; width: var(--content-width); max-width: 100%; gap: 10px; margin: 0; }
@@ -167,12 +169,20 @@
         from { background-position: 120px 0; }
         to { background-position: 0 0; }
       }
+      @keyframes beta-glitter {
+        from { background-position: 90px 0; }
+        to { background-position: 0 0; }
+      }
+      @keyframes beta-glow {
+        0%, 100% { box-shadow: 0 0 0 rgba(158, 119, 237, 0); }
+        50% { box-shadow: 0 0 9px rgba(158, 119, 237, .65), inset 0 0 4px #fff; }
+      }
       @keyframes recommendation-pulse {
         0%, 100% { transform: scale(1); filter: brightness(.92) saturate(.95); box-shadow: 0 0 0 var(--signal-glow-faded); }
         50% { transform: scale(1.04); filter: brightness(1.15) saturate(1.18); box-shadow: 0 2px 10px var(--signal-glow); }
       }
       @media (prefers-reduced-motion: reduce) {
-        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge { animation: none; }
+        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before { animation: none; }
       }
       .analysis-badge { --signal-glow: rgba(102, 112, 133, .45); --signal-glow-faded: rgba(102, 112, 133, 0); flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #667085; color: white; font-size: 12px; font-weight: 800; letter-spacing: .04em; animation: recommendation-pulse 2.6s ease-in-out infinite; }
       .buy .analysis-badge { --signal-glow: rgba(6, 118, 71, .55); --signal-glow-faded: rgba(6, 118, 71, 0); background: #067647; }
@@ -325,7 +335,7 @@
     </style>
   </head>
   <body>
-    <h1>NSE/BSE Stock Results<span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
+    <h1>NSE/BSE Stock Results<span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
     <p>Enter a company name or NSE symbol.</p>
     <div id="search-results-layout">
       <div id="results-column">
