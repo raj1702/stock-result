@@ -305,6 +305,24 @@ class StockService:
         pat_growth = self._number(yoy_profit)
         revenue_growth = self._number(yoy_revenue)
         margin = self._number(profit_margin)
+        is_high_risk = (
+            pe <= 0
+            and peg <= 0
+            and (
+                pat_growth < 0
+                or abs(pat_growth - revenue_growth) > 500
+            )
+        )
+        if is_high_risk:
+            return {
+                "available": False,
+                "high_risk": True,
+                "recommendation": "HIGH RISK",
+                "message": (
+                    "This stock is highly risky, so no prediction can be made. "
+                    "Review the metrics before taking a call."
+                ),
+            }
         if pe > 0 and peg > 0:
             expected_growth = pe / peg
             growth_source = "P/E divided by PEG"

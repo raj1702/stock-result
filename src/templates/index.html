@@ -81,6 +81,8 @@
       .comparison-option.active button { box-shadow: inset 0 0 0 2.5px white; }
       #interpretation-section { width: var(--content-width); max-width: 100%; margin-top: 28px; }
       #interpretation-section h2 { margin: 0 0 12px; font-size: 18px; }
+      #analysis-note { margin: 0 0 14px; color: #b42318; font-size: 14px; font-weight: 750; line-height: 1.5; }
+      #analysis-note[hidden] { display: none; }
       #analysis-box { --analysis-focus: rgba(102, 112, 133, .28); --analysis-focus-faded: rgba(102, 112, 133, 0); box-sizing: border-box; margin-bottom: 14px; padding: 14px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; animation: analysis-focus-pulse 3.4s ease-in-out infinite; }
       #analysis-box[hidden] { display: none; }
       #analysis-box.buy { --analysis-focus: rgba(6, 118, 71, .34); --analysis-focus-faded: rgba(6, 118, 71, 0); border-color: #75e0a7; background: #ecfdf3; }
@@ -288,6 +290,7 @@
     <p id="data-note" hidden></p>
     <section id="interpretation-section" hidden>
       <h2>Interpretation</h2>
+      <p id="analysis-note" hidden></p>
       <article id="analysis-box" hidden aria-live="polite"></article>
       <div id="charts"></div>
     </section>
@@ -306,6 +309,7 @@
       const comparisonTitle = document.getElementById('comparison-title');
       const dataNote = document.getElementById('data-note');
       const interpretationSection = document.getElementById('interpretation-section');
+      const analysisNote = document.getElementById('analysis-note');
       const analysisBox = document.getElementById('analysis-box');
       const charts = document.getElementById('charts');
       let currentQuarterlyTable = null;
@@ -436,8 +440,17 @@
       function renderAnalysis(analysis) {
         analysisBox.replaceChildren();
         analysisBox.className = '';
+        analysisNote.hidden = true;
+        analysisNote.textContent = '';
         if (!analysis) {
           analysisBox.hidden = true;
+          return;
+        }
+        if (analysis.high_risk) {
+          analysisBox.hidden = true;
+          analysisNote.textContent = analysis.message;
+          analysisNote.hidden = false;
+          interpretationSection.hidden = false;
           return;
         }
         const recommendation = analysis.recommendation || 'UNAVAILABLE';
@@ -549,7 +562,7 @@
         const rows = table?.rows || [];
         charts.replaceChildren();
         if (!quarters.length || !rows.length) {
-          interpretationSection.hidden = analysisBox.hidden;
+          interpretationSection.hidden = analysisBox.hidden && analysisNote.hidden;
           return;
         }
         const colors = ['#155eef', '#067647', '#b42318', '#7f56d9', '#b54708', '#0891b2', '#475467'];
@@ -564,7 +577,7 @@
             };
           });
         if (!availableRows.length) {
-          interpretationSection.hidden = analysisBox.hidden;
+          interpretationSection.hidden = analysisBox.hidden && analysisNote.hidden;
           return;
         }
 
@@ -757,7 +770,7 @@
         charts.append(card);
         drawChart(options[0].rows);
         startChartRotation();
-        interpretationSection.hidden = charts.childElementCount === 0 && analysisBox.hidden;
+        interpretationSection.hidden = charts.childElementCount === 0 && analysisBox.hidden && analysisNote.hidden;
       }
       function renderQuarterlyTable(table) {
         const quarters = table?.quarters || [];
