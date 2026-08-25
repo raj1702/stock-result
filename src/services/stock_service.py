@@ -282,6 +282,7 @@ class StockService:
             yoy_revenue=yoy_revenue,
             profit_margin=profit_margin,
             yoy_pat_available=yoy_pat_available,
+            profit_margin_yoy_change=profit_margin_yoy_change,
         )
         with self._stock_cache_lock:
             self._stock_cache[nse_symbol] = (datetime.utcnow(), deepcopy(metrics))
@@ -291,6 +292,7 @@ class StockService:
         self, symbol: str, isin: Optional[str], quarterly_results: Mapping[str, Any],
         *, pe_ratio: float, peg_ratio: float, yoy_profit: float,
         yoy_revenue: float, profit_margin: float, yoy_pat_available: bool = True,
+        profit_margin_yoy_change: float = 0.0,
     ) -> dict:
         """Build the requested valuation signal from growth and price movement.
 
@@ -305,6 +307,7 @@ class StockService:
         pat_growth = self._number(yoy_profit)
         revenue_growth = self._number(yoy_revenue)
         margin = self._number(profit_margin)
+        margin_yoy_change = self._number(profit_margin_yoy_change)
         is_high_risk = (
             pe <= 0
             and peg <= 0
@@ -326,9 +329,9 @@ class StockService:
         if pe > 0 and peg > 0:
             expected_growth = pe / peg
             growth_source = "P/E divided by PEG"
-        elif pat_growth > revenue_growth and margin > 0:
+        elif pat_growth > revenue_growth and margin_yoy_change > 0:
             expected_growth = pat_growth
-            growth_source = "YoY PAT growth (P/E or PEG unavailable)"
+            growth_source = "YoY PAT growth (P/E or PEG unavailable; profit margin improved YoY)"
         else:
             expected_growth = revenue_growth
             growth_source = "YoY revenue growth (P/E or PEG unavailable)"
@@ -343,6 +346,7 @@ class StockService:
             "yoy_pat_available": bool(yoy_pat_available),
             "yoy_revenue_percent": round(revenue_growth, 2),
             "profit_margin_percent": round(margin, 2),
+            "profit_margin_yoy_change": round(margin_yoy_change, 2),
             "neutral_band_percent": 10.0,
         }
         quarters = quarterly_results.get("quarters", [])
