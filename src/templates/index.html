@@ -17,21 +17,8 @@
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
       @keyframes loading-spin { to { transform: rotate(360deg); } }
-      #search-results-layout { display: grid; grid-template-columns: var(--content-width) 210px; width: fit-content; max-width: 100%; gap: 14px; align-items: stretch; }
+      #search-results-layout { width: var(--content-width); max-width: 100%; }
       #results-column { min-width: 0; }
-      #question-box { box-sizing: border-box; display: flex; flex-direction: column; align-self: stretch; overflow: hidden; padding: 14px; border: 1px solid #b2ddff; border-radius: 8px; background: #f5faff; color: #175cd3; }
-      #question-box[hidden] { display: none; }
-      #chat-messages { display: grid; flex: 1 1 auto; min-height: 0; align-content: start; gap: 9px; overflow-y: auto; }
-      .assistant-bubble { display: flex; gap: 9px; align-items: flex-start; }
-      .assistant-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; background: #155eef; color: white; font-size: 13px; font-weight: 700; }
-      .assistant-copy { margin: 2px 0 0; font-size: 13px; line-height: 1.4; }
-      .chat-message { padding: 8px 9px; border-radius: 7px; font-size: 12px; line-height: 1.4; }
-      .chat-message.assistant { background: #e0f2fe; color: #175cd3; }
-      .chat-message.user { margin-left: 18px; background: white; color: #344054; }
-      #question-form { display: flex; gap: 6px; margin-top: auto; padding-top: 12px; }
-      #chat-input { flex: 1; min-width: 0; padding: 8px; border: 1px solid #b2ddff; border-radius: 6px; font: inherit; font-size: 12px; }
-      #question-form button { padding: 8px 10px; font-size: 12px; }
-      #chat-input:disabled, #question-form button:disabled { cursor: not-allowed; opacity: .55; }
       #tables { display: grid; grid-template-columns: minmax(0, 1fr) max-content; width: var(--content-width); max-width: 100%; gap: 14px; align-items: stretch; margin: 28px 0 0; }
       #tables[hidden] { display: none; }
       #results-panel, #comparison-panel { box-sizing: border-box; height: 100%; overflow-x: auto; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; color: #172033; }
@@ -81,17 +68,12 @@
       .negative { color: #b42318; }
       .neutral { color: #526075; }
       /* Keep the result panels in their desktop order on narrow screens.
-         Stacking them made the comparison and chat panels push the charts far
-         down the page. A phone can scroll sideways through this compact
+         A phone can scroll sideways through this compact
          desktop-width workspace, while each results table remains scrollable
          within its own panel. */
       @media (max-width: 1100px) {
         body { min-width: 944px; overflow-x: auto; margin: 20px; }
-        #search-results-layout {
-          grid-template-columns: var(--content-width) 210px;
-          width: calc(var(--content-width) + 224px);
-          max-width: none;
-        }
+        #search-results-layout { width: var(--content-width); max-width: none; }
         #tables {
           width: var(--content-width);
           max-width: none;
@@ -114,7 +96,7 @@
         form { width: 100%; gap: 8px; }
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
-        #search-results-layout { grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; max-width: 100%; gap: 16px; }
+        #search-results-layout { width: 100%; min-width: 0; max-width: 100%; }
         #results-column, #tables { min-width: 0; max-width: 100%; }
         #tables { grid-template-columns: minmax(0, 1fr) 88px; width: 100%; margin-top: 20px; gap: 6px; }
         #results-panel, #comparison-panel { padding: 6px; }
@@ -130,8 +112,6 @@
         #comparison-panel { width: 100%; min-width: 0; overflow-x: hidden; }
         #comparison-panel table { width: 100%; min-width: 0; table-layout: fixed; }
         #comparison-panel th, #comparison-panel td { padding: 5px 2px; font-size: 9px; }
-        #question-box { height: 260px !important; min-height: 260px; }
-        #question-box { margin-top: 28px; }
         #interpretation-section { width: 100%; max-width: none; margin-top: 22px; }
         #interpretation-section h2 { font-size: 17px; }
         #charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -182,18 +162,6 @@
       </div>
         </div>
       </div>
-      <aside id="question-box" hidden aria-label="Questions assistant">
-        <div id="chat-messages" aria-live="polite">
-          <div class="assistant-bubble">
-            <span class="assistant-icon">?</span>
-            <p class="assistant-copy">Got more questions?<br>I’m here to answer.</p>
-          </div>
-        </div>
-        <form id="question-form">
-          <input id="chat-input" placeholder="Ask a question" aria-label="Ask a question" required>
-          <button type="submit">Send</button>
-        </form>
-      </aside>
     </div>
     <p id="data-note" hidden></p>
     <section id="interpretation-section" hidden>
@@ -216,17 +184,9 @@
       const dataNote = document.getElementById('data-note');
       const interpretationSection = document.getElementById('interpretation-section');
       const charts = document.getElementById('charts');
-      const questionBox = document.getElementById('question-box');
-      const resultsColumn = document.getElementById('results-column');
-      const questionForm = document.getElementById('question-form');
-      const chatInput = document.getElementById('chat-input');
-      const chatMessages = document.getElementById('chat-messages');
-      const questionBoxDesktopParent = questionBox.parentElement;
       let currentQuarterlyTable = null;
       let comparisonMode = 'qoq';
-      let chatQuestionCount = 0;
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
-      let hasSuccessfulSearch = false;
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -244,39 +204,7 @@
         info.setAttribute('aria-label', helpText);
         return info;
       }
-      function appendChatMessage(text, sender) {
-        chatMessages.append(Object.assign(document.createElement('div'), {
-          className: `chat-message ${sender}`, textContent: text,
-        }));
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-      function syncQuestionBoxHeight() {
-        if (window.matchMedia('(max-width: 760px)').matches) {
-          questionBox.style.removeProperty('height');
-          return;
-        }
-        // Prevent old chat content from affecting the grid-row measurement.
-        questionBox.style.height = '0px';
-        requestAnimationFrame(() => {
-          questionBox.style.height = `${resultsColumn.getBoundingClientRect().height}px`;
-        });
-      }
-      function positionQuestionBox() {
-        if (window.matchMedia('(max-width: 760px)').matches) {
-          // On a phone, charts are more useful immediately after the data;
-          // place the optional chat after them rather than between data and
-          // interpretation. On desktop it remains the right-side panel.
-          if (questionBox.parentElement !== document.body) {
-            interpretationSection.insertAdjacentElement('afterend', questionBox);
-          }
-        } else if (questionBox.parentElement !== questionBoxDesktopParent) {
-          questionBoxDesktopParent.append(questionBox);
-          syncQuestionBoxHeight();
-        }
-      }
-      positionQuestionBox();
       window.addEventListener('resize', () => {
-        positionQuestionBox();
         const compactNow = window.matchMedia('(max-width: 760px)').matches;
         if (compactNow !== isCompactTableView && currentQuarterlyTable) {
           isCompactTableView = compactNow;
@@ -538,29 +466,8 @@
         comparisonOptions.forEach((item) => item.classList.toggle('active', item === option));
         renderComparisonTable();
       }));
-      questionForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const question = chatInput.value.trim();
-        if (!question) return;
-        appendChatMessage(question, 'user');
-        chatQuestionCount += 1;
-        if (chatQuestionCount === 1) {
-          appendChatMessage('I am still learning, ask me later.', 'assistant');
-        } else if (chatQuestionCount === 2) {
-          appendChatMessage('As of now, please rely on the data shown. I will try to learn faster.', 'assistant');
-        } else if (chatQuestionCount === 3) {
-          appendChatMessage('Please don’t waste time on me.', 'assistant');
-        } else {
-          chatInput.disabled = true;
-          questionForm.querySelector('button').disabled = true;
-          chatInput.placeholder = 'Chat is unavailable for now';
-        }
-        chatInput.value = '';
-        if (!chatInput.disabled) chatInput.focus();
-      });
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        if (!hasSuccessfulSearch) questionBox.hidden = true;
         message.classList.add('loading');
         message.textContent = 'Finding NSE symbol and financial results…';
         tables.hidden = true;
@@ -581,9 +488,6 @@
           summary.push(`PEG: ${Number.isFinite(peg) && peg > 0 ? peg.toFixed(2) : '—'}`);
           message.textContent = summary.join(' | ');
           renderQuarterlyTable(data.quarterly_results);
-          hasSuccessfulSearch = true;
-          questionBox.hidden = false;
-          syncQuestionBoxHeight();
           if (data.data_note) {
             dataNote.textContent = data.data_note;
             dataNote.hidden = false;
