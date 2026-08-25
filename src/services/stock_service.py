@@ -48,7 +48,12 @@ class StockService:
     BSE_ONLY_ISINS = {"NSDL": "INE301O01023"}
     # NSE can still return a quote shell for historical, suspended symbols.
     # Preserve common search names that now trade under their successor ticker.
-    SYMBOL_ALIASES = {"HDFC": "HDFCBANK"}
+    SYMBOL_ALIASES = {
+        "HDFC": "HDFCBANK",
+        # LIC trades on NSE as LICI. Without this common-name alias, the short
+        # query can fuzzy-match another insurance-related company.
+        "LIC": "LICI",
+    }
 
     def __init__(self, api_client=None):
         # An injected client is retained for tests. Production uses the
