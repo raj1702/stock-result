@@ -59,6 +59,7 @@
       .screening-row-status.neutral { background: #f2f4f7; color: #344054; }
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
+      .screening-details-button:disabled { cursor: not-allowed; border-color: #d0d5dd; background: #f2f4f7; color: #98a2b3; box-shadow: none; }
       #screening-results-body tr[hidden] { display: none; }
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
@@ -463,7 +464,8 @@
       let chartResumeTimer = null;
       const indexStocksCache = new Map();
       const stockResultCache = new Map();
-      const stockResultCacheTtlMs = 15 * 60 * 1000;
+      const stockResultCacheTtlMs = 12 * 60 * 60 * 1000;
+      const minimumAnalysisDisplayMs = 1800;
       let visibleIndexEndpoint = '';
       let visibleIndexLabel = '';
       let visibleIndexStocks = [];
@@ -1077,6 +1079,7 @@
         document.body.style.overflow = 'hidden';
         screeningClose.focus();
         const resultCells = [];
+        const detailsButtons = [];
         screeningResultsBody.replaceChildren(...stocks.map((stock) => {
           const row = document.createElement('tr');
           row.dataset.category = 'pending';
@@ -1095,10 +1098,12 @@
           const detailsButton = Object.assign(document.createElement('button'), {
             className: 'screening-details-button', type: 'button', textContent: 'More details →',
             title: `Open the full ${stock.symbol} analysis`,
+            disabled: true,
           });
           detailsButton.addEventListener('click', () => openStockDetails(stock.symbol));
           detailsCell.append(detailsButton);
           resultCells.push(resultCell);
+          detailsButtons.push(detailsButton);
           row.append(stockCell, resultCell, detailsCell);
           return row;
         }));
@@ -1114,12 +1119,24 @@
             const stock = stocks[index];
             const cell = resultCells[index];
             cell.textContent = 'Analysing…';
+            const analysisDisplayDelay = new Promise((resolve) => {
+              window.setTimeout(resolve, minimumAnalysisDisplayMs);
+            });
             try {
-              const response = await fetch(`/stock/${encodeURIComponent(stock.symbol)}`);
-              const data = await readJson(response);
-              if (!response.ok) throw new Error(data.error || 'Analysis unavailable');
+              const cacheKey = stock.symbol.toUpperCase();
+              const cached = stockResultCache.get(cacheKey);
+              let data;
+              if (cached && Date.now() - cached.cachedAt < stockResultCacheTtlMs) {
+                data = cached.data;
+              } else {
+                if (cached) stockResultCache.delete(cacheKey);
+                const response = await fetch(`/stock/${encodeURIComponent(stock.symbol)}`);
+                data = await readJson(response);
+                if (!response.ok) throw new Error(data.error || 'Analysis unavailable');
+                stockResultCache.set(cacheKey, { cachedAt: Date.now(), data });
+              }
+              await analysisDisplayDelay;
               if (runId !== screeningRunId) return;
-              stockResultCache.set(stock.symbol, { cachedAt: Date.now(), data });
               const interpretation = screeningInterpretation(data);
               cell.textContent = interpretation.text;
               cell.className = `screening-row-status complete ${interpretation.category}`;
@@ -1140,6 +1157,9 @@
         await Promise.all(Array.from({ length: Math.min(5, stocks.length) }, worker));
         if (runId === screeningRunId) {
           screeningProgress.textContent = `Screening complete · ${completed} stocks analysed`;
+          detailsButtons.forEach((button) => {
+            button.disabled = false;
+          });
         }
       }
       fullIndexScreeningButton.addEventListener('click', runFullIndexScreening);
@@ -1224,6 +1244,9 @@
         dataNote.hidden = true;
         interpretationSection.hidden = true;
         renderAnalysis(null);
+        const analysisDisplayDelay = new Promise((resolve) => {
+          window.setTimeout(resolve, minimumAnalysisDisplayMs);
+        });
         try {
           const cacheKey = query.value.trim().toUpperCase().replace(/\.NS$/, '');
           const cached = stockResultCache.get(cacheKey);
@@ -1239,8 +1262,10 @@
             stockResultCache.set(cacheKey, entry);
             stockResultCache.set(String(data.symbol).toUpperCase(), entry);
           }
+          await analysisDisplayDelay;
           renderFullStockData(data);
         } catch (error) {
+          await analysisDisplayDelay;
           message.textContent = error.message;
         } finally {
           message.classList.remove('loading');
