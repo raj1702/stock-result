@@ -685,12 +685,6 @@
           ));
           analysisBox.append(insights);
         }
-        const method = analysis.available
-          ? `${analysis.method_note} Data coverage: ${analysis.coverage_percent}% (${analysis.available_weight}/${analysis.total_weight} weighted points available).`
-          : analysis.error;
-        analysisBox.append(Object.assign(document.createElement('p'), {
-          className: 'analysis-formula', textContent: method,
-        }));
         analysisBox.append(Object.assign(document.createElement('p'), {
           className: 'analysis-disclaimer',
           textContent: 'AI-generated analysis—verify before making an investment decision.',

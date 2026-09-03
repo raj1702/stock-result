@@ -344,9 +344,9 @@ class StockService:
     ) -> dict:
         """Score the persistence and alignment of reported quarterly metrics.
 
-        The user-selected weights total 70. Earned points are therefore
-        normalized against the weights for which usable data exists, producing
-        a score out of 100 without silently treating missing observations as 0.
+        Component weights total 100. Earned points are normalized against the
+        weights for which usable data exists, so missing observations are not
+        silently treated as zero.
         This is a descriptive results-quality score, not a price recommendation.
         """
         quarters = quarterly_results.get("quarters", [])
@@ -389,8 +389,6 @@ class StockService:
             ratio = (improving + (0.5 * unchanged)) / len(transitions)
             earned = weight * ratio
             latest = next((value for value in reversed(values) if value is not None), None)
-            if key == "profit" and latest is not None and latest <= 0:
-                earned = min(earned, weight * 0.25)
             trend_word = (
                 "consistent" if ratio >= 0.75
                 else "mixed" if ratio >= 0.4
@@ -403,35 +401,50 @@ class StockService:
             if key == "loan_book" and len(reported_values) < len(values):
                 explanation += " Blank quarters were skipped to support half-yearly reporting."
             if key == "profit" and latest is not None and latest <= 0:
-                explanation += " The latest quarter remains loss-making, so PAT points are capped."
+                narrowing_losses = sum(
+                    previous < 0 and current > previous
+                    for previous, current in transitions
+                )
+                if narrowing_losses:
+                    explanation += (
+                        f" Loss narrowed in {narrowing_losses} of {len(transitions)} "
+                        "comparable moves; this improvement earns PAT-consistency points "
+                        "even though the latest quarter remains loss-making."
+                    )
+                else:
+                    explanation += " The latest quarter remains loss-making."
             return {
                 "key": key, "label": label, "weight": weight,
                 "available": True, "earned": round(earned, 1),
                 "improving_periods": improving,
                 "comparable_periods": len(transitions),
+                "consistency_ratio": round(ratio, 4),
                 "explanation": explanation,
             }
 
-        def margin_component() -> dict:
-            weight = 20
-            values = numeric_values("profit_margin")
+        def margin_component(key: str, label: str, weight: int) -> dict:
+            values = numeric_values(key)
             reported_values = [value for value in values if value is not None]
             transitions = list(zip(reported_values, reported_values[1:]))
             latest = next((value for value in reversed(values) if value is not None), None)
             if latest is None or not transitions:
                 return {
-                    "key": "profit_margin", "label": "Profit margin", "weight": weight,
+                    "key": key, "label": label, "weight": weight,
                     "available": False, "earned": None,
                     "explanation": "Not enough reported margin data to score.",
                 }
             improving = sum(current > previous for previous, current in transitions)
             unchanged = sum(current == previous for previous, current in transitions)
-            trend_points = 10 * ((improving + (0.5 * unchanged)) / len(transitions))
-            profitability_points = 10 if latest > 0 else 0
+            ratio = (improving + (0.5 * unchanged)) / len(transitions)
+            trend_points = (weight / 2) * ratio
+            profitability_points = weight / 2 if latest > 0 else 0
             earned = profitability_points + trend_points
             return {
-                "key": "profit_margin", "label": "Profit margin", "weight": weight,
+                "key": key, "label": label, "weight": weight,
                 "available": True, "earned": round(earned, 1),
+                "improving_periods": improving,
+                "comparable_periods": len(transitions),
+                "consistency_ratio": round(ratio, 4),
                 "explanation": (
                     f"Latest margin is {latest:.2f}% and improved in {improving} of "
                     f"{len(transitions)} comparable reported-period moves. "
@@ -439,20 +452,75 @@ class StockService:
                 ),
             }
 
-        components = [
-            consistency_component(
-                "net_interest_income" if is_lender else "revenue",
-                "NII consistency" if is_lender else "Revenue consistency",
-                20,
-            ),
-            consistency_component("profit", "PAT consistency", 20),
-            margin_component(),
-            consistency_component(
-                "loan_book" if is_lender else "operating_profit",
-                "Loan-book consistency" if is_lender else "Operating-profit consistency",
-                10,
-            ),
+        if is_lender:
+            components = [
+                consistency_component("revenue", "Revenue / total-income consistency", 20),
+                consistency_component("net_interest_income", "NII consistency", 20),
+                consistency_component("profit", "PAT consistency", 20),
+                margin_component("profit_margin", "Profit margin", 20),
+                consistency_component("loan_book", "Loan-book consistency", 20),
+            ]
+        else:
+            components = [
+                consistency_component("revenue", "Revenue consistency", 25),
+                consistency_component("profit", "PAT consistency", 25),
+                margin_component("profit_margin", "Profit margin", 20),
+                consistency_component("operating_profit", "Operating-profit consistency", 15),
+                margin_component("operating_margin", "Operating margin", 15),
+            ]
+
+        def latest_yoy(key: str) -> Optional[float]:
+            row = next((
+                item for item in quarterly_results.get("comparisons", {}).get("yoy", [])
+                if item.get("key") == key
+            ), None)
+            values = row.get("values", []) if row else []
+            value = values[-1] if values else None
+            return self._number(value) if value is not None else None
+
+        # PAT growth without revenue support is less durable when it is driven
+        # by margin expansion. Apply a visible, auditable quality adjustment.
+        revenue_component = next(c for c in components if c["key"] == "revenue")
+        pat_component = next(c for c in components if c["key"] == "profit")
+        pat_yoy = latest_yoy("profit")
+        revenue_yoy = latest_yoy("revenue")
+        profit_margin_yoy = latest_yoy("profit_margin")
+        operating_margin_yoy = latest_yoy("operating_margin")
+        expanding_margins = [
+            label for label, value in (
+                ("profit margin", profit_margin_yoy),
+                ("operating margin", operating_margin_yoy),
+            ) if value is not None and value > 0
         ]
+        if (
+            pat_component["available"] and revenue_component["available"]
+            and pat_yoy is not None and pat_yoy > 0 and expanding_margins
+        ):
+            original_pat_points = pat_component["earned"]
+            revenue_ratio = revenue_component.get("consistency_ratio", 0)
+            pat_ratio = pat_component.get("consistency_ratio", 0)
+            if revenue_yoy is not None and revenue_yoy <= 0:
+                pat_component["earned"] = round(
+                    min(original_pat_points, pat_component["weight"] * 0.4), 1
+                )
+                penalty_reason = "latest revenue did not grow"
+            elif revenue_ratio < 0.5 and pat_ratio > revenue_ratio:
+                pat_component["earned"] = round(original_pat_points * 0.7, 1)
+                penalty_reason = "revenue was inconsistent across the reported periods"
+            else:
+                penalty_reason = ""
+            if penalty_reason and pat_component["earned"] < original_pat_points:
+                margin_text = " and ".join(expanding_margins)
+                pat_component["quality_adjustment"] = round(
+                    original_pat_points - pat_component["earned"], 1
+                )
+                pat_component["explanation"] += (
+                    f" PAT points were reduced from {original_pat_points:.1f} to "
+                    f"{pat_component['earned']:.1f} because {penalty_reason} while "
+                    f"{margin_text} expanded. This PAT growth appears margin-led and "
+                    "may be less sustainable without revenue growth."
+                )
+
         available = [component for component in components if component["available"]]
         available_weight = sum(component["weight"] for component in available)
         earned_points = sum(component["earned"] for component in available)
@@ -474,16 +542,6 @@ class StockService:
         else:
             rating, category = "Fragile", "weak"
 
-        def latest_yoy(key: str) -> Optional[float]:
-            row = next((
-                item for item in quarterly_results.get("comparisons", {}).get("yoy", [])
-                if item.get("key") == key
-            ), None)
-            values = row.get("values", []) if row else []
-            value = values[-1] if values else None
-            return self._number(value) if value is not None else None
-
-        pat_yoy = latest_yoy("profit")
         primary_key = "net_interest_income" if is_lender else "revenue"
         primary_label = "NII" if is_lender else "Revenue"
         primary_yoy = latest_yoy(primary_key)
@@ -539,14 +597,16 @@ class StockService:
             "components": components,
             "earned_points": round(earned_points, 1),
             "available_weight": available_weight,
-            "total_weight": 70,
-            "coverage_percent": round((available_weight / 70) * 100),
+            "total_weight": 100,
+            "coverage_percent": round(available_weight),
             "is_lender_model": bool(is_lender),
             "latest_quarter_label": str(quarters[-1].get("label") or "Latest quarter"),
             "insights": insights,
             "method_note": (
                 "Score = earned component points ÷ available component weights × 100. "
-                "Consistency compares consecutive reported values and skips blank periods."
+                "Component weights total 100. Consistency compares consecutive reported "
+                "values and skips blank periods; PAT may be discounted when margin-led "
+                "growth lacks revenue support."
             ),
         }
 
