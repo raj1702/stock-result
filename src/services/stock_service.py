@@ -146,6 +146,9 @@ class StockService:
             # blank; loss-making companies can still have no meaningful P/E.
             if not pe_ratio:
                 pe_ratio = self._yahoo_pe_ratio(nse_symbol)
+            last_close_price, last_close_date = self._last_completed_close(
+                nse_symbol, quote
+            )
             market_cap_crore = self._market_cap_crore(quote)
             market_cap_source = "NSE"
             if not market_cap_crore:
@@ -159,6 +162,7 @@ class StockService:
             # the ISIN-based Upstox Fundamentals fallback instead.
             quote = {}
             pe_ratio = 0.0
+            last_close_price, last_close_date = 0.0, ""
             market_cap_crore = 0.0
             market_cap_source = ""
 
@@ -232,6 +236,8 @@ class StockService:
         metrics = {
             "symbol": nse_symbol,
             "pe_ratio": round(pe_ratio, 2),
+            "last_close_price": round(last_close_price, 2),
+            "last_close_date": last_close_date,
             "market_cap_crore": round(market_cap_crore, 2),
             "market_cap_source": market_cap_source,
             "profit_margin": round(profit_margin, 2),
@@ -1966,6 +1972,76 @@ class StockService:
         """Use Yahoo's trailing P/E only when the NSE quote omits it."""
         return self._number(self._yahoo_valuation(symbol).get("pe_ratio"))
 
+    def _last_completed_close(
+        self, symbol: str, quote: Mapping[str, Any]
+    ) -> tuple[float, str]:
+        """Return the latest close strictly before today and its trading date."""
+        previous_close = self._number(
+            self._quote_metadata(quote).get("previousClose")
+            or (quote.get("priceInfo") or {}).get("previousClose")
+        )
+        token = os.getenv("UPSTOX_ACCESS_TOKEN")
+        isin = str(
+            self._quote_metadata(quote).get("isinCode")
+            or self._quote_metadata(quote).get("isin")
+            or ""
+        ).strip()
+        if token and isin:
+            try:
+                today = datetime.now().date()
+                response = requests.get(
+                    "https://api.upstox.com/v3/historical-candle/"
+                    f"NSE_EQ%7C{isin}/days/1/{today.isoformat()}/"
+                    f"{(today - timedelta(days=10)).isoformat()}",
+                    headers={
+                        "Accept": "application/json",
+                        "Authorization": f"Bearer {token}",
+                    },
+                    timeout=5,
+                )
+                response.raise_for_status()
+                candles = response.json().get("data", {}).get("candles", [])
+                completed = []
+                for candle in candles:
+                    candle_date = datetime.fromisoformat(
+                        str(candle[0]).replace("Z", "+00:00")
+                    ).date()
+                    if candle_date < today:
+                        completed.append((candle_date, self._number(candle[4])))
+                if completed:
+                    close_date, upstox_close = max(completed, key=lambda item: item[0])
+                    return previous_close or upstox_close, close_date.isoformat()
+            except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
+                logger.warning("Upstox previous-close lookup failed for %s: %s", symbol, exc)
+
+        # Public fallback keeps LCP available when an Upstox token is absent or
+        # temporarily expired. The server-side stock cache prevents repeated calls.
+        try:
+            response = requests.get(
+                f"https://query2.finance.yahoo.com/v8/finance/chart/{symbol}.NS",
+                params={"range": "10d", "interval": "1d", "events": "history"},
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=5,
+            )
+            response.raise_for_status()
+            result = response.json()["chart"]["result"][0]
+            timestamps = result.get("timestamp") or []
+            closes = ((result.get("indicators") or {}).get("quote") or [{}])[0].get("close") or []
+            today = datetime.now().date()
+            completed = [
+                (datetime.utcfromtimestamp(timestamp).date(), self._number(close))
+                for timestamp, close in zip(timestamps, closes)
+                if close is not None and datetime.utcfromtimestamp(timestamp).date() < today
+            ]
+            if completed:
+                close_date, historical_close = completed[-1]
+                # NSE is authoritative for the price shown in its live quote;
+                # the daily series supplies the associated completed-session date.
+                return previous_close or historical_close, close_date.isoformat()
+        except (requests.RequestException, KeyError, IndexError, TypeError, ValueError) as exc:
+            logger.warning("Previous closing-date lookup failed for %s: %s", symbol, exc)
+        return previous_close, ""
+
     def _yahoo_peg_ratio(self, symbol: str) -> float:
         """Use Yahoo's provider-reported PEG instead of deriving it from one quarter."""
         return self._number(self._yahoo_valuation(symbol).get("peg_ratio"))
@@ -2000,6 +2076,8 @@ class StockService:
         return {
             "symbol": symbol,
             "pe_ratio": 0.0,
+            "last_close_price": 0.0,
+            "last_close_date": "",
             "market_cap_crore": 0.0,
             "market_cap_source": "",
             "profit_margin": 0.0,

@@ -68,6 +68,16 @@
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
+      #message.stock-summary { display: flex; flex-wrap: wrap; gap: 7px; width: fit-content; max-width: 100%; min-height: 0; margin-top: 16px; padding: 7px; border: 1px solid #dbe3f0; border-radius: 10px; background: linear-gradient(135deg, #f8faff, #f9fafb); box-shadow: 0 4px 13px rgba(16, 24, 40, .06); }
+      .summary-item { display: inline-flex; align-items: center; gap: 5px; min-width: 0; padding: 7px 9px; border: 1px solid #e4e7ec; border-radius: 7px; background: rgba(255,255,255,.92); box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+      .summary-item.symbol { border-color: #b2ccff; background: #eff4ff; }
+      .summary-label { color: #667085; font-size: 10px; font-weight: 700; letter-spacing: .025em; text-transform: uppercase; white-space: nowrap; }
+      .summary-value { color: #101828; font-size: 12px; font-weight: 800; white-space: nowrap; }
+      .summary-item.symbol .summary-value { color: #175cd3; }
+      .lcp-info { position: relative; display: inline-grid; place-items: center; width: 16px; height: 16px; margin-left: 4px; padding: 0; border: 1px solid #98a2b3; border-radius: 50%; background: #fff; color: #475467; font-family: Georgia, serif; font-size: 11px; font-style: italic; font-weight: 700; line-height: 1; vertical-align: 1px; }
+      .lcp-info::after { content: attr(data-tooltip); position: absolute; z-index: 8; right: -4px; bottom: calc(100% + 7px); box-sizing: border-box; width: max-content; max-width: min(250px, calc(100vw - 32px)); padding: 8px 10px; border-radius: 6px; background: #101828; color: #fff; font-family: system-ui, sans-serif; font-size: 12px; font-style: normal; font-weight: 500; line-height: 1.4; text-align: left; white-space: normal; opacity: 0; pointer-events: none; transform: translateY(3px); transition: opacity .12s ease, transform .12s ease; box-shadow: 0 6px 16px rgba(16, 24, 40, .22); }
+      .lcp-info:hover::after, .lcp-info:focus::after, .lcp-info:focus-visible::after, .lcp-info.is-open::after { opacity: 1; transform: translateY(0); }
+      .lcp-info:focus-visible { outline: 2px solid #84adff; outline-offset: 2px; }
       @keyframes loading-spin { to { transform: rotate(360deg); } }
       #search-results-layout { width: var(--content-width); max-width: 100%; }
       #results-column { min-width: 0; }
@@ -272,6 +282,10 @@
         h1 { margin: 0 0 8px; font-size: 24px; }
         .mobile-view-tip { display: block; margin-top: 4px; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.35; }
         body > p:first-of-type { margin-bottom: 14px; font-size: 14px; }
+        #message.stock-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; box-sizing: border-box; gap: 6px; padding: 6px; }
+        .summary-item { box-sizing: border-box; width: 100%; padding: 7px; }
+        .summary-label { font-size: 9px; }
+        .summary-value { overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
         form { width: 100%; gap: 8px; }
         input { padding: 11px; font-size: 15px; }
         button { padding: 11px 14px; font-size: 15px; }
@@ -1165,14 +1179,54 @@
         form.requestSubmit();
       });
       function renderFullStockData(data) {
-        const summary = [`NSE Symbol: ${data.symbol}`];
+        message.classList.add('stock-summary');
+        message.replaceChildren();
+        const addSummaryItem = (label, value, className = '') => {
+          const item = Object.assign(document.createElement('span'), {
+            className: `summary-item ${className}`.trim(),
+          });
+          item.append(
+            Object.assign(document.createElement('span'), {
+              className: 'summary-label', textContent: label,
+            }),
+            Object.assign(document.createElement('strong'), {
+              className: 'summary-value', textContent: value,
+            }),
+          );
+          message.append(item);
+          return item;
+        };
         const pe = Number(data.pe_ratio);
+        const lastClose = Number(data.last_close_price);
         const marketCapCrore = Number(data.market_cap_crore);
-        if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
+        addSummaryItem('NSE Symbol', data.symbol, 'symbol');
+        if (Number.isFinite(pe) && pe > 0) addSummaryItem('P/E', Math.round(pe).toLocaleString('en-IN'));
         if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
-          summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
+          addSummaryItem('Market Cap', `₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`, 'market-cap');
         }
-        message.textContent = summary.join(' | ');
+        if (Number.isFinite(lastClose) && lastClose > 0) {
+          const closeDate = data.last_close_date
+            ? new Date(`${data.last_close_date}T00:00:00`).toLocaleDateString('en-IN', {
+                day: '2-digit', month: 'short', year: 'numeric',
+              })
+            : 'date unavailable';
+          const lcpValue = `₹${lastClose.toLocaleString('en-IN', {
+            minimumFractionDigits: 2, maximumFractionDigits: 2,
+          })}`;
+          const lcpItem = addSummaryItem('LCP', lcpValue, 'lcp');
+          const info = Object.assign(document.createElement('button'), {
+            className: 'lcp-info', type: 'button', textContent: 'i',
+          });
+          const tooltip = `LCP means Last Closing Price. This stock closed at ${lcpValue} on ${closeDate}.`;
+          info.dataset.tooltip = tooltip;
+          info.setAttribute('aria-label', tooltip);
+          info.setAttribute('aria-expanded', 'false');
+          info.addEventListener('click', () => {
+            const isOpen = info.classList.toggle('is-open');
+            info.setAttribute('aria-expanded', String(isOpen));
+          });
+          lcpItem.append(info);
+        }
         renderQuarterlyTable(data.quarterly_results);
         renderAnalysis(data.analysis);
         if (data.data_note) {
@@ -1191,6 +1245,7 @@
           clearTimeout(chartResumeTimer);
           chartResumeTimer = null;
         }
+        message.classList.remove('stock-summary');
         message.classList.add('loading');
         message.textContent = 'Finding NSE symbol and financial results…';
         tables.hidden = true;
