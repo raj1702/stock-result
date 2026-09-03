@@ -8,6 +8,18 @@
       :root { --content-width: 720px; }
       body { max-width: 1400px; margin: 32px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
       h1 { text-align: left; }
+      .india-market-mark { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; margin-right: 7px; padding: 2px 8px 3px; overflow: hidden; border: 1px solid rgba(19,136,8,.4); border-radius: 6px; background: repeating-linear-gradient(105deg, transparent 0, transparent 26px, rgba(255,255,255,.96) 38px, transparent 50px, transparent 76px), linear-gradient(180deg, rgba(255, 153, 51, .62) 0 31%, #fff 31% 66%, rgba(19, 136, 8, .48) 66% 100%); background-size: 100px 100%, 100% 100%; color: #173b71; font-weight: 850; letter-spacing: -.025em; text-shadow: 0 1px 1px rgba(255,255,255,.9); box-shadow: 0 2px 7px rgba(16, 24, 40, .1); vertical-align: 1px; transform-origin: left center; will-change: transform, background-position; animation: india-flag-glitter 4.2s linear infinite, india-flag-glow 3s ease-in-out infinite, india-flag-ripple 5.4s ease-in-out infinite; }
+      .india-market-text { position: relative; z-index: 1; }
+      .india-market-chakra { position: relative; z-index: 1; color: #000080; font-size: .7em; line-height: 1; text-shadow: 0 0 4px rgba(255,255,255,.95); animation: india-chakra-glimmer 3s ease-in-out infinite; }
+      @keyframes india-flag-glitter { from { background-position: 100px 0, 0 0; } to { background-position: 0 0, 0 0; } }
+      @keyframes india-flag-glow { 0%, 100% { box-shadow: 0 2px 6px rgba(16,24,40,.08); } 50% { box-shadow: 0 0 9px rgba(255,153,51,.35), 0 0 12px rgba(19,136,8,.22), inset 0 0 4px #fff; } }
+      @keyframes india-flag-ripple {
+        0%, 100% { transform: perspective(180px) rotateX(0deg) rotateY(0deg) skewY(0deg); }
+        25% { transform: perspective(180px) rotateX(3deg) rotateY(-1.5deg) skewY(.25deg); }
+        50% { transform: perspective(180px) rotateX(-2.5deg) rotateY(1deg) skewY(-.2deg); }
+        75% { transform: perspective(180px) rotateX(1.5deg) rotateY(-.6deg) skewY(.12deg); }
+      }
+      @keyframes india-chakra-glimmer { 0%, 100% { opacity: .65; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.08); } }
       .beta-badge { position: relative; top: -3px; display: inline-flex; align-items: center; margin-left: 8px; padding: 3px 7px; overflow: hidden; border: 1px solid #b692f6; border-radius: 999px; background: repeating-linear-gradient(105deg, #f4ebff 0, #f4ebff 18px, #d6bbfb 34px, #fff 43px, #d6bbfb 53px, #f4ebff 72px); background-size: 90px 100%; color: #6941c6; font-size: 9px; font-weight: 850; letter-spacing: .1em; line-height: 1.2; vertical-align: middle; animation: beta-glitter 3.4s linear infinite, beta-glow 2.8s ease-in-out infinite; }
       .beta-badge::before { content: "✦"; margin-right: 3px; font-size: 8px; animation: ai-sparkle 2.4s ease-in-out infinite; }
       .mobile-view-tip { display: none; }
@@ -189,7 +201,7 @@
         50% { transform: scale(1.04); filter: brightness(1.15) saturate(1.18); box-shadow: 0 2px 10px var(--signal-glow); }
       }
       @media (prefers-reduced-motion: reduce) {
-        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before { animation: none; }
+        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before, .india-market-mark, .india-market-chakra { animation: none; }
       }
       .analysis-badge { --signal-glow: rgba(102, 112, 133, .45); --signal-glow-faded: rgba(102, 112, 133, 0); flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #667085; color: white; font-size: 12px; font-weight: 800; letter-spacing: .04em; animation: recommendation-pulse 2.6s ease-in-out infinite; }
       .strong .analysis-badge, .healthy .analysis-badge { --signal-glow: rgba(6, 118, 71, .55); --signal-glow-faded: rgba(6, 118, 71, 0); background: #067647; }
@@ -355,7 +367,7 @@
     </style>
   </head>
   <body>
-    <h1>NSE/BSE Earnings Decision Assistant<span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
+    <h1><span class="india-market-mark" aria-label="NSE and BSE"><span class="india-market-text">NSE</span><span class="india-market-chakra" aria-hidden="true">✺</span><span class="india-market-text">BSE</span></span>Earnings Decision Assistant<span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
     <p>Enter a company name or NSE symbol.</p>
     <div id="search-results-layout">
       <div id="results-column">
