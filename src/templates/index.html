@@ -54,9 +54,10 @@
       .screening-row-status { color: #667085; font-style: italic; }
       .screening-row-status.complete { color: #344054; font-style: normal; }
       .screening-row-status.error { color: #b42318; }
-      .screening-row-status.undervalued { background: #ecfdf3; color: #05603a; }
-      .screening-row-status.overvalued { background: #fef3f2; color: #912018; }
-      .screening-row-status.neutral { background: #f2f4f7; color: #344054; }
+      .screening-row-status.strong { background: #dcfae6; color: #05603a; }
+      .screening-row-status.healthy { background: #ecfdf3; color: #067647; }
+      .screening-row-status.mixed { background: #fffaeb; color: #93370d; }
+      .screening-row-status.weak { background: #fef3f2; color: #912018; }
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       .screening-details-button:disabled { cursor: not-allowed; border-color: #d0d5dd; background: #f2f4f7; color: #98a2b3; box-shadow: none; }
@@ -134,22 +135,17 @@
       #interpretation-section h2 { margin: 0 0 12px; font-size: 18px; }
       #analysis-box { --analysis-focus: rgba(102, 112, 133, .28); --analysis-focus-faded: rgba(102, 112, 133, 0); box-sizing: border-box; margin-bottom: 14px; padding: 14px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; animation: analysis-focus-pulse 3.4s ease-in-out infinite; }
       #analysis-box[hidden] { display: none; }
-      #analysis-box.buy { --analysis-focus: rgba(6, 118, 71, .34); --analysis-focus-faded: rgba(6, 118, 71, 0); border-color: #75e0a7; background: #ecfdf3; }
-      #analysis-box.sell { --analysis-focus: rgba(180, 35, 24, .34); --analysis-focus-faded: rgba(180, 35, 24, 0); border-color: #fda29b; background: #fef3f2; }
-      #analysis-box.neutral { --analysis-focus: rgba(102, 112, 133, .3); --analysis-focus-faded: rgba(102, 112, 133, 0); border-color: #98a2b3; background: #f2f4f7; }
-      #analysis-box.high-risk { --analysis-focus: rgba(180, 35, 24, .34); --analysis-focus-faded: rgba(180, 35, 24, 0); border-color: #fda29b; background: #fef3f2; }
+      #analysis-box.strong, #analysis-box.healthy { --analysis-focus: rgba(6, 118, 71, .3); --analysis-focus-faded: rgba(6, 118, 71, 0); border-color: #75e0a7; background: #ecfdf3; }
+      #analysis-box.mixed { --analysis-focus: rgba(220, 104, 3, .25); --analysis-focus-faded: rgba(220, 104, 3, 0); border-color: #fec84b; background: #fffaeb; }
+      #analysis-box.weak { --analysis-focus: rgba(180, 35, 24, .3); --analysis-focus-faded: rgba(180, 35, 24, 0); border-color: #fda29b; background: #fef3f2; }
       @keyframes analysis-focus-pulse {
         0%, 100% { box-shadow: 0 0 0 0 var(--analysis-focus-faded); transform: scale(1); }
         50% { box-shadow: 0 0 0 3px var(--analysis-focus), 0 7px 18px var(--analysis-focus); transform: scale(1.002); }
       }
       .analysis-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-      .high-risk .analysis-header { margin-bottom: 0; }
       .analysis-verdict { margin: 0; color: #344054; font-size: 14px; }
       .analysis-signals { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; }
-      .analysis-valuation { color: #101828; font-weight: 800; }
-      .buy .analysis-valuation { color: #067647; }
-      .sell .analysis-valuation { color: #b42318; }
-      .high-risk .analysis-valuation { color: #b42318; line-height: 1.45; }
+      .analysis-valuation { color: #101828; font-size: 18px; font-weight: 850; }
       .ai-calculated-badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 6px; border: 1px solid #b692f6; border-radius: 5px; background: repeating-linear-gradient(105deg, #f4ebff 0, #f4ebff 24px, #d6bbfb 45px, #fff 58px, #d6bbfb 71px, #f4ebff 96px, #f4ebff 120px); background-size: 120px 100%; color: #6941c6; font-size: 9px; font-weight: 750; line-height: 1; text-shadow: 0 0 4px rgba(255, 255, 255, .9); white-space: nowrap; animation: ai-flag-curl 3.8s linear infinite, ai-badge-glow 2.8s ease-in-out infinite; }
       .ai-calculated-badge::before, .ai-calculated-badge::after { display: inline-block; color: #7f56d9; text-shadow: 0 0 5px #fff, 0 0 8px #9e77ed; }
       .ai-calculated-badge::before { content: "✦"; animation: ai-sparkle 2.4s ease-in-out infinite; }
@@ -186,10 +182,10 @@
         #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before { animation: none; }
       }
       .analysis-badge { --signal-glow: rgba(102, 112, 133, .45); --signal-glow-faded: rgba(102, 112, 133, 0); flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #667085; color: white; font-size: 12px; font-weight: 800; letter-spacing: .04em; animation: recommendation-pulse 2.6s ease-in-out infinite; }
-      .buy .analysis-badge { --signal-glow: rgba(6, 118, 71, .55); --signal-glow-faded: rgba(6, 118, 71, 0); background: #067647; }
-      .sell .analysis-badge { --signal-glow: rgba(180, 35, 24, .55); --signal-glow-faded: rgba(180, 35, 24, 0); background: #b42318; }
-      .neutral .analysis-badge { --signal-glow: rgba(71, 84, 103, .5); --signal-glow-faded: rgba(71, 84, 103, 0); background: #475467; }
-      .analysis-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
+      .strong .analysis-badge, .healthy .analysis-badge { --signal-glow: rgba(6, 118, 71, .55); --signal-glow-faded: rgba(6, 118, 71, 0); background: #067647; }
+      .mixed .analysis-badge { --signal-glow: rgba(220, 104, 3, .48); --signal-glow-faded: rgba(220, 104, 3, 0); background: #dc6803; }
+      .weak .analysis-badge { --signal-glow: rgba(180, 35, 24, .55); --signal-glow-faded: rgba(180, 35, 24, 0); background: #b42318; }
+      .analysis-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; }
       .analysis-metric { display: flex; flex-direction: column; min-width: 0; min-height: 66px; padding: 9px; border-radius: 6px; background: rgba(255, 255, 255, .7); }
       .analysis-label { display: block; min-height: 2.6em; margin-bottom: 8px; color: #667085; font-size: 10px; line-height: 1.3; }
       .analysis-value { margin-top: auto; color: #101828; font-size: 14px; font-weight: 750; line-height: 1.3; }
@@ -197,6 +193,14 @@
       .analysis-value.negative-number { color: #b42318; }
       .analysis-value.neutral-number { color: #475467; }
       .analysis-formula { margin: 10px 0 0; color: #475467; font-size: 11px; line-height: 1.45; }
+      .quality-component-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+      .quality-component-name { color: #344054; font-size: 11px; font-weight: 750; }
+      .quality-component-score { color: #101828; font-size: 12px; font-weight: 850; white-space: nowrap; }
+      .quality-progress { height: 5px; overflow: hidden; border-radius: 999px; background: #e4e7ec; }
+      .quality-progress span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #528bff, #7f56d9); }
+      .quality-component-note { margin: 7px 0 0; color: #667085; font-size: 9px; line-height: 1.4; }
+      .quality-insights { margin: 11px 0 0; padding-left: 18px; color: #344054; font-size: 11px; line-height: 1.5; }
+      .quality-insights li + li { margin-top: 4px; }
       .analysis-disclaimer { margin: 6px 0 0; color: #475467; font-size: 11px; font-style: italic; font-weight: 700; line-height: 1.45; text-align: right; }
       #charts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
       .chart-card { box-sizing: border-box; position: relative; flex: 0 1 calc((100% - 24px) / 3); min-width: 0; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; }
@@ -320,10 +324,11 @@
         #interpretation-section { width: 100%; max-width: none; margin-top: 22px; }
         #interpretation-section h2 { font-size: 17px; }
         #analysis-box { padding: 11px; }
-        .analysis-header { align-items: flex-start; }
-        .analysis-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+        .analysis-header { flex-wrap: wrap; align-items: flex-start; }
+        .analysis-verdict { min-width: 0; }
+        .analysis-signals { margin-left: auto; }
+        .analysis-metrics { grid-template-columns: minmax(0, 1fr); gap: 6px; }
         .analysis-metric { padding: 8px; }
-        .analysis-metric:last-child { grid-column: 1 / -1; }
         #charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .chart-card { width: 100%; padding: 8px; }
         .chart-card.combined-chart { grid-column: 1 / -1; padding: 10px; }
@@ -399,7 +404,7 @@
     </div>
     <p id="data-note" hidden></p>
     <section id="interpretation-section" hidden>
-      <h2>Interpretation</h2>
+      <h2>Earnings quality analysis</h2>
       <article id="analysis-box" hidden aria-live="polite"></article>
       <div id="charts"></div>
     </section>
@@ -412,12 +417,13 @@
       <div class="screening-progress-track"><div id="screening-progress-bar"></div></div>
       <div id="screening-filters" role="group" aria-label="Filter screening results">
         <button class="screening-filter active" type="button" data-screening-filter="all">All (0)</button>
-        <button class="screening-filter" type="button" data-screening-filter="undervalued">Undervalued (0)</button>
-        <button class="screening-filter" type="button" data-screening-filter="overvalued">Overvalued (0)</button>
-        <button class="screening-filter" type="button" data-screening-filter="neutral">Neutral (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="strong">Strong (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="healthy">Healthy (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="mixed">Mixed (0)</button>
+        <button class="screening-filter" type="button" data-screening-filter="weak">Weak (0)</button>
       </div>
       <div class="screening-table-heading">
-        <strong>Screening interpretations</strong>
+        <strong>Earnings quality scores</strong>
         <span class="ai-calculated-badge">AI Smart Signal</span>
       </div>
       <div class="screening-results-wrap">
@@ -517,12 +523,6 @@
           ? number.toLocaleString('en-IN', { maximumFractionDigits: 2 })
           : '—';
       }
-      function formatAnalysisDate(value) {
-        const date = new Date(`${value}T00:00:00`);
-        return Number.isNaN(date.getTime())
-          ? value
-          : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-      }
       function formatQuarterlyValue(value, unit) {
         if (value === null || value === undefined) return '—';
         if (!window.matchMedia('(max-width: 760px)').matches || unit === '%') {
@@ -598,115 +598,76 @@
           analysisBox.hidden = true;
           return;
         }
-        if (analysis.high_risk) {
-          analysisBox.classList.add('high-risk');
-          const header = Object.assign(document.createElement('div'), { className: 'analysis-header' });
-          const verdict = Object.assign(document.createElement('p'), { className: 'analysis-verdict' });
-          verdict.append(Object.assign(document.createElement('strong'), {
-            className: 'analysis-valuation', textContent: analysis.message,
-          }));
-          const signals = Object.assign(document.createElement('div'), { className: 'analysis-signals' });
-          signals.append(Object.assign(document.createElement('span'), {
-            className: 'ai-calculated-badge', textContent: 'AI Smart Signal',
-          }));
-          header.append(verdict, signals);
-          analysisBox.append(header);
-          analysisBox.hidden = false;
-          interpretationSection.hidden = false;
-          return;
-        }
-        const recommendation = analysis.recommendation || 'UNAVAILABLE';
-        analysisBox.classList.add(recommendation.toLowerCase());
+        const category = analysis.available ? analysis.category : 'unavailable';
+        analysisBox.classList.add(category || 'unavailable');
         const header = Object.assign(document.createElement('div'), { className: 'analysis-header' });
         const verdict = Object.assign(document.createElement('p'), { className: 'analysis-verdict' });
         if (analysis.available) {
-          verdict.append(
-            Object.assign(document.createElement('strong'), {
-              className: 'analysis-valuation', textContent: analysis.valuation,
-            }),
-            document.createTextNode(' based on the growth-versus-price.'),
-          );
+          verdict.append(Object.assign(document.createElement('strong'), {
+            className: 'analysis-valuation',
+            textContent: `Earnings Quality: ${analysis.score}/100 — ${analysis.rating}`,
+          }));
         } else {
-          verdict.textContent = analysis.error || 'Recommendation inputs are unavailable.';
+          verdict.textContent = analysis.error || 'Earnings quality inputs are unavailable.';
         }
         const signals = Object.assign(document.createElement('div'), { className: 'analysis-signals' });
         signals.append(
           Object.assign(document.createElement('span'), {
             className: 'ai-calculated-badge', textContent: 'AI Smart Signal',
           }),
-          Object.assign(document.createElement('span'), {
-            className: 'analysis-badge', textContent: recommendation,
-          }),
         );
+        if (analysis.available) {
+          signals.append(Object.assign(document.createElement('span'), {
+            className: 'analysis-badge', textContent: analysis.rating.toUpperCase(),
+          }));
+        }
         header.append(verdict, signals);
         analysisBox.append(header);
-        const pricePeriod = analysis.available
-          ? `${formatAnalysisDate(analysis.benchmark_date)}–${formatAnalysisDate(analysis.current_close_date)}`
-          : 'period unavailable';
-        const metricData = [
-          {
-            label: `Expected future growth from ${analysis.latest_quarter_label || 'latest quarter'}`,
-            value: analysis.expected_growth_percent,
-          },
-          {
-            label: `Stock rise / fall (${pricePeriod})`,
-            value: analysis.available ? analysis.stock_change_percent : null,
-          },
-          {
-            label: 'Potential upside / downside',
-            value: analysis.available ? analysis.net_upside_percent : null,
-            neutralTone: recommendation === 'NEUTRAL',
-            display: analysis.available
-              ? `₹${Number(analysis.target_price).toLocaleString('en-IN')} (${formatNumber(analysis.net_upside_percent)}%)`
-              : '—',
-          },
-        ];
-        const metrics = Object.assign(document.createElement('div'), { className: 'analysis-metrics' });
-        metricData.forEach(({ label, value, display, neutralTone = false }) => {
-          const metric = Object.assign(document.createElement('div'), { className: 'analysis-metric' });
-          const numericValue = Number(value);
-          const valueElement = Object.assign(document.createElement('span'), {
-            className: 'analysis-value',
-            textContent: display || (value === null ? '—' : `${formatNumber(value)}%`),
+        if (analysis.components?.length) {
+          const metrics = Object.assign(document.createElement('div'), { className: 'analysis-metrics' });
+          analysis.components.forEach((component) => {
+            const metric = Object.assign(document.createElement('div'), { className: 'analysis-metric' });
+            const head = Object.assign(document.createElement('div'), { className: 'quality-component-head' });
+            head.append(
+              Object.assign(document.createElement('span'), {
+                className: 'quality-component-name', textContent: component.label,
+              }),
+              Object.assign(document.createElement('span'), {
+                className: 'quality-component-score',
+                textContent: component.available ? `${formatNumber(component.earned)}/${component.weight}` : 'Not scored',
+              }),
+            );
+            const progress = Object.assign(document.createElement('div'), { className: 'quality-progress' });
+            const progressBar = document.createElement('span');
+            progressBar.style.width = `${component.available ? (Number(component.earned) / Number(component.weight)) * 100 : 0}%`;
+            progress.append(progressBar);
+            metric.append(
+              head,
+              progress,
+              Object.assign(document.createElement('p'), {
+                className: 'quality-component-note', textContent: component.explanation,
+              }),
+            );
+            metrics.append(metric);
           });
-          if (value !== null && Number.isFinite(numericValue)) {
-            if (neutralTone) valueElement.classList.add('neutral-number');
-            else if (numericValue > 0) valueElement.classList.add('positive-number');
-            else if (numericValue < 0) valueElement.classList.add('negative-number');
-          }
-          metric.append(
-            Object.assign(document.createElement('span'), { className: 'analysis-label', textContent: label }),
-            valueElement,
-          );
-          metrics.append(metric);
-        });
-        analysisBox.append(metrics);
-        const stockMovement = Number(analysis.stock_change_percent);
-        const potentialMovement = Number(analysis.net_upside_percent);
-        const stockDirection = stockMovement > 0 ? 'rose' : stockMovement < 0 ? 'fell' : 'remained unchanged';
-        const potentialResult = potentialMovement > 0
-          ? `potential upside of ${formatNumber(potentialMovement)}%`
-          : potentialMovement < 0
-            ? `potential downside of ${formatNumber(Math.abs(potentialMovement))}%`
-            : 'neutral potential of 0%';
-        let details;
-        if (analysis.available && recommendation === 'NEUTRAL') {
-          const movementContext = stockMovement > 0
-            ? `Expected future growth is ${formatNumber(analysis.expected_growth_percent)}%, but the stock has already risen by ${formatNumber(stockMovement)}% to ₹${formatNumber(analysis.current_close)} during ${pricePeriod}.`
-            : `Expected future growth is ${formatNumber(analysis.expected_growth_percent)}%, while the stock ${stockDirection} by ${formatNumber(Math.abs(stockMovement))}% to ₹${formatNumber(analysis.current_close)} during ${pricePeriod}.`;
-          details = `${movementContext} The current stance is Neutral—not a sell signal. We will need to review the next result to assess its future potential.`;
-        } else if (analysis.available) {
-          details = `Based on the reported metrics and expected future growth of ${formatNumber(analysis.expected_growth_percent)}%, the stock had a growth potential of ${formatNumber(analysis.growth_potential_percent)}%. During ${pricePeriod}, the stock ${stockDirection} by ${formatNumber(Math.abs(stockMovement))}%, resulting in a ${potentialResult}.`;
-        } else {
-          details = analysis.error || 'The price-based recommendation is currently unavailable.';
+          analysisBox.append(metrics);
         }
+        if (analysis.insights?.length) {
+          const insights = Object.assign(document.createElement('ul'), { className: 'quality-insights' });
+          analysis.insights.forEach((insight) => insights.append(
+            Object.assign(document.createElement('li'), { textContent: insight }),
+          ));
+          analysisBox.append(insights);
+        }
+        const method = analysis.available
+          ? `${analysis.method_note} Data coverage: ${analysis.coverage_percent}% (${analysis.available_weight}/${analysis.total_weight} weighted points available).`
+          : analysis.error;
         analysisBox.append(Object.assign(document.createElement('p'), {
-          className: 'analysis-formula',
-          textContent: details,
+          className: 'analysis-formula', textContent: method,
         }));
         analysisBox.append(Object.assign(document.createElement('p'), {
           className: 'analysis-disclaimer',
-          textContent: 'AI-generated analysis—verify before investing.',
+          textContent: 'AI-generated analysis—verify before making an investment decision.',
         }));
         analysisBox.hidden = false;
         interpretationSection.hidden = false;
@@ -1013,22 +974,16 @@
       }
       function screeningInterpretation(data) {
         const analysis = data?.analysis;
-        if (!analysis) return { text: 'Interpretation unavailable.', category: 'other' };
-        if (analysis.high_risk) return { text: analysis.message, category: 'other' };
+        if (!analysis) return { text: 'Earnings quality score unavailable.', category: 'other' };
         if (!analysis.available) return {
-          text: analysis.error || 'Prediction unavailable; review the reported metrics.',
+          text: analysis.error || 'Score unavailable; review the reported metrics.',
           category: 'other',
         };
-        const potential = Number(analysis.net_upside_percent);
-        const potentialText = potential > 0
-          ? `${formatNumber(potential)}% potential upside`
-          : potential < 0
-            ? `${formatNumber(Math.abs(potential))}% potential downside`
-            : 'no remaining upside or downside';
-        const category = String(analysis.valuation || '').toLowerCase();
+        const category = String(analysis.category || '').toLowerCase();
+        const leadInsight = analysis.insights?.[0] || 'Review the component scores for details.';
         return {
-          text: `${analysis.valuation} (${analysis.recommendation}). Expected future growth is ${formatNumber(analysis.expected_growth_percent)}%; the stock moved ${formatNumber(analysis.stock_change_percent)}%, leaving ${potentialText}.`,
-          category: ['undervalued', 'overvalued', 'neutral'].includes(category) ? category : 'other',
+          text: `${analysis.score}/100 — ${analysis.rating}. ${leadInsight}`,
+          category: ['strong', 'healthy', 'mixed', 'weak'].includes(category) ? category : 'other',
         };
       }
       function applyScreeningFilter() {
@@ -1041,7 +996,7 @@
       }
       function updateScreeningFilterCounts() {
         const rows = [...screeningResultsBody.querySelectorAll('tr')];
-        const labels = { all: 'All', undervalued: 'Undervalued', overvalued: 'Overvalued', neutral: 'Neutral' };
+        const labels = { all: 'All', strong: 'Strong', healthy: 'Healthy', mixed: 'Mixed', weak: 'Weak' };
         screeningFilterButtons.forEach((button) => {
           const filter = button.dataset.screeningFilter;
           const count = filter === 'all' ? rows.length : rows.filter((row) => row.dataset.category === filter).length;
@@ -1212,13 +1167,11 @@
       function renderFullStockData(data) {
         const summary = [`NSE Symbol: ${data.symbol}`];
         const pe = Number(data.pe_ratio);
-        const peg = Number(data.peg_ratio);
         const marketCapCrore = Number(data.market_cap_crore);
         if (Number.isFinite(pe) && pe > 0) summary.push(`P/E: ${Math.round(pe)}`);
         if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
           summary.push(`Market Cap: ₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`);
         }
-        summary.push(`PEG: ${Number.isFinite(peg) && peg > 0 ? peg.toFixed(2) : '—'}`);
         message.textContent = summary.join(' | ');
         renderQuarterlyTable(data.quarterly_results);
         renderAnalysis(data.analysis);

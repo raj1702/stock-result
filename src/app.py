@@ -5,6 +5,12 @@ app = Flask(__name__)
 stock_service = StockService(api_client=None)  # No need to pass api_client
 
 
+@app.route('/health', methods=['GET'])
+def health():
+    """Cheap liveness check for the ECS task and load balancer."""
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')

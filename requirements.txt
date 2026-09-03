@@ -1,6 +1,4 @@
+Flask
+gunicorn
 requests
-pandas
-numpy
-matplotlib
-jugaad-data
 yfinance

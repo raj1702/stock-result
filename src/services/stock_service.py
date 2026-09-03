@@ -11,7 +11,6 @@ from io import StringIO
 from datetime import datetime, timedelta
 from threading import Lock
 from typing import Any, Mapping, Optional
-from urllib.parse import quote as url_quote
 from xml.etree import ElementTree
 
 import requests
@@ -147,7 +146,6 @@ class StockService:
             # blank; loss-making companies can still have no meaningful P/E.
             if not pe_ratio:
                 pe_ratio = self._yahoo_pe_ratio(nse_symbol)
-            peg_ratio = self._yahoo_peg_ratio(nse_symbol)
             market_cap_crore = self._market_cap_crore(quote)
             market_cap_source = "NSE"
             if not market_cap_crore:
@@ -161,7 +159,6 @@ class StockService:
             # the ISIN-based Upstox Fundamentals fallback instead.
             quote = {}
             pe_ratio = 0.0
-            peg_ratio = 0.0
             market_cap_crore = 0.0
             market_cap_source = ""
 
@@ -208,12 +205,6 @@ class StockService:
             interest_income_latest, interest_income_previous = {}, {}
             pe_ratio = self._number(fallback.get("pe_ratio")) or pe_ratio
 
-        # Yahoo does not report PEG for many Indian small caps. Fall back to
-        # one transparent definition instead of mixing third-party formulas:
-        # trailing P/E divided by annualised 3-year EPS growth from NSE XBRL.
-        if not peg_ratio and pe_ratio:
-            peg_ratio = self._calculated_peg_ratio(nse_symbol, pe_ratio)
-
         current_revenue = self._number(latest.get("revenue"))
         current_profit = self._number(latest.get("profit"))
         previous_revenue = self._number(previous.get("revenue"))
@@ -241,7 +232,6 @@ class StockService:
         metrics = {
             "symbol": nse_symbol,
             "pe_ratio": round(pe_ratio, 2),
-            "peg_ratio": round(peg_ratio, 2),
             "market_cap_crore": round(market_cap_crore, 2),
             "market_cap_source": market_cap_source,
             "profit_margin": round(profit_margin, 2),
@@ -335,205 +325,223 @@ class StockService:
             # latest quarter, rather than mixing two financial data scopes.
             yoy_profit = self._number(latest_yoy_pat)
             metrics["yoy_profit"] = round(yoy_profit, 2)
-        quote_isin = str(
-            self._quote_metadata(quote).get("isin")
-            or self._quote_metadata(quote).get("isinCode")
-            or known_isin
-            or ""
-        ).strip()
-        metrics["analysis"] = self._recommendation_analysis(
-            nse_symbol,
-            quote_isin or None,
+        metrics["analysis"] = self._earnings_quality_analysis(
             quarterly_results,
-            pe_ratio=pe_ratio,
-            peg_ratio=peg_ratio,
-            yoy_profit=yoy_profit,
-            yoy_revenue=yoy_revenue,
-            profit_margin=profit_margin,
-            yoy_pat_available=yoy_pat_available,
-            profit_margin_yoy_change=profit_margin_yoy_change,
+            is_lender=self._is_lender(quote),
         )
         with self._stock_cache_lock:
             self._stock_cache[nse_symbol] = (datetime.utcnow(), deepcopy(metrics))
         return metrics
 
-    def _recommendation_analysis(
-        self, symbol: str, isin: Optional[str], quarterly_results: Mapping[str, Any],
-        *, pe_ratio: float, peg_ratio: float, yoy_profit: float,
-        yoy_revenue: float, profit_margin: float, yoy_pat_available: bool = True,
-        profit_margin_yoy_change: float = 0.0,
+    def _earnings_quality_analysis(
+        self, quarterly_results: Mapping[str, Any], *, is_lender: bool = False
     ) -> dict:
-        """Build the requested valuation signal from growth and price movement.
+        """Score the persistence and alignment of reported quarterly metrics.
 
-        The price benchmark is the first trading close on or after the first
-        day two months after the latest quarter end, shifted one year back:
-        Q1 FY2027 (Jun 2026) therefore uses Aug 1, 2025; Q2 FY2027 uses Nov 1,
-        2025. The comparison close is the latest completed trading day, never
-        an intraday quote.
+        The user-selected weights total 70. Earned points are therefore
+        normalized against the weights for which usable data exists, producing
+        a score out of 100 without silently treating missing observations as 0.
+        This is a descriptive results-quality score, not a price recommendation.
         """
-        pe = self._number(pe_ratio)
-        peg = self._number(peg_ratio)
-        pat_growth = self._number(yoy_profit)
-        revenue_growth = self._number(yoy_revenue)
-        margin = self._number(profit_margin)
-        margin_yoy_change = self._number(profit_margin_yoy_change)
-        is_high_risk = (
-            pe <= 0
-            and peg <= 0
-            and (
-                pat_growth < 0
-                or abs(pat_growth - revenue_growth) > 500
-            )
-        )
-        if is_high_risk:
+        quarters = quarterly_results.get("quarters", [])
+        rows = {
+            row.get("key"): row
+            for row in quarterly_results.get("rows", [])
+            if isinstance(row, Mapping) and row.get("key")
+        }
+        if not quarters:
             return {
                 "available": False,
-                "high_risk": True,
-                "recommendation": "HIGH RISK",
-                "message": (
-                    "This stock is highly risky, so no prediction can be made. "
-                    "Review the metrics before taking a call."
+                "error": (
+                    "Quarterly result history is not yet available for this stock. "
+                    "The score will appear after reported quarterly data is published."
                 ),
             }
-        if pe > 0 and peg > 0:
-            expected_growth = pe / peg
-            growth_source = "P/E divided by PEG"
-        elif pat_growth > revenue_growth and margin_yoy_change > 0:
-            expected_growth = pat_growth
-            growth_source = "YoY PAT growth (P/E or PEG unavailable; profit margin improved YoY)"
-        else:
-            expected_growth = revenue_growth
-            growth_source = "YoY revenue growth (P/E or PEG unavailable)"
 
-        analysis = {
-            "available": False,
-            "recommendation": "UNAVAILABLE",
-            "valuation": "Price comparison unavailable",
-            "expected_growth_percent": round(expected_growth, 2),
-            "expected_growth_source": growth_source,
-            "yoy_pat_percent": round(pat_growth, 2),
-            "yoy_pat_available": bool(yoy_pat_available),
-            "yoy_revenue_percent": round(revenue_growth, 2),
-            "profit_margin_percent": round(margin, 2),
-            "profit_margin_yoy_change": round(margin_yoy_change, 2),
-            "neutral_band_percent": 10.0,
-        }
-        quarters = quarterly_results.get("quarters", [])
-        if not quarters:
-            analysis["error"] = (
-                "Quarterly result history is not yet available for this stock. "
-                "Analysis will appear after reported quarterly data is published."
+        def numeric_values(key: str) -> list[Optional[float]]:
+            values = rows.get(key, {}).get("values", [])
+            return [
+                self._number(value) if value is not None else None
+                for value in values
+            ]
+
+        def consistency_component(key: str, label: str, weight: int) -> dict:
+            values = numeric_values(key)
+            # Some metrics, especially a lender's loan book, are disclosed
+            # half-yearly. Compare consecutive *reported* observations rather
+            # than requiring values in adjacent quarterly columns.
+            reported_values = [value for value in values if value is not None]
+            transitions = list(zip(reported_values, reported_values[1:]))
+            if not transitions:
+                return {
+                    "key": key, "label": label, "weight": weight,
+                    "available": False, "earned": None,
+                    "explanation": "Not enough reported quarters to measure consistency.",
+                }
+            improving = sum(current > previous for previous, current in transitions)
+            unchanged = sum(current == previous for previous, current in transitions)
+            ratio = (improving + (0.5 * unchanged)) / len(transitions)
+            earned = weight * ratio
+            latest = next((value for value in reversed(values) if value is not None), None)
+            if key == "profit" and latest is not None and latest <= 0:
+                earned = min(earned, weight * 0.25)
+            trend_word = (
+                "consistent" if ratio >= 0.75
+                else "mixed" if ratio >= 0.4
+                else "weak"
             )
-            return analysis
-        try:
-            latest_quarter = datetime.fromisoformat(str(quarters[-1]["date"])).date()
-            latest_quarter_label = str(quarters[-1].get("label") or latest_quarter.isoformat())
-        except (KeyError, TypeError, ValueError):
-            analysis["error"] = "Latest reporting-quarter date is invalid."
-            return analysis
-
-        # First move to the post-result benchmark month (Jun -> Aug, Sep ->
-        # Nov, Dec -> Feb, Mar -> May), then go back exactly one year.
-        total_months = latest_quarter.year * 12 + latest_quarter.month - 1 + 2 - 12
-        benchmark_year, benchmark_month_index = divmod(total_months, 12)
-        benchmark_date = datetime(benchmark_year, benchmark_month_index + 1, 1).date()
-        latest_allowed_date = datetime.now().date() - timedelta(days=1)
-        analysis["benchmark_target_date"] = benchmark_date.isoformat()
-        if benchmark_date > latest_allowed_date:
-            analysis["error"] = "The benchmark date has not occurred yet."
-            return analysis
-        try:
-            price_data = self._upstox_price_change(
-                symbol, isin, benchmark_date, latest_allowed_date
+            explanation = (
+                f"Improved in {improving} of {len(transitions)} comparable "
+                f"reported-period moves; trend is {trend_word}."
             )
-        except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
-            logger.warning("Upstox price comparison failed for %s: %s", symbol, exc)
-            analysis["error"] = f"Upstox closing prices unavailable: {str(exc)[:160]}"
-            return analysis
+            if key == "loan_book" and len(reported_values) < len(values):
+                explanation += " Blank quarters were skipped to support half-yearly reporting."
+            if key == "profit" and latest is not None and latest <= 0:
+                explanation += " The latest quarter remains loss-making, so PAT points are capped."
+            return {
+                "key": key, "label": label, "weight": weight,
+                "available": True, "earned": round(earned, 1),
+                "improving_periods": improving,
+                "comparable_periods": len(transitions),
+                "explanation": explanation,
+            }
 
-        stock_change = price_data["change_percent"]
-        # When valuation ratios supply expected growth but the YoY PAT
-        # comparison is absent, do not silently treat missing PAT as 0% and
-        # imply that it participated in the formula.
-        growth_potential = (
-            pat_growth + expected_growth
-            if yoy_pat_available
-            else expected_growth
-        )
-        net_upside = growth_potential - stock_change
-        raw_target_price = price_data["current_close"] * (1 + (net_upside / 100))
-        # Display a practical price level rather than false decimal precision.
-        target_price = max(0, int(math.floor((raw_target_price / 5) + 0.5)) * 5)
-        if abs(net_upside) <= 10:
-            recommendation, valuation = "NEUTRAL", "Neutral"
-        elif net_upside > 0:
-            recommendation, valuation = "BUY", "Undervalued"
+        def margin_component() -> dict:
+            weight = 20
+            values = numeric_values("profit_margin")
+            reported_values = [value for value in values if value is not None]
+            transitions = list(zip(reported_values, reported_values[1:]))
+            latest = next((value for value in reversed(values) if value is not None), None)
+            if latest is None or not transitions:
+                return {
+                    "key": "profit_margin", "label": "Profit margin", "weight": weight,
+                    "available": False, "earned": None,
+                    "explanation": "Not enough reported margin data to score.",
+                }
+            improving = sum(current > previous for previous, current in transitions)
+            unchanged = sum(current == previous for previous, current in transitions)
+            trend_points = 10 * ((improving + (0.5 * unchanged)) / len(transitions))
+            profitability_points = 10 if latest > 0 else 0
+            earned = profitability_points + trend_points
+            return {
+                "key": "profit_margin", "label": "Profit margin", "weight": weight,
+                "available": True, "earned": round(earned, 1),
+                "explanation": (
+                    f"Latest margin is {latest:.2f}% and improved in {improving} of "
+                    f"{len(transitions)} comparable reported-period moves. "
+                    "Half the points measure positive profitability and half measure consistency."
+                ),
+            }
+
+        components = [
+            consistency_component(
+                "net_interest_income" if is_lender else "revenue",
+                "NII consistency" if is_lender else "Revenue consistency",
+                20,
+            ),
+            consistency_component("profit", "PAT consistency", 20),
+            margin_component(),
+            consistency_component(
+                "loan_book" if is_lender else "operating_profit",
+                "Loan-book consistency" if is_lender else "Operating-profit consistency",
+                10,
+            ),
+        ]
+        available = [component for component in components if component["available"]]
+        available_weight = sum(component["weight"] for component in available)
+        earned_points = sum(component["earned"] for component in available)
+        if not available_weight:
+            return {
+                "available": False,
+                "components": components,
+                "error": "Reported metrics are insufficient to calculate an earnings quality score.",
+            }
+        score = round((earned_points / available_weight) * 100)
+        if score >= 80:
+            rating, category = "Strong", "strong"
+        elif score >= 65:
+            rating, category = "Healthy", "healthy"
+        elif score >= 50:
+            rating, category = "Mixed", "mixed"
+        elif score >= 35:
+            rating, category = "Weak", "weak"
         else:
-            recommendation, valuation = "SELL", "Overvalued"
-        analysis.update({
-            "available": True,
-            "recommendation": recommendation,
-            "valuation": valuation,
-            "latest_quarter_label": latest_quarter_label,
-            "benchmark_close": price_data["benchmark_close"],
-            "benchmark_date": price_data["benchmark_date"],
-            "current_close": price_data["current_close"],
-            "current_close_date": price_data["current_close_date"],
-            "stock_change_percent": stock_change,
-            "growth_potential_percent": round(growth_potential, 2),
-            "net_upside_percent": round(net_upside, 2),
-            "target_price": target_price,
-        })
-        return analysis
+            rating, category = "Fragile", "weak"
 
-    def _upstox_price_change(
-        self, symbol: str, isin: Optional[str], benchmark_date, latest_date
-    ) -> dict:
-        """Return first/last completed daily closes across the benchmark range."""
-        token = os.getenv("UPSTOX_ACCESS_TOKEN")
-        if not token:
-            raise ValueError("UPSTOX_ACCESS_TOKEN is not set")
-        resolved_isin = isin or self._isin_for_symbol(symbol)
-        if not resolved_isin:
-            raise ValueError(f"No ISIN found for {symbol}")
-        exchange = "BSE_EQ" if symbol in self.BSE_ONLY_ISINS else "NSE_EQ"
-        instrument_key = f"{exchange}|{resolved_isin}"
-        endpoint = (
-            "https://api.upstox.com/v3/historical-candle/"
-            f"{url_quote(instrument_key, safe='')}/days/1/"
-            f"{latest_date.isoformat()}/{benchmark_date.isoformat()}"
-        )
-        response = requests.get(
-            endpoint,
-            headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
-            timeout=20,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        if payload.get("status") != "success":
-            raise ValueError(str(payload))
-        candles = payload.get("data", {}).get("candles", [])
-        valid = []
-        for candle in candles:
-            if not isinstance(candle, list) or len(candle) < 5:
-                continue
-            try:
-                candle_date = datetime.fromisoformat(str(candle[0])).date()
-                close = float(candle[4])
-            except (TypeError, ValueError):
-                continue
-            if math.isfinite(close) and close > 0:
-                valid.append((candle_date, close))
-        if not valid:
-            raise ValueError("Upstox returned no completed daily candles")
-        valid.sort(key=lambda item: item[0])
-        first, last = valid[0], valid[-1]
+        def latest_yoy(key: str) -> Optional[float]:
+            row = next((
+                item for item in quarterly_results.get("comparisons", {}).get("yoy", [])
+                if item.get("key") == key
+            ), None)
+            values = row.get("values", []) if row else []
+            value = values[-1] if values else None
+            return self._number(value) if value is not None else None
+
+        pat_yoy = latest_yoy("profit")
+        primary_key = "net_interest_income" if is_lender else "revenue"
+        primary_label = "NII" if is_lender else "Revenue"
+        primary_yoy = latest_yoy(primary_key)
+        margin_yoy = latest_yoy("profit_margin")
+        operating_key = "loan_book" if is_lender else "operating_profit"
+        operating_label = "Loan book" if is_lender else "Operating profit"
+        operating_yoy = latest_yoy(operating_key)
+        insights = []
+        if pat_yoy is not None and primary_yoy is not None:
+            gap = pat_yoy - primary_yoy
+            if pat_yoy > 0 and primary_yoy <= 0:
+                insights.append(
+                    f"PAT grew {pat_yoy:.2f}% while {primary_label} did not grow. "
+                    "Profit growth is not supported by topline growth; review margins, other income, tax and exceptional items."
+                )
+            elif gap >= 15:
+                if margin_yoy is not None and margin_yoy > 0:
+                    insights.append(
+                        f"PAT growth exceeded {primary_label} growth by {gap:.2f} percentage points, "
+                        f"while profit margin improved {margin_yoy:.2f}%. Margin expansion supported earnings, "
+                        "but its repeatability should be checked."
+                    )
+                else:
+                    insights.append(
+                        f"PAT growth exceeded {primary_label} growth by {gap:.2f} percentage points without "
+                        "clear margin support. Other income, tax or exceptional items may have influenced PAT."
+                    )
+            elif primary_yoy > 0 and pat_yoy < 0:
+                insights.append(
+                    f"{primary_label} grew {primary_yoy:.2f}%, but PAT fell {abs(pat_yoy):.2f}%, indicating cost or margin pressure."
+                )
+            elif primary_yoy > 0 and pat_yoy > 0:
+                insights.append(
+                    f"{primary_label} and PAT both grew YoY, providing broader support for the latest earnings."
+                )
+        if operating_yoy is not None and primary_yoy is not None:
+            if operating_yoy < primary_yoy - 10:
+                insights.append(
+                    f"{operating_label} growth trails {primary_label} growth, suggesting weaker operating conversion."
+                )
+            elif operating_yoy > 0:
+                insights.append(f"{operating_label} also grew YoY, supporting operating momentum.")
+        if not insights:
+            insights.append(
+                "The score reflects the available quarterly trends; review the detailed metrics and filings for one-off items."
+            )
+
         return {
-            "benchmark_date": first[0].isoformat(),
-            "benchmark_close": round(first[1], 2),
-            "current_close_date": last[0].isoformat(),
-            "current_close": round(last[1], 2),
-            "change_percent": round(((last[1] - first[1]) / first[1]) * 100, 2),
+            "available": True,
+            "score": score,
+            "rating": rating,
+            "category": category,
+            "components": components,
+            "earned_points": round(earned_points, 1),
+            "available_weight": available_weight,
+            "total_weight": 70,
+            "coverage_percent": round((available_weight / 70) * 100),
+            "is_lender_model": bool(is_lender),
+            "latest_quarter_label": str(quarters[-1].get("label") or "Latest quarter"),
+            "insights": insights,
+            "method_note": (
+                "Score = earned component points ÷ available component weights × 100. "
+                "Consistency compares consecutive reported values and skips blank periods."
+            ),
         }
 
     def _quarterly_results(self, symbol: str, include_financial_rows: bool) -> dict:
@@ -1992,7 +2000,6 @@ class StockService:
         return {
             "symbol": symbol,
             "pe_ratio": 0.0,
-            "peg_ratio": 0.0,
             "market_cap_crore": 0.0,
             "market_cap_source": "",
             "profit_margin": 0.0,
