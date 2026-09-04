@@ -7,7 +7,77 @@
     <style>
       :root { --content-width: 720px; }
       body { max-width: 1400px; margin: 32px auto; padding: 0 20px; font-family: system-ui, sans-serif; color: #172033; }
-      h1 { text-align: left; }
+      .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+      h1 { margin-top: 0; text-align: left; }
+      .brand-title { color: #172b4d; font-weight: 780; letter-spacing: -.035em; }
+      .account-controls { display: flex; flex: 0 0 auto; align-items: center; gap: 7px; padding-top: 3px; }
+      .account-link { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 7px 10px; border: 1px solid #b2ccff; border-radius: 7px; background: #eff4ff; color: #175cd3; font-size: 11px; font-weight: 750; line-height: 1.2; text-decoration: none; white-space: nowrap; }
+      .account-link.primary { border-color: #155eef; background: #155eef; color: #fff; }
+      .account-link.logout { border-color: #d0d5dd; background: #fff; color: #475467; }
+      .account-link:hover, .account-link:focus-visible { filter: brightness(.96); outline: 2px solid #84adff; outline-offset: 2px; }
+      .signed-in-user { display: flex; align-items: center; gap: 7px; min-width: 0; padding: 6px 9px; border: 1px solid #abefc6; border-radius: 8px; background: #ecfdf3; }
+      .signed-in-dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #17b26a; box-shadow: 0 0 0 3px rgba(23,178,106,.12); }
+      .signed-in-copy { min-width: 0; line-height: 1.15; }
+      .signed-in-label { display: block; color: #067647; font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+      .signed-in-email { display: block; max-width: 210px; overflow: hidden; color: #05603a; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+      .header-plan-status { display: flex; align-items: stretch; overflow: hidden; border: 1px solid #d6bbfb; border-radius: 7px; background: #faf8ff; cursor: pointer; }
+      .header-plan-status:focus-visible { outline: 2px solid #84adff; outline-offset: 2px; }
+      .header-plan-status.free { border-color: #98a2b3; background: #f2f4f7; }
+      .header-plan-status.bronze { border-color: #c98250; background: #fff4eb; }
+      .header-plan-status.silver { border-color: #98a2b3; background: #f2f4f7; }
+      .header-plan-status.gold { border-color: #e4a611; background: #fffaeb; }
+      .header-plan-field { display: flex; flex-direction: column; justify-content: center; min-width: 72px; padding: 5px 8px; }
+      .header-plan-field + .header-plan-field { border-left: 1px solid #e4dcf5; }
+      .header-plan-label { color: #7f7197; font-size: 7px; font-weight: 800; letter-spacing: .045em; line-height: 1.2; text-transform: uppercase; white-space: nowrap; }
+      .header-plan-value { margin-top: 1px; color: #4a2c85; font-size: 10px; font-weight: 850; line-height: 1.2; white-space: nowrap; }
+      .plan-open { align-self: stretch; border-color: #6941c6; background: #6941c6; color: #fff; cursor: pointer; }
+      .plan-open[hidden] { display: none; }
+      .plan-open.free { border-color: #475467; background: #475467; }
+      .plan-open.bronze { border-color: #96552c; background: #96552c; }
+      .plan-open.silver { border-color: #667085; background: #667085; }
+      .plan-open.gold { border-color: #b46f00; background: #b46f00; }
+      .header-plan-status.bronze .header-plan-value { color: #854a25; }
+      .header-plan-status.gold .header-plan-value { color: #8a5000; }
+      .header-plan-status.free .header-plan-value, .header-plan-status.silver .header-plan-value { color: #344054; }
+      #subscription-overlay { position: fixed; z-index: 60; inset: 0; box-sizing: border-box; overflow-y: auto; padding: 28px 22px; background: linear-gradient(145deg,#eef4ff 0%,#f5f0ff 55%,#eef8ff 100%); }
+      #subscription-overlay[hidden] { display: none; }
+      .subscription-shell { width: min(920px, 100%); margin: 0 auto; }
+      .subscription-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(105,65,198,.2); }
+      .subscription-header h2 { margin: 0; color: #35265f; font-size: 26px; letter-spacing: -.025em; }
+      .subscription-header p { margin: 4px 0 0; color: #655b7c; font-size: 12px; }
+      .subscription-back { padding: 8px 12px; border: 1px solid #7f56d9; background: #6941c6; color: #fff; font-size: 12px; font-weight: 750; }
+      .plan-card { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(220px, auto); align-items: center; gap: 16px; width: 100%; max-width: 100%; margin: 0 0 12px; padding: 18px; border: 0; border-left: 6px solid #7f56d9; border-radius: 5px; background: linear-gradient(105deg,#4a2c85,#6941c6 58%,#7f56d9); box-shadow: 0 8px 20px rgba(74,44,133,.2); }
+      .plan-card.free { border-left-color: #667085; background: linear-gradient(105deg,#344054,#475467 58%,#667085); }
+      .plan-card.bronze { border-left-color: #d18a55; background: linear-gradient(105deg,#704022,#96552c 58%,#b66a35); box-shadow: 0 8px 20px rgba(112,64,34,.2); }
+      .plan-card.silver { border-left-color: #98a2b3; background: linear-gradient(105deg,#344054,#475467 58%,#667085); }
+      .plan-card.gold { border-left-color: #f5c451; background: linear-gradient(105deg,#8a5000,#b46f00 58%,#d99a09); box-shadow: 0 8px 20px rgba(138,80,0,.2); }
+      .plan-card[hidden] { display: none; }
+      .plan-tier { display: inline-grid; place-items: center; min-width: 68px; padding: 8px 9px; border: 1px solid rgba(255,255,255,.55); border-radius: 4px; background: rgba(255,255,255,.16); color: #fff; font-size: 11px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+      .plan-tier.free, .plan-tier.bronze, .plan-tier.silver, .plan-tier.gold { background: rgba(255,255,255,.16); }
+      .plan-copy { min-width: 0; }
+      .plan-summary { margin: 0; color: #fff; font-size: 13px; font-weight: 800; line-height: 1.4; }
+      .plan-guidance { margin: 3px 0 0; color: #eee7ff; font-size: 10px; line-height: 1.4; }
+      .referral-share { display: flex; align-items: center; gap: 5px; min-width: 0; }
+      .referral-share[hidden] { display: none; }
+      .plan-option .referral-share { justify-self: end; }
+      .plan-option .copy-referral { border-color: #6941c6; background: #6941c6; color: #fff; }
+      .referral-action-label { color: #6941c6; font-size: 9px; font-weight: 800; white-space: nowrap; }
+      .referral-link { box-sizing: border-box; width: 190px; min-width: 0; padding: 7px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #475467; font-size: 10px; text-overflow: ellipsis; }
+      .copy-referral { padding: 7px 9px; border: 1px solid #fff; border-radius: 5px; background: #fff; color: #6941c6; font-size: 10px; font-weight: 800; white-space: nowrap; }
+      .plan-options { display: grid; grid-auto-rows: minmax(64px, 1fr); gap: 7px; }
+      .plan-option { box-sizing: border-box; display: grid; grid-template-columns: 110px minmax(0,1fr) 180px auto; align-items: center; gap: 14px; min-height: 64px; padding: 13px 16px; border: 1px solid #d8d1ea; border-left: 5px solid #98a2b3; border-radius: 4px; background: rgba(255,255,255,.82); }
+      .plan-option[data-plan="bronze"] { border-left-color: #a65d2f; background: #fff8f2; }
+      .plan-option[data-plan="silver"] { border-left-color: #667085; background: #f8fafc; }
+      .plan-option[data-plan="gold"] { border-left-color: #d99a09; background: #fffbeb; }
+      .plan-option.current { border-color: #7f56d9; border-left-color: #6941c6; background: #f4ebff; }
+      .plan-option.current[data-plan="free"] { border-color: #667085; background: #f2f4f7; }
+      .plan-option.current[data-plan="bronze"] { border-color: #a65d2f; background: #fbe9dc; }
+      .plan-option.current[data-plan="silver"] { border-color: #667085; background: #e4e7ec; }
+      .plan-option.current[data-plan="gold"] { border-color: #d99a09; background: #fef0c7; }
+      .plan-option h3 { margin: 0; color: #35265f; font-size: 15px; }
+      .plan-option p { margin: 0; color: #655b7c; font-size: 11px; line-height: 1.5; }
+      .plan-option strong { color: #4f4268; font-size: 11px; }
+      .current-plan-mark { display: inline-block; padding: 3px 6px; border-radius: 3px; background: #6941c6; color: #fff; font-size: 9px; font-weight: 850; text-transform: uppercase; white-space: nowrap; }
       .india-market-mark { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; margin-right: 7px; padding: 2px 8px 3px; overflow: hidden; border: 1px solid rgba(19,136,8,.4); border-radius: 6px; background: repeating-linear-gradient(105deg, transparent 0, transparent 26px, rgba(255,255,255,.96) 38px, transparent 50px, transparent 76px), linear-gradient(180deg, rgba(255, 153, 51, .62) 0 31%, #fff 31% 66%, rgba(19, 136, 8, .48) 66% 100%); background-size: 100px 100%, 100% 100%; color: #173b71; font-weight: 850; letter-spacing: -.025em; text-shadow: 0 1px 1px rgba(255,255,255,.9); box-shadow: 0 2px 7px rgba(16, 24, 40, .1); vertical-align: 1px; transform-origin: left center; will-change: transform, background-position; animation: india-flag-glitter 4.2s linear infinite, india-flag-glow 3s ease-in-out infinite, india-flag-ripple 5.4s ease-in-out infinite; }
       .india-market-text { position: relative; z-index: 1; }
       .india-market-chakra { position: relative; z-index: 1; color: #000080; font-size: .7em; line-height: 1; text-shadow: 0 0 4px rgba(255,255,255,.95); animation: india-chakra-glimmer 3s ease-in-out infinite; }
@@ -44,6 +114,16 @@
       #nifty-select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #101828; font: inherit; font-size: 12px; }
       #screening-overlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; padding: 20px; background: rgba(248, 250, 252, .98); backdrop-filter: blur(8px); }
       #screening-overlay[hidden] { display: none; }
+      #auth-gate { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; box-sizing: border-box; padding: 20px; background: rgba(16,24,40,.58); backdrop-filter: blur(5px); }
+      #auth-gate[hidden] { display: none; }
+      .auth-gate-card { position: relative; box-sizing: border-box; width: min(430px, 100%); padding: 26px; border: 1px solid rgba(255,255,255,.7); border-radius: 16px; background: radial-gradient(circle at 90% 0, rgba(132,173,255,.2), transparent 32%), #fff; box-shadow: 0 24px 60px rgba(16,24,40,.28); text-align: center; }
+      .auth-gate-close { position: absolute; right: 12px; top: 12px; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 1px solid #e4e7ec; border-radius: 50%; background: #f9fafb; color: #667085; font-size: 18px; line-height: 1; }
+      .auth-gate-icon { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 13px; border-radius: 13px; background: linear-gradient(135deg,#eff4ff,#f4ebff); color: #155eef; font-size: 22px; box-shadow: inset 0 0 0 1px #d6e4ff; }
+      .auth-gate-card h2 { margin: 0 34px 7px; color: #101828; font-size: 21px; }
+      .auth-gate-card p { margin: 0 auto 18px; max-width: 340px; color: #667085; font-size: 13px; line-height: 1.5; }
+      .auth-gate-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+      .auth-gate-action { display: inline-flex; align-items: center; justify-content: center; padding: 11px 13px; border: 1px solid #b2ccff; border-radius: 8px; background: #eff4ff; color: #175cd3; font-size: 13px; font-weight: 800; text-decoration: none; }
+      .auth-gate-action.primary { border-color: #155eef; background: linear-gradient(135deg,#2970ff,#155eef); color: #fff; box-shadow: 0 5px 12px rgba(21,94,239,.22); }
       .screening-overlay-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; width: 100%; margin: 0 auto 12px; }
       .screening-overlay-header h2 { margin: 0; color: #101828; font-size: 22px; }
       #screening-close { padding: 8px 11px; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-size: 13px; }
@@ -73,6 +153,20 @@
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       .screening-details-button:disabled { cursor: not-allowed; border-color: #d0d5dd; background: #f2f4f7; color: #98a2b3; box-shadow: none; }
+      .screening-locked-row td { position: relative; height: 220px; padding: 0 !important; overflow: hidden; background: #f8fafc; text-align: center !important; }
+      .screening-locked-blur { position: absolute; inset: -8px; display: grid; align-content: stretch; filter: blur(5px); opacity: .72; transform: scale(1.025); }
+      .screening-fake-row { display: grid; grid-template-columns: 220px minmax(300px,1fr) 118px; align-items: center; min-height: 47px; padding: 0 12px; border-bottom: 1px solid #d0d5dd; background: #fff; }
+      .screening-fake-row:nth-child(even) { background: #f9fafb; }
+      .screening-fake-cell { display: block; height: 11px; margin: 0 10px; border-radius: 4px; background: #98a2b3; }
+      .screening-fake-cell.company { width: 72%; background: linear-gradient(90deg,#667085 0 65%,#b2ccff 65%); }
+      .screening-fake-cell.analysis { width: 86%; height: 20px; background: linear-gradient(90deg,#abefc6 0 18%,#d0d5dd 18% 62%,#fecdc9 62% 78%,#d0d5dd 78%); }
+      .screening-fake-cell.details { width: 72px; height: 25px; justify-self: center; border: 1px solid #84adff; background: #dbe8ff; }
+      .screening-locked-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 15px; background: radial-gradient(circle at center, rgba(255,255,255,.84) 0 30%, rgba(248,250,252,.6) 55%, rgba(248,250,252,.25) 100%); }
+      .screening-lock-icon { display: grid; place-items: center; width: 31px; height: 31px; margin-bottom: 6px; border-radius: 50%; background: #eff4ff; color: #155eef; font-size: 15px; }
+      .screening-locked-content strong { color: #101828; font-size: 14px; }
+      .screening-locked-content p { margin: 4px 0 9px; color: #667085; font-size: 11px; }
+      .screening-unlock-actions { display: flex; gap: 7px; }
+      .screening-unlock-actions .account-link { padding: 6px 9px; }
       #screening-results-body tr[hidden] { display: none; }
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
@@ -291,7 +385,29 @@
         :root { --content-width: 100%; }
         html { overflow-x: hidden; }
         body { box-sizing: border-box; width: calc(100vw - 28px); max-width: calc(100vw - 28px); min-width: 0; margin: 18px 14px; padding: 0; overflow-x: hidden; }
-        h1 { margin: 0 0 8px; font-size: 24px; }
+        .page-header { flex-direction: column; gap: 8px; }
+        h1 { margin: 0; font-size: 24px; }
+        .account-controls { align-self: stretch; justify-content: flex-end; padding: 0; }
+        .account-controls { flex-wrap: wrap; }
+        .header-plan-status { order: 3; flex: 1 1 calc(100% - 76px); }
+        .header-plan-field { flex: 1; min-width: 0; padding: 6px 7px; }
+        .plan-open { order: 4; flex: 0 0 auto; }
+        .signed-in-user { flex: 1; }
+        .signed-in-email { max-width: calc(100vw - 150px); }
+        #subscription-overlay { padding: 14px; }
+        .subscription-header { align-items: flex-start; margin-bottom: 13px; }
+        .subscription-header h2 { font-size: 20px; }
+        .subscription-back { flex: 0 0 auto; padding: 7px 9px; }
+        .plan-card { grid-template-columns: auto minmax(0, 1fr); gap: 9px; margin-bottom: 12px; padding: 11px; }
+        .plan-tier { min-width: 58px; padding: 7px; font-size: 10px; }
+        .referral-share { grid-column: 1 / -1; }
+        .referral-link { flex: 1; width: auto; }
+        .plan-options { gap: 6px; }
+        .plan-option { grid-template-columns: 72px minmax(0,1fr); gap: 5px 9px; padding: 10px; }
+        .plan-option strong { grid-column: 2; }
+        .current-plan-mark { grid-column: 2; justify-self: start; }
+        .plan-option .referral-share { grid-column: 1 / -1; width: 100%; justify-self: stretch; }
+        .referral-action-label { display: none; }
         .mobile-view-tip { display: block; margin-top: 4px; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.35; }
         body > p:first-of-type { margin-bottom: 14px; font-size: 14px; }
         #message.stock-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; box-sizing: border-box; gap: 6px; padding: 6px; }
@@ -311,6 +427,9 @@
         #full-index-screening-button { width: 100%; }
         #nifty-select { box-sizing: border-box; width: 100%; }
         #screening-overlay { padding: 12px; }
+        #auth-gate { padding: 14px; }
+        .auth-gate-card { padding: 23px 17px 18px; }
+        .auth-gate-actions { grid-template-columns: 1fr; }
         .screening-overlay-header h2 { font-size: 18px; }
         #screening-close { padding: 7px 9px; font-size: 12px; }
         #screening-filters { gap: 5px; }
@@ -367,7 +486,61 @@
     </style>
   </head>
   <body>
-    <h1><span class="india-market-mark" aria-label="NSE and BSE"><span class="india-market-text">NSE</span><span class="india-market-chakra" aria-hidden="true">✺</span><span class="india-market-text">BSE</span></span>Earnings Decision Assistant<span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
+    <header class="page-header">
+      <h1><span class="brand-title">NSE · BSE Earnings Decision Assistant</span><span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
+      <nav class="account-controls" aria-label="Account">
+        {% if current_user %}
+          <span id="header-plan-status" class="header-plan-status" role="button" tabindex="0" aria-label="Open subscription details">
+            <span class="header-plan-field"><span class="header-plan-label">Current plan</span><span id="header-plan-tier" class="header-plan-value">Loading…</span></span>
+            <span class="header-plan-field"><span class="header-plan-label">Stocks quota left</span><span id="header-plan-quota" class="header-plan-value">—</span></span>
+            <span class="header-plan-field"><span class="header-plan-label">Expires on</span><span id="header-plan-expiry" class="header-plan-value">—</span></span>
+          </span>
+          <button id="subscription-open" class="account-link plan-open" type="button">Upgrade</button>
+          <span class="signed-in-user">
+            <span class="signed-in-dot" aria-hidden="true"></span>
+            <span class="signed-in-copy">
+              <span class="signed-in-label">Signed in</span>
+              <span class="signed-in-email" title="{{ current_user.email|e }}">{{ current_user.email|e }}</span>
+            </span>
+          </span>
+          <a class="account-link logout" href="/logout">Log out</a>
+        {% else %}
+          <a class="account-link" href="/login">Sign in</a>
+          <a class="account-link primary" href="/signup">Sign up</a>
+        {% endif %}
+      </nav>
+    </header>
+    {% if current_user %}
+      <section id="subscription-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="subscription-title">
+        <div class="subscription-shell">
+          <header class="subscription-header">
+            <div>
+              <h2 id="subscription-title">Subscription plan</h2>
+              <p>Earn upgrades through successful referrals. Each paid tier is valid for 30 days.</p>
+            </div>
+            <button id="subscription-back" class="subscription-back" type="button">← Back to home</button>
+          </header>
+          <section id="plan-card" class="plan-card" aria-live="polite">
+            <span id="plan-tier" class="plan-tier">Plan</span>
+            <div class="plan-copy">
+              <p id="plan-summary" class="plan-summary">Loading your plan…</p>
+              <p id="plan-guidance" class="plan-guidance"></p>
+            </div>
+          </section>
+          <div class="plan-options" aria-label="Available plans">
+            <article class="plan-option" data-plan="free"><h3>Free</h3><p>Explore up to 10 stocks each month.</p><strong>Default plan</strong></article>
+            <article class="plan-option" data-plan="bronze"><h3>Bronze</h3><p>Explore up to 25 stocks each month.</p><strong>1 successful referral</strong></article>
+            <article class="plan-option" data-plan="silver"><h3>Silver</h3><p>Explore up to 40 stocks each month.</p><strong>2 successful referrals</strong></article>
+            <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong>3 successful referrals</strong></article>
+          </div>
+          <div id="referral-share" class="referral-share" hidden>
+            <span id="referral-action-label" class="referral-action-label">Referral link</span>
+            <input id="referral-link" class="referral-link" type="text" readonly aria-label="Your referral link">
+            <button id="copy-referral" class="copy-referral" type="button">Copy link</button>
+          </div>
+        </div>
+      </section>
+    {% endif %}
     <p>Enter a company name or NSE symbol.</p>
     <div id="search-results-layout">
       <div id="results-column">
@@ -459,6 +632,18 @@
         </table>
       </div>
     </section>
+    <section id="auth-gate" hidden aria-modal="true" role="dialog" aria-labelledby="auth-gate-title">
+      <div class="auth-gate-card">
+        <button id="auth-gate-close" class="auth-gate-close" type="button" aria-label="Close">×</button>
+        <div class="auth-gate-icon" aria-hidden="true">✦</div>
+        <h2 id="auth-gate-title">Continue your analysis</h2>
+        <p>You’ve explored two stocks. Create a free account or sign in to analyse more companies.</p>
+        <div class="auth-gate-actions">
+          <a id="auth-gate-signin" class="auth-gate-action" href="/login?next=/">Sign in</a>
+          <a id="auth-gate-signup" class="auth-gate-action primary" href="/signup?next=/">Create free account</a>
+        </div>
+      </div>
+    </section>
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
@@ -475,6 +660,10 @@
       const screeningResultsBody = document.getElementById('screening-results-body');
       const screeningFilterButtons = document.querySelectorAll('.screening-filter');
       const backToScreeningButton = document.getElementById('back-to-screening');
+      const authGate = document.getElementById('auth-gate');
+      const authGateClose = document.getElementById('auth-gate-close');
+      const authGateSignin = document.getElementById('auth-gate-signin');
+      const authGateSignup = document.getElementById('auth-gate-signup');
       const message = document.getElementById('message');
       const tables = document.getElementById('tables');
       const resultsPanel = document.getElementById('results-panel');
@@ -498,11 +687,148 @@
       const stockResultCache = new Map();
       const stockResultCacheTtlMs = 12 * 60 * 60 * 1000;
       const minimumAnalysisDisplayMs = 1800;
+      const currentUserAuthenticated = {{ (current_user is not none)|tojson }};
+      const planCard = document.getElementById('plan-card');
+      const planTier = document.getElementById('plan-tier');
+      const planSummary = document.getElementById('plan-summary');
+      const planGuidance = document.getElementById('plan-guidance');
+      const referralLink = document.getElementById('referral-link');
+      const copyReferralButton = document.getElementById('copy-referral');
+      const referralShare = document.getElementById('referral-share');
+      const referralActionLabel = document.getElementById('referral-action-label');
+      const subscriptionOpen = document.getElementById('subscription-open');
+      const subscriptionOverlay = document.getElementById('subscription-overlay');
+      const subscriptionBack = document.getElementById('subscription-back');
+      const headerPlanTier = document.getElementById('header-plan-tier');
+      const headerPlanQuota = document.getElementById('header-plan-quota');
+      const headerPlanExpiry = document.getElementById('header-plan-expiry');
+      const headerPlanStatus = document.getElementById('header-plan-status');
       let visibleIndexEndpoint = '';
       let visibleIndexLabel = '';
       let visibleIndexStocks = [];
       let screeningRunId = 0;
       let activeScreeningFilter = 'all';
+      let currentPlanData = null;
+      function formatPlanExpiry(value) {
+        if (!value) return '';
+        return new Intl.DateTimeFormat('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
+        }).format(new Date(value));
+      }
+      async function loadPlanCard() {
+        if (!currentUserAuthenticated || !planCard) return;
+        planCard.hidden = false;
+        try {
+          const response = await fetch('/api/plan');
+          const plan = await readJson(response);
+          if (!response.ok) throw new Error(plan.error || 'Plan unavailable');
+          currentPlanData = plan;
+          const tier = plan.plan || 'free';
+          const allowance = plan.stock_limit == null ? 'Unlimited stock analyses' : `${plan.stock_limit} stock analyses per month`;
+          planTier.textContent = tier;
+          planTier.className = `plan-tier ${tier}`;
+          planCard.className = `plan-card ${tier}`;
+          if (headerPlanStatus) headerPlanStatus.className = `header-plan-status ${tier}`;
+          if (subscriptionOpen) {
+            subscriptionOpen.className = `account-link plan-open ${tier}`;
+            subscriptionOpen.hidden = tier === 'gold';
+          }
+          if (headerPlanTier) {
+            headerPlanTier.textContent = tier[0].toUpperCase() + tier.slice(1);
+          }
+          if (headerPlanQuota) headerPlanQuota.textContent = plan.stocks_remaining == null ? 'Unlimited' : String(plan.stocks_remaining);
+          if (headerPlanExpiry) headerPlanExpiry.textContent = plan.expires_at ? formatPlanExpiry(plan.expires_at) : 'No expiry';
+          document.querySelectorAll('.plan-option').forEach((option) => {
+            option.classList.toggle('current', option.dataset.plan === tier);
+            option.querySelector('.current-plan-mark')?.remove();
+          });
+          planSummary.textContent = plan.expires_at
+            ? `${allowance} · ${tier[0].toUpperCase() + tier.slice(1)} until ${formatPlanExpiry(plan.expires_at)}`
+            : allowance;
+          const downgradeTier = { bronze: 'Free', silver: 'Bronze', gold: 'Silver' }[tier];
+          const expiryMessage = plan.expires_at ? `After expiry, your plan moves to ${downgradeTier}. ` : '';
+          const daysUntilExpiry = plan.expires_at
+            ? Math.max(0, Math.ceil((new Date(plan.expires_at) - Date.now()) / 86400000))
+            : null;
+          const expiryWarning = daysUntilExpiry !== null && daysUntilExpiry <= 7
+            ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}. `
+            : '';
+          if (plan.next_tier) {
+            const nextName = plan.next_tier[0].toUpperCase() + plan.next_tier.slice(1);
+            planGuidance.textContent = `${expiryWarning}${expiryMessage}${plan.referrals_needed_for_next_tier} more successful referral unlocks ${nextName} for 30 days.`;
+          } else {
+            planGuidance.textContent = `${expiryWarning}${expiryMessage}One more successful referral renews Gold for 30 days.`;
+          }
+          referralLink.value = plan.referral_url || '';
+          const referralTarget = document.querySelector(`.plan-option[data-plan="${plan.next_tier || 'gold'}"]`);
+          if (referralTarget && referralShare) {
+            referralActionLabel.textContent = plan.next_tier ? `Unlock ${plan.next_tier}` : 'Renew Gold';
+            referralTarget.append(referralShare);
+            referralShare.hidden = false;
+          }
+          return plan;
+        } catch (error) {
+          planSummary.textContent = error.message;
+          planGuidance.textContent = 'Please refresh to try again.';
+          return null;
+        }
+      }
+      if (copyReferralButton) {
+        copyReferralButton.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(referralLink.value);
+            copyReferralButton.textContent = 'Copied';
+            window.setTimeout(() => { copyReferralButton.textContent = 'Copy link'; }, 1600);
+          } catch (_error) {
+            referralLink.select();
+            document.execCommand('copy');
+          }
+        });
+      }
+      function closeSubscription() {
+        if (!subscriptionOverlay) return;
+        subscriptionOverlay.hidden = true;
+        document.body.style.overflow = '';
+        if (subscriptionOpen && !subscriptionOpen.hidden) subscriptionOpen.focus();
+        else headerPlanStatus?.focus();
+      }
+      function openSubscription() {
+        subscriptionOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        subscriptionBack.focus();
+      }
+      subscriptionOpen?.addEventListener('click', openSubscription);
+      headerPlanStatus?.addEventListener('click', openSubscription);
+      headerPlanStatus?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openSubscription();
+        }
+      });
+      subscriptionBack?.addEventListener('click', closeSubscription);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && subscriptionOverlay && !subscriptionOverlay.hidden) closeSubscription();
+      });
+      function showAuthGate(details = {}) {
+        sessionStorage.setItem('pendingStockSearch', query.value.trim());
+        authGateSignin.href = details.login_url || '/login?next=/';
+        authGateSignup.href = details.signup_url || '/signup?next=/';
+        authGate.hidden = false;
+        document.body.style.overflow = 'hidden';
+        authGateSignup.focus();
+      }
+      function closeAuthGate() {
+        authGate.hidden = true;
+        document.body.style.overflow = '';
+        query.focus();
+      }
+      authGateClose.addEventListener('click', closeAuthGate);
+      authGate.addEventListener('click', (event) => {
+        if (event.target === authGate) closeAuthGate();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !authGate.hidden) closeAuthGate();
+      });
       const metricHelp = {
         profit: 'PAT: profit left after all expenses and tax. Rising, sustainable PAT is generally positive.',
         revenue: 'Revenue: income from the company’s main business. Prefer consistent growth alongside stable or improving margins.',
@@ -984,7 +1310,9 @@
           ...options,
         );
         indexPickerLabel.textContent = `${label} constituents`;
-        fullIndexScreeningButton.textContent = `Run full ${label} screening`;
+        fullIndexScreeningButton.textContent = currentUserAuthenticated
+          ? `Run full ${label} screening`
+          : `Preview ${label} screening 🔒`;
         visibleIndexEndpoint = endpoint;
         visibleIndexLabel = label;
         visibleIndexStocks = stocks;
@@ -1015,7 +1343,7 @@
         });
       }
       function updateScreeningFilterCounts() {
-        const rows = [...screeningResultsBody.querySelectorAll('tr')];
+        const rows = [...screeningResultsBody.querySelectorAll('tr:not(.screening-locked-row)')];
         const labels = { all: 'All', strong: 'Strong', healthy: 'Healthy', mixed: 'Mixed', weak: 'Weak' };
         screeningFilterButtons.forEach((button) => {
           const filter = button.dataset.screeningFilter;
@@ -1044,10 +1372,28 @@
       async function runFullIndexScreening() {
         if (!visibleIndexStocks.length) return;
         const runId = ++screeningRunId;
-        const stocks = visibleIndexStocks.slice();
+        const allStocks = visibleIndexStocks.slice();
+        const plan = currentUserAuthenticated ? await loadPlanCard() : null;
+        if (currentUserAuthenticated && !plan) return;
+        let stocks;
+        if (currentUserAuthenticated && plan.stock_limit != null) {
+          const alreadyUsed = new Set((plan.used_symbols || []).map((symbol) => symbol.toUpperCase()));
+          let newSlots = plan.stocks_remaining;
+          stocks = allStocks.filter((stock) => {
+            if (alreadyUsed.has(stock.symbol.toUpperCase())) return true;
+            if (newSlots <= 0) return false;
+            newSlots -= 1;
+            return true;
+          });
+        } else {
+          stocks = currentUserAuthenticated ? allStocks : allStocks.slice(0, 3);
+        }
+        const lockedCount = allStocks.length - stocks.length;
         const indexLabel = visibleIndexLabel;
         screeningTitle.textContent = `${indexLabel} stock screening`;
-        screeningProgress.textContent = `Screened 0 of ${stocks.length} stocks`;
+        screeningProgress.textContent = currentUserAuthenticated
+          ? `Your plan can display ${stocks.length} of ${allStocks.length} stocks in this screening`
+          : `Free preview · analysing 3 of ${allStocks.length} stocks`;
         screeningProgressBar.style.width = '0%';
         activeScreeningFilter = 'all';
         screeningOverlay.hidden = false;
@@ -1055,7 +1401,7 @@
         screeningClose.focus();
         const resultCells = [];
         const detailsButtons = [];
-        screeningResultsBody.replaceChildren(...stocks.map((stock) => {
+        const previewRows = stocks.map((stock) => {
           const row = document.createElement('tr');
           row.dataset.category = 'pending';
           const stockCell = document.createElement('th');
@@ -1081,7 +1427,65 @@
           detailsButtons.push(detailsButton);
           row.append(stockCell, resultCell, detailsCell);
           return row;
-        }));
+        });
+        if (lockedCount > 0) {
+          const lockedRow = Object.assign(document.createElement('tr'), {
+            className: 'screening-locked-row',
+          });
+          lockedRow.dataset.category = 'locked';
+          const lockedCell = document.createElement('td');
+          lockedCell.colSpan = 3;
+          const blur = Object.assign(document.createElement('div'), { className: 'screening-locked-blur' });
+          blur.setAttribute('aria-hidden', 'true');
+          Array.from({ length: 5 }).forEach(() => {
+            const fakeRow = Object.assign(document.createElement('span'), { className: 'screening-fake-row' });
+            fakeRow.append(
+              Object.assign(document.createElement('span'), { className: 'screening-fake-cell company' }),
+              Object.assign(document.createElement('span'), { className: 'screening-fake-cell analysis' }),
+              Object.assign(document.createElement('span'), { className: 'screening-fake-cell details' }),
+            );
+            blur.append(fakeRow);
+          });
+          const content = Object.assign(document.createElement('div'), { className: 'screening-locked-content' });
+          const actions = Object.assign(document.createElement('div'), { className: 'screening-unlock-actions' });
+          if (currentUserAuthenticated) {
+            const upgrade = Object.assign(document.createElement('button'), {
+              className: 'account-link primary', type: 'button', textContent: 'View upgrade options',
+            });
+            upgrade.addEventListener('click', () => {
+              closeFullScreening();
+              subscriptionOpen?.click();
+            });
+            actions.append(upgrade);
+          } else {
+            actions.append(
+              Object.assign(document.createElement('a'), {
+                className: 'account-link', href: '/login?next=/', textContent: 'Sign in',
+              }),
+              Object.assign(document.createElement('a'), {
+                className: 'account-link primary', href: '/signup?next=/', textContent: 'Create free account',
+              }),
+            );
+          }
+          content.append(
+            Object.assign(document.createElement('span'), {
+              className: 'screening-lock-icon', textContent: '🔒',
+            }),
+            Object.assign(document.createElement('strong'), {
+              textContent: `${lockedCount} more stock signals are locked`,
+            }),
+            Object.assign(document.createElement('p'), {
+              textContent: currentUserAuthenticated
+                ? 'Upgrade your plan with a successful referral to reveal more results.'
+                : 'Sign in to see more screening results.',
+            }),
+            actions,
+          );
+          lockedCell.append(blur, content);
+          lockedRow.append(lockedCell);
+          previewRows.push(lockedRow);
+        }
+        screeningResultsBody.replaceChildren(...previewRows);
         updateScreeningFilterCounts();
         applyScreeningFilter();
         let nextIndex = 0;
@@ -1105,7 +1509,8 @@
                 data = cached.data;
               } else {
                 if (cached) stockResultCache.delete(cacheKey);
-                const response = await fetch(`/stock/${encodeURIComponent(stock.symbol)}`);
+                const indexName = visibleIndexEndpoint.replace(/^\//, '');
+                const response = await fetch(`/screening/${encodeURIComponent(indexName)}/${encodeURIComponent(stock.symbol)}`);
                 data = await readJson(response);
                 if (!response.ok) throw new Error(data.error || 'Analysis unavailable');
                 stockResultCache.set(cacheKey, { cachedAt: Date.now(), data });
@@ -1131,7 +1536,9 @@
         };
         await Promise.all(Array.from({ length: Math.min(5, stocks.length) }, worker));
         if (runId === screeningRunId) {
-          screeningProgress.textContent = `Screening complete · ${completed} stocks analysed`;
+          screeningProgress.textContent = currentUserAuthenticated
+            ? `Screening complete · ${completed} stocks analysed`
+            : `Free preview complete · ${completed} of ${allStocks.length} stocks shown`;
           detailsButtons.forEach((button) => {
             button.disabled = false;
           });
@@ -1266,11 +1673,22 @@
           const cached = stockResultCache.get(cacheKey);
           let data;
           if (cached && Date.now() - cached.cachedAt < stockResultCacheTtlMs) {
+            const accessResponse = await fetch(`/search-access?query=${encodeURIComponent(query.value)}`);
+            const access = await readJson(accessResponse);
+            if (accessResponse.status === 401 && access.auth_required) {
+              showAuthGate(access);
+              return;
+            }
+            if (!accessResponse.ok) throw new Error(access.error || 'Unable to check stock access.');
             data = cached.data;
           } else {
             if (cached) stockResultCache.delete(cacheKey);
             const response = await fetch(`/search?query=${encodeURIComponent(query.value)}`);
             data = await readJson(response);
+            if (response.status === 401 && data.auth_required) {
+              showAuthGate(data);
+              return;
+            }
             if (!response.ok) throw new Error(data.error || 'Unable to fetch stock data.');
             const entry = { cachedAt: Date.now(), data };
             stockResultCache.set(cacheKey, entry);
@@ -1278,6 +1696,7 @@
           }
           await analysisDisplayDelay;
           renderFullStockData(data);
+          if (currentUserAuthenticated) await loadPlanCard();
         } catch (error) {
           await analysisDisplayDelay;
           message.textContent = error.message;
@@ -1285,6 +1704,22 @@
           message.classList.remove('loading');
         }
       });
+      (async () => {
+        const pendingSearch = sessionStorage.getItem('pendingStockSearch');
+        if (!pendingSearch) return;
+        try {
+          const response = await fetch('/auth/status');
+          const status = await readJson(response);
+          if (status.authenticated) {
+            sessionStorage.removeItem('pendingStockSearch');
+            query.value = pendingSearch;
+            form.requestSubmit();
+          }
+        } catch (_error) {
+          // Authentication status is non-critical; the user can search again.
+        }
+      })();
+      loadPlanCard();
     </script>
   </body>
 </html>

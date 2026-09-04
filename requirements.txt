@@ -1,4 +1,8 @@
 Flask
+Authlib
 gunicorn
+python-dotenv
 requests
 yfinance
+boto3
+botocore[crt]
