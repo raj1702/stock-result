@@ -112,7 +112,7 @@
       #full-index-screening-button { padding: 7px 10px; border: 1px solid #7f56d9; border-radius: 6px; background: linear-gradient(135deg, #7f56d9, #6941c6); color: #fff; font-size: 11px; font-weight: 750; box-shadow: 0 3px 8px rgba(105, 65, 198, .22); }
       #full-index-screening-button:hover, #full-index-screening-button:focus-visible { background: #53389e; outline: none; }
       #nifty-select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #101828; font: inherit; font-size: 12px; }
-      #screening-overlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; padding: 20px; background: rgba(248, 250, 252, .98); backdrop-filter: blur(8px); }
+      #screening-overlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; padding: 20px; overflow: hidden; background: #f8fafc; }
       #screening-overlay[hidden] { display: none; }
       #auth-gate { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; box-sizing: border-box; padding: 20px; background: rgba(16,24,40,.58); backdrop-filter: blur(5px); }
       #auth-gate[hidden] { display: none; }
@@ -153,15 +153,15 @@
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       .screening-details-button:disabled { cursor: not-allowed; border-color: #d0d5dd; background: #f2f4f7; color: #98a2b3; box-shadow: none; }
-      .screening-locked-row td { position: relative; height: 220px; padding: 0 !important; overflow: hidden; background: #f8fafc; text-align: center !important; }
-      .screening-locked-blur { position: absolute; inset: -8px; display: grid; align-content: stretch; filter: blur(5px); opacity: .72; transform: scale(1.025); }
+      .screening-locked-row td { position: relative !important; isolation: isolate; height: 220px; padding: 0 !important; overflow: hidden; background: #eef2f7; text-align: center !important; }
+      .screening-locked-blur { position: absolute; z-index: 0; inset: -8px; display: grid; align-content: stretch; filter: blur(5px); opacity: .62; pointer-events: none; transform: scale(1.025); }
       .screening-fake-row { display: grid; grid-template-columns: 220px minmax(300px,1fr) 118px; align-items: center; min-height: 47px; padding: 0 12px; border-bottom: 1px solid #d0d5dd; background: #fff; }
       .screening-fake-row:nth-child(even) { background: #f9fafb; }
       .screening-fake-cell { display: block; height: 11px; margin: 0 10px; border-radius: 4px; background: #98a2b3; }
       .screening-fake-cell.company { width: 72%; background: linear-gradient(90deg,#667085 0 65%,#b2ccff 65%); }
       .screening-fake-cell.analysis { width: 86%; height: 20px; background: linear-gradient(90deg,#abefc6 0 18%,#d0d5dd 18% 62%,#fecdc9 62% 78%,#d0d5dd 78%); }
       .screening-fake-cell.details { width: 72px; height: 25px; justify-self: center; border: 1px solid #84adff; background: #dbe8ff; }
-      .screening-locked-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 15px; background: radial-gradient(circle at center, rgba(255,255,255,.84) 0 30%, rgba(248,250,252,.6) 55%, rgba(248,250,252,.25) 100%); }
+      .screening-locked-content { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; padding: 15px; pointer-events: auto; background: radial-gradient(circle at center, rgba(255,255,255,.98) 0 36%, rgba(248,250,252,.9) 58%, rgba(248,250,252,.6) 100%); }
       .screening-lock-icon { display: grid; place-items: center; width: 31px; height: 31px; margin-bottom: 6px; border-radius: 50%; background: #eff4ff; color: #155eef; font-size: 15px; }
       .screening-locked-content strong { color: #101828; font-size: 14px; }
       .screening-locked-content p { margin: 4px 0 9px; color: #667085; font-size: 11px; }
@@ -426,7 +426,7 @@
         .index-picker-heading { align-items: stretch; flex-direction: column; }
         #full-index-screening-button { width: 100%; }
         #nifty-select { box-sizing: border-box; width: 100%; }
-        #screening-overlay { padding: 12px; }
+        #screening-overlay { padding: 12px; background: #f8fafc; }
         #auth-gate { padding: 14px; }
         .auth-gate-card { padding: 23px 17px 18px; }
         .auth-gate-actions { grid-template-columns: 1fr; }
@@ -445,6 +445,13 @@
         #screening-results-table tbody td { display: block; box-sizing: border-box; width: 100%; padding: 10px; border: 0; font-size: 11px; }
         #screening-results-table th:last-child, #screening-results-table td:last-child { width: 100%; text-align: right; }
         #screening-results-table .screening-details-cell { padding-top: 0; background: inherit; }
+        #screening-results-table .screening-locked-row { min-height: 230px; overflow: hidden; background: #eef2f7; }
+        #screening-results-table .screening-locked-row td { display: block; width: 100%; height: 230px; min-height: 230px; padding: 0 !important; }
+        .screening-locked-content { inset: 0; padding: 18px 14px; background: rgba(248,250,252,.94); }
+        .screening-locked-content strong { max-width: 260px; font-size: 14px; }
+        .screening-locked-content p { max-width: 270px; margin: 6px 0 11px; font-size: 11px; line-height: 1.4; }
+        .screening-unlock-actions { position: relative; z-index: 3; justify-content: center; width: 100%; }
+        .screening-unlock-actions .account-link { min-height: 34px; padding: 8px 11px; }
         #search-results-layout { width: 100%; min-width: 0; max-width: 100%; }
         #results-column, #tables { min-width: 0; max-width: 100%; }
         #tables { box-sizing: border-box; grid-template-columns: minmax(0, 1fr) minmax(74px, 82px); width: 100%; margin-top: 20px; gap: 5px; }
