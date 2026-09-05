@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import timedelta
 from urllib.parse import urlencode
 
@@ -6,6 +7,7 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from services.plan_service import PlanService
+from services.payment_service import PaymentService
 from services.stock_service import StockService
 
 load_dotenv()
@@ -20,6 +22,7 @@ app.config.update(
 )
 stock_service = StockService(api_client=None)  # No need to pass api_client
 plan_service = PlanService()
+payment_service = PaymentService()
 
 COGNITO_REGION = os.getenv("COGNITO_REGION", "ap-south-1")
 COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID", "")
@@ -73,16 +76,6 @@ def _guest_stock_access(symbol, *, record=False, limit=2, session_key="guest_sto
     return None
 
 
-def _qualify_current_user_referral():
-    user = session.get("user")
-    if not user:
-        return
-    try:
-        plan_service.qualify_referral(user["sub"])
-    except Exception:
-        app.logger.exception("Unable to qualify referral after stock analysis")
-
-
 def _plan_limit_response(usage):
     return jsonify({
         "plan_limit_reached": True,
@@ -118,7 +111,6 @@ def _complete_stock_access(symbol, *, screening_preview=False):
     usage = plan_service.record_stock_usage(user["sub"], symbol)
     if not usage["allowed"]:
         return _plan_limit_response(usage)
-    _qualify_current_user_referral()
     return None
 
 
@@ -130,18 +122,6 @@ def health():
 
 @app.route('/', methods=['GET'])
 def home():
-    referral_code = request.args.get("ref")
-    if referral_code:
-        try:
-            valid_code = plan_service.capture_referral(
-                referral_code,
-                current_user_id=(session.get("user") or {}).get("sub"),
-            )
-            if valid_code and not session.get("user"):
-                session.permanent = True
-                session["pending_referral_code"] = valid_code
-        except Exception:
-            app.logger.exception("Unable to capture referral code")
     return render_template('index.html', current_user=session.get("user"))
 
 
@@ -195,7 +175,6 @@ def auth_callback():
         app.logger.exception("Cognito callback failed")
         return redirect(url_for("home", auth_error="signin_failed"))
     post_login_path = session.get("post_login_path", "/")
-    pending_referral_code = session.get("pending_referral_code")
     session.clear()
     session.permanent = True
     session["user"] = {
@@ -204,16 +183,9 @@ def auth_callback():
         "name": user.get("name") or user.get("email"),
     }
     try:
-        plan, created = plan_service.ensure_user_with_status(session["user"])
+        plan_service.ensure_user(session["user"])
         network_hash = plan_service.hash_network_address(request.remote_addr)
         plan_service.update_login_context(session["user"]["sub"], network_hash)
-        if pending_referral_code and created:
-            plan_service.register_referral(
-                session["user"]["sub"],
-                pending_referral_code,
-                email=session["user"].get("email"),
-                network_hash=network_hash,
-            )
     except Exception:
         # Authentication should still succeed during a temporary DynamoDB issue.
         # Plan-protected actions will fail closed when they check entitlement.
@@ -239,19 +211,72 @@ def plan_status():
     try:
         plan = plan_service.ensure_user(user)
         usage = plan_service.get_usage(user["sub"], plan)
-        referral_path = url_for("home", ref=plan["referral_code"])
-        referral_url = f"{PUBLIC_BASE_URL}{referral_path}" if PUBLIC_BASE_URL else url_for(
-            "home", ref=plan["referral_code"], _external=True
-        )
         return jsonify({
             "authenticated": True,
             **plan,
             **usage,
-            "referral_url": referral_url,
+            "payments_enabled": payment_service.ready,
+            "paid_plans": payment_service.public_plans(),
         }), 200
     except Exception:
         app.logger.exception("Unable to load the user plan")
         return jsonify({"error": "Your plan is temporarily unavailable."}), 503
+
+
+@app.route('/api/payments/order', methods=['POST'])
+def create_payment_order():
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Sign in before purchasing a plan."}), 401
+    try:
+        payload = request.get_json(silent=True) or {}
+        requested_tier = (payload.get("tier") or "").lower()
+        current_plan = plan_service.ensure_user(user)
+        tier_rank = {"free": 0, "bronze": 1, "silver": 2, "gold": 3}
+        if requested_tier not in tier_rank or requested_tier == "free":
+            raise ValueError("Unknown paid plan")
+        if tier_rank[requested_tier] < tier_rank[current_plan["plan"]]:
+            raise ValueError("You cannot purchase a lower plan while your current plan is active")
+        return jsonify(payment_service.create_order(user, requested_tier)), 201
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        app.logger.exception("Unable to create Razorpay order")
+        return jsonify({"error": "Payment checkout is temporarily unavailable."}), 502
+
+
+@app.route('/api/payments/verify', methods=['POST'])
+def verify_payment():
+    user = session.get("user")
+    if not user:
+        return jsonify({"error": "Sign in before verifying a payment."}), 401
+    try:
+        payload = request.get_json(silent=True) or {}
+        order, payment = payment_service.verify_checkout_payment(user["sub"], payload)
+        plan = plan_service.activate_paid_plan(order, payment)
+        usage = plan_service.get_usage(user["sub"], plan)
+        return jsonify({"verified": True, **plan, **usage}), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception:
+        app.logger.exception("Unable to verify Razorpay payment")
+        return jsonify({"error": "Payment verification failed. Your plan was not changed."}), 502
+
+
+@app.route('/api/payments/webhook', methods=['POST'])
+def razorpay_webhook():
+    raw_body = request.get_data(cache=False)
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    try:
+        payment_service.verify_webhook(raw_body, signature)
+        event = json.loads(raw_body)
+        order, payment = payment_service.captured_payment_from_webhook(event)
+        if order and payment:
+            plan_service.activate_paid_plan(order, payment)
+        return jsonify({"received": True}), 200
+    except Exception:
+        app.logger.exception("Rejected Razorpay webhook")
+        return jsonify({"error": "Invalid webhook"}), 400
 
 
 @app.route('/logout', methods=['GET'])

@@ -33,7 +33,6 @@ class FakePlanService:
     def __init__(self, allowed=True):
         self.allowed = allowed
         self.recorded = []
-        self.qualified = []
 
     def can_access_stock(self, _user_id, _symbol):
         return {
@@ -53,9 +52,6 @@ class FakePlanService:
             "stocks_remaining": 9,
             "used_symbols": [symbol],
         }
-
-    def qualify_referral(self, user_id):
-        self.qualified.append(user_id)
 
     def get_plan(self, _user_id):
         return {"stock_limit": 10}
@@ -89,13 +85,12 @@ def test_direct_stock_endpoint_cannot_bypass_limit(client):
     assert stock.fetch_calls == 0
 
 
-def test_interpretation_endpoint_records_usage_and_qualifies_referral(client):
+def test_interpretation_endpoint_records_usage(client):
     browser, stock, plan = client
     response = browser.get("/interpretation/HDFCBANK")
     assert response.status_code == 200
     assert stock.fetch_calls == 1
     assert plan.recorded == ["HDFCBANK"]
-    assert plan.qualified == ["user-1"]
 
 
 def test_search_access_checks_quota_before_cached_result(client):
@@ -112,4 +107,3 @@ def test_screening_result_does_not_consume_quota(client):
     assert response.status_code == 200
     assert stock.fetch_calls == 1
     assert plan.recorded == []
-    assert plan.qualified == []

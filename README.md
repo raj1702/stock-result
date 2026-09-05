@@ -119,7 +119,7 @@ python3 scripts/manage_user_plan.py \
 Every tier grant, quota override, or quota reset begins a fresh quota cycle.
 Old usage records remain in DynamoDB for audit purposes. Applied administrator
 actions also create an `ADMIN#...` audit record against the user. Normal
-referral upgrades and automatic tier downgrades remove custom quota overrides.
+Paid upgrades and automatic tier downgrades remove custom quota overrides.
 
 Do not expose this command through a public web route or place AWS access keys
 in `.env`. EC2 and ECS deployments should use the restricted IAM role described

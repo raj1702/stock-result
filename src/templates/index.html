@@ -46,7 +46,7 @@
       .subscription-header h2 { margin: 0; color: #35265f; font-size: 26px; letter-spacing: -.025em; }
       .subscription-header p { margin: 4px 0 0; color: #655b7c; font-size: 12px; }
       .subscription-back { padding: 8px 12px; border: 1px solid #7f56d9; background: #6941c6; color: #fff; font-size: 12px; font-weight: 750; }
-      .plan-card { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(220px, auto); align-items: center; gap: 16px; width: 100%; max-width: 100%; margin: 0 0 12px; padding: 18px; border: 0; border-left: 6px solid #7f56d9; border-radius: 5px; background: linear-gradient(105deg,#4a2c85,#6941c6 58%,#7f56d9); box-shadow: 0 8px 20px rgba(74,44,133,.2); }
+      .plan-card { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; width: 100%; max-width: 100%; margin: 0 0 12px; padding: 18px; border: 0; border-left: 6px solid #7f56d9; border-radius: 5px; background: linear-gradient(105deg,#4a2c85,#6941c6 58%,#7f56d9); box-shadow: 0 8px 20px rgba(74,44,133,.2); }
       .plan-card.free { border-left-color: #667085; background: linear-gradient(105deg,#344054,#475467 58%,#667085); }
       .plan-card.bronze { border-left-color: #d18a55; background: linear-gradient(105deg,#704022,#96552c 58%,#b66a35); box-shadow: 0 8px 20px rgba(112,64,34,.2); }
       .plan-card.silver { border-left-color: #98a2b3; background: linear-gradient(105deg,#344054,#475467 58%,#667085); }
@@ -57,14 +57,7 @@
       .plan-copy { min-width: 0; }
       .plan-summary { margin: 0; color: #fff; font-size: 13px; font-weight: 800; line-height: 1.4; }
       .plan-guidance { margin: 3px 0 0; color: #eee7ff; font-size: 10px; line-height: 1.4; }
-      .referral-share { display: flex; align-items: center; gap: 5px; min-width: 0; }
-      .referral-share[hidden] { display: none; }
-      .plan-option .referral-share { justify-self: end; }
-      .plan-option .copy-referral { border-color: #6941c6; background: #6941c6; color: #fff; }
-      .referral-action-label { color: #6941c6; font-size: 9px; font-weight: 800; white-space: nowrap; }
-      .referral-link { box-sizing: border-box; width: 190px; min-width: 0; padding: 7px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; color: #475467; font-size: 10px; text-overflow: ellipsis; }
-      .copy-referral { padding: 7px 9px; border: 1px solid #fff; border-radius: 5px; background: #fff; color: #6941c6; font-size: 10px; font-weight: 800; white-space: nowrap; }
-      .plan-options { display: grid; grid-auto-rows: minmax(64px, 1fr); gap: 7px; }
+      .plan-options { display: grid; grid-auto-rows: minmax(70px, 1fr); gap: 7px; }
       .plan-option { box-sizing: border-box; display: grid; grid-template-columns: 110px minmax(0,1fr) 180px auto; align-items: center; gap: 14px; min-height: 64px; padding: 13px 16px; border: 1px solid #d8d1ea; border-left: 5px solid #98a2b3; border-radius: 4px; background: rgba(255,255,255,.82); }
       .plan-option[data-plan="bronze"] { border-left-color: #a65d2f; background: #fff8f2; }
       .plan-option[data-plan="silver"] { border-left-color: #667085; background: #f8fafc; }
@@ -78,6 +71,12 @@
       .plan-option p { margin: 0; color: #655b7c; font-size: 11px; line-height: 1.5; }
       .plan-option strong { color: #4f4268; font-size: 11px; }
       .current-plan-mark { display: inline-block; padding: 3px 6px; border-radius: 3px; background: #6941c6; color: #fff; font-size: 9px; font-weight: 850; text-transform: uppercase; white-space: nowrap; }
+      .plan-price s { margin-right: 5px; color: #98a2b3; font-weight: 600; }
+      .plan-pay-button { min-width: 92px; padding: 8px 10px; border-radius: 5px; background: #6941c6; font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .plan-pay-button:disabled { cursor: not-allowed; background: #e4e7ec; color: #98a2b3; }
+      .payment-status { min-height: 18px; margin: 10px 0 0; color: #475467; font-size: 11px; font-weight: 700; text-align: right; }
+      .payment-status.success { color: #067647; }
+      .payment-status.error { color: #b42318; }
       .india-market-mark { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; margin-right: 7px; padding: 2px 8px 3px; overflow: hidden; border: 1px solid rgba(19,136,8,.4); border-radius: 6px; background: repeating-linear-gradient(105deg, transparent 0, transparent 26px, rgba(255,255,255,.96) 38px, transparent 50px, transparent 76px), linear-gradient(180deg, rgba(255, 153, 51, .62) 0 31%, #fff 31% 66%, rgba(19, 136, 8, .48) 66% 100%); background-size: 100px 100%, 100% 100%; color: #173b71; font-weight: 850; letter-spacing: -.025em; text-shadow: 0 1px 1px rgba(255,255,255,.9); box-shadow: 0 2px 7px rgba(16, 24, 40, .1); vertical-align: 1px; transform-origin: left center; will-change: transform, background-position; animation: india-flag-glitter 4.2s linear infinite, india-flag-glow 3s ease-in-out infinite, india-flag-ripple 5.4s ease-in-out infinite; }
       .india-market-text { position: relative; z-index: 1; }
       .india-market-chakra { position: relative; z-index: 1; color: #000080; font-size: .7em; line-height: 1; text-shadow: 0 0 4px rgba(255,255,255,.95); animation: india-chakra-glimmer 3s ease-in-out infinite; }
@@ -400,14 +399,11 @@
         .subscription-back { flex: 0 0 auto; padding: 7px 9px; }
         .plan-card { grid-template-columns: auto minmax(0, 1fr); gap: 9px; margin-bottom: 12px; padding: 11px; }
         .plan-tier { min-width: 58px; padding: 7px; font-size: 10px; }
-        .referral-share { grid-column: 1 / -1; }
-        .referral-link { flex: 1; width: auto; }
         .plan-options { gap: 6px; }
         .plan-option { grid-template-columns: 72px minmax(0,1fr); gap: 5px 9px; padding: 10px; }
         .plan-option strong { grid-column: 2; }
+        .plan-pay-button { grid-column: 2; justify-self: start; }
         .current-plan-mark { grid-column: 2; justify-self: start; }
-        .plan-option .referral-share { grid-column: 1 / -1; width: 100%; justify-self: stretch; }
-        .referral-action-label { display: none; }
         .mobile-view-tip { display: block; margin-top: 4px; color: #667085; font-size: 11px; font-weight: 400; line-height: 1.35; }
         body > p:first-of-type { margin-bottom: 14px; font-size: 14px; }
         #message.stock-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; box-sizing: border-box; gap: 6px; padding: 6px; }
@@ -523,7 +519,7 @@
           <header class="subscription-header">
             <div>
               <h2 id="subscription-title">Subscription plan</h2>
-              <p>Earn upgrades through successful referrals. Each paid tier is valid for 30 days.</p>
+              <p>Choose a plan with secure Razorpay checkout. Each purchase is valid for 30 days.</p>
             </div>
             <button id="subscription-back" class="subscription-back" type="button">← Back to home</button>
           </header>
@@ -535,16 +531,12 @@
             </div>
           </section>
           <div class="plan-options" aria-label="Available plans">
-            <article class="plan-option" data-plan="free"><h3>Free</h3><p>Explore up to 10 stocks each month.</p><strong>Default plan</strong></article>
-            <article class="plan-option" data-plan="bronze"><h3>Bronze</h3><p>Explore up to 25 stocks each month.</p><strong>1 successful referral</strong></article>
-            <article class="plan-option" data-plan="silver"><h3>Silver</h3><p>Explore up to 40 stocks each month.</p><strong>2 successful referrals</strong></article>
-            <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong>3 successful referrals</strong></article>
+            <article class="plan-option" data-plan="free"><h3>Free</h3><p>Explore up to 10 stocks each month.</p><strong id="free-plan-status">Free tier</strong></article>
+            <article class="plan-option" data-plan="bronze"><h3>Bronze</h3><p>Explore up to 25 stocks each month.</p><strong class="plan-price"><s>₹500</s>₹25 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="bronze">Pay ₹25</button></article>
+            <article class="plan-option" data-plan="silver"><h3>Silver</h3><p>Explore up to 40 stocks each month.</p><strong class="plan-price"><s>₹1,000</s>₹50 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="silver">Pay ₹50</button></article>
+            <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong class="plan-price"><s>₹2,500</s>₹250 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="gold">Pay ₹250</button></article>
           </div>
-          <div id="referral-share" class="referral-share" hidden>
-            <span id="referral-action-label" class="referral-action-label">Referral link</span>
-            <input id="referral-link" class="referral-link" type="text" readonly aria-label="Your referral link">
-            <button id="copy-referral" class="copy-referral" type="button">Copy link</button>
-          </div>
+          <p id="payment-status" class="payment-status" aria-live="polite"></p>
         </div>
       </section>
     {% endif %}
@@ -651,6 +643,7 @@
         </div>
       </div>
     </section>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
@@ -699,10 +692,9 @@
       const planTier = document.getElementById('plan-tier');
       const planSummary = document.getElementById('plan-summary');
       const planGuidance = document.getElementById('plan-guidance');
-      const referralLink = document.getElementById('referral-link');
-      const copyReferralButton = document.getElementById('copy-referral');
-      const referralShare = document.getElementById('referral-share');
-      const referralActionLabel = document.getElementById('referral-action-label');
+      const paymentStatus = document.getElementById('payment-status');
+      const planPayButtons = document.querySelectorAll('.plan-pay-button');
+      const freePlanStatus = document.getElementById('free-plan-status');
       const subscriptionOpen = document.getElementById('subscription-open');
       const subscriptionOverlay = document.getElementById('subscription-overlay');
       const subscriptionBack = document.getElementById('subscription-back');
@@ -749,6 +741,9 @@
             option.classList.toggle('current', option.dataset.plan === tier);
             option.querySelector('.current-plan-mark')?.remove();
           });
+          if (freePlanStatus) {
+            freePlanStatus.textContent = tier === 'free' ? 'Current plan' : 'Base free tier';
+          }
           planSummary.textContent = plan.expires_at
             ? `${allowance} · ${tier[0].toUpperCase() + tier.slice(1)} until ${formatPlanExpiry(plan.expires_at)}`
             : allowance;
@@ -761,18 +756,21 @@
             ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}. `
             : '';
           if (plan.next_tier) {
-            const nextName = plan.next_tier[0].toUpperCase() + plan.next_tier.slice(1);
-            planGuidance.textContent = `${expiryWarning}${expiryMessage}${plan.referrals_needed_for_next_tier} more successful referral unlocks ${nextName} for 30 days.`;
+            planGuidance.textContent = `${expiryWarning}${expiryMessage}Purchase a plan below to upgrade for 30 days.`;
           } else {
-            planGuidance.textContent = `${expiryWarning}${expiryMessage}One more successful referral renews Gold for 30 days.`;
+            planGuidance.textContent = `${expiryWarning}${expiryMessage}Renew Gold to continue unlimited access.`;
           }
-          referralLink.value = plan.referral_url || '';
-          const referralTarget = document.querySelector(`.plan-option[data-plan="${plan.next_tier || 'gold'}"]`);
-          if (referralTarget && referralShare) {
-            referralActionLabel.textContent = plan.next_tier ? `Unlock ${plan.next_tier}` : 'Renew Gold';
-            referralTarget.append(referralShare);
-            referralShare.hidden = false;
-          }
+          const tierRank = { free: 0, bronze: 1, silver: 2, gold: 3 };
+          planPayButtons.forEach((button) => {
+            const purchaseTier = button.dataset.purchaseTier;
+            const isCurrentPlan = purchaseTier === tier;
+            button.disabled = isCurrentPlan
+              || tierRank[purchaseTier] < tierRank[tier]
+              || !plan.payments_enabled;
+            button.textContent = isCurrentPlan
+              ? 'Current plan'
+              : `Pay ₹${plan.paid_plans[purchaseTier].price_rupees}`;
+          });
           return plan;
         } catch (error) {
           planSummary.textContent = error.message;
@@ -780,18 +778,71 @@
           return null;
         }
       }
-      if (copyReferralButton) {
-        copyReferralButton.addEventListener('click', async () => {
-          try {
-            await navigator.clipboard.writeText(referralLink.value);
-            copyReferralButton.textContent = 'Copied';
-            window.setTimeout(() => { copyReferralButton.textContent = 'Copy link'; }, 1600);
-          } catch (_error) {
-            referralLink.select();
-            document.execCommand('copy');
-          }
-        });
+      async function startPlanPayment(tier, button) {
+        if (!window.Razorpay) {
+          paymentStatus.className = 'payment-status error';
+          paymentStatus.textContent = 'Payment checkout could not load. Please refresh and try again.';
+          return;
+        }
+        button.disabled = true;
+        paymentStatus.className = 'payment-status';
+        paymentStatus.textContent = 'Preparing secure checkout…';
+        try {
+          const orderResponse = await fetch('/api/payments/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier }),
+          });
+          const order = await readJson(orderResponse);
+          if (!orderResponse.ok) throw new Error(order.error || 'Unable to create payment order');
+          const checkout = new Razorpay({
+            key: order.key_id,
+            amount: order.amount,
+            currency: order.currency,
+            name: order.name,
+            description: order.description,
+            order_id: order.order_id,
+            prefill: order.prefill,
+            theme: { color: '#6941c6' },
+            modal: { ondismiss: () => {
+              paymentStatus.textContent = 'Payment cancelled. Your plan was not changed.';
+              button.disabled = false;
+            }},
+            handler: async (result) => {
+              paymentStatus.textContent = 'Verifying payment…';
+              try {
+                const verifyResponse = await fetch('/api/payments/verify', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(result),
+                });
+                const verified = await readJson(verifyResponse);
+                if (!verifyResponse.ok) throw new Error(verified.error || 'Payment verification failed');
+                paymentStatus.className = 'payment-status success';
+                paymentStatus.textContent = `${verified.plan[0].toUpperCase() + verified.plan.slice(1)} activated successfully.`;
+                await loadPlanCard();
+              } catch (error) {
+                paymentStatus.className = 'payment-status error';
+                paymentStatus.textContent = `${error.message}. If money was captured, it will be reconciled automatically.`;
+              }
+            },
+          });
+          checkout.on('payment.failed', (failure) => {
+            paymentStatus.className = 'payment-status error';
+            paymentStatus.textContent = failure.error?.description || 'Payment failed. Your plan was not changed.';
+            button.disabled = false;
+          });
+          paymentStatus.textContent = '';
+          checkout.open();
+        } catch (error) {
+          paymentStatus.className = 'payment-status error';
+          paymentStatus.textContent = error.message;
+          button.disabled = false;
+        }
       }
+      planPayButtons.forEach((button) => button.addEventListener('click', () => {
+        startPlanPayment(button.dataset.purchaseTier, button);
+      }));
       function closeSubscription() {
         if (!subscriptionOverlay) return;
         subscriptionOverlay.hidden = true;
@@ -1483,7 +1534,7 @@
             }),
             Object.assign(document.createElement('p'), {
               textContent: currentUserAuthenticated
-                ? 'Upgrade your plan with a successful referral to reveal more results.'
+                ? 'Upgrade your plan to reveal more screening results.'
                 : 'Sign in to see more screening results.',
             }),
             actions,

@@ -24,14 +24,12 @@ DISPOSABLE_EMAIL_DOMAINS = {
 
 
 class PlanService:
-    """Store and resolve a user's referral-earned plan in DynamoDB."""
+    """Store and resolve a user's paid plan and stock quota in DynamoDB."""
 
     def __init__(self):
         region = os.getenv("AWS_REGION", "ap-south-1")
         table_name = os.getenv("DYNAMODB_TABLE_NAME", "earnings-assistant")
         self.referral_secret = os.getenv("REFERRAL_CODE_SECRET") or os.getenv("FLASK_SECRET_KEY", "")
-        if not self.referral_secret:
-            raise ValueError("REFERRAL_CODE_SECRET or FLASK_SECRET_KEY must be configured")
         self.table = boto3.resource("dynamodb", region_name=region).Table(table_name)
         self.table_name = table_name
         self.dynamodb_client = self.table.meta.client
@@ -67,7 +65,6 @@ class PlanService:
                     "SK": "PROFILE",
                     "email": user.get("email") or "",
                     "plan": "free",
-                    "successful_referrals": 0,
                     "created_at": self._format_datetime(now),
                     "updated_at": self._format_datetime(now),
                 },
@@ -77,8 +74,6 @@ class PlanService:
         except ClientError as exc:
             if exc.response.get("Error", {}).get("Code") != "ConditionalCheckFailedException":
                 raise
-        self._ensure_email_identity(user_id, user.get("email"))
-        self._ensure_referral_code(user_id)
         return self.get_plan(user_id), created
 
     def _email_fingerprint(self, email):
@@ -352,13 +347,9 @@ class PlanService:
                 int(profile["stock_limit_override"])
                 if "stock_limit_override" in profile else None
             ),
-            "successful_referrals": int(profile.get("successful_referrals", 0)),
             "quota_cycle": int(profile.get("quota_cycle", 0)),
-            "referral_code": profile.get("referral_code") or self._ensure_referral_code(user_id),
             "expires_at": profile.get("tier_expires_at"),
             "next_tier": next_tier,
-            "referrals_needed_for_next_tier": 1,
-            "referral_action": "renew" if tier == "gold" else "upgrade",
         }
 
     def get_usage(self, user_id, plan=None):
@@ -419,6 +410,93 @@ class PlanService:
             or usage["stocks_remaining"] > 0
         )
         return {"allowed": allowed, **usage}
+
+    def activate_paid_plan(self, order, payment):
+        """Idempotently activate a captured Razorpay order for 30 days."""
+        user_id = order["user_id"]
+        tier = order["tier"]
+        if tier not in TIER_ORDER[1:]:
+            raise ValueError("Invalid paid tier")
+        order_id = order["PK"].removeprefix("PAYMENT#")
+        payment_id = payment["id"]
+
+        for _ in range(4):
+            current_order = self.table.get_item(
+                Key={"PK": f"PAYMENT#{order_id}", "SK": "ORDER"},
+                ConsistentRead=True,
+            ).get("Item")
+            if not current_order:
+                raise ValueError("Payment order not found")
+            if current_order.get("status") == "activated":
+                if current_order.get("payment_id") != payment_id:
+                    raise ValueError("Order was activated by another payment")
+                return self.get_plan(user_id)
+
+            profile = self.table.get_item(
+                Key={"PK": f"USER#{user_id}", "SK": "PROFILE"},
+                ConsistentRead=True,
+            ).get("Item")
+            if not profile:
+                raise ValueError("User profile not found")
+            quota_cycle = int(profile.get("quota_cycle", 0))
+            now = self._now()
+            current_tier = profile.get("plan", "free")
+            current_expiry = self._parse_datetime(profile.get("tier_expires_at"))
+            renewal_base = (
+                current_expiry
+                if current_tier == tier and current_expiry and current_expiry > now
+                else now
+            )
+            expiry = renewal_base + TIER_DURATION
+            payment_values = {
+                ":created": "created",
+                ":activated": "activated",
+                ":payment_id": payment_id,
+                ":captured_at": self._format_datetime(now),
+                ":updated": self._format_datetime(now),
+            }
+            profile_values = {
+                ":tier": tier,
+                ":started": self._format_datetime(now),
+                ":expiry": self._format_datetime(expiry),
+                ":updated": self._format_datetime(now),
+                ":cycle": quota_cycle,
+                ":next_cycle": quota_cycle + 1,
+            }
+            try:
+                self.dynamodb_client.transact_write_items(TransactItems=[
+                    {"Update": {
+                        "TableName": self.table_name,
+                        "Key": {"PK": f"PAYMENT#{order_id}", "SK": "ORDER"},
+                        "UpdateExpression": (
+                            "SET #status = :activated, payment_id = :payment_id, "
+                            "captured_at = :captured_at, updated_at = :updated"
+                        ),
+                        "ConditionExpression": "#status = :created",
+                        "ExpressionAttributeNames": {"#status": "status"},
+                        "ExpressionAttributeValues": payment_values,
+                    }},
+                    {"Update": {
+                        "TableName": self.table_name,
+                        "Key": {"PK": f"USER#{user_id}", "SK": "PROFILE"},
+                        "UpdateExpression": (
+                            "SET #plan = :tier, tier_started_at = :started, "
+                            "tier_expires_at = :expiry, quota_cycle = :next_cycle, "
+                            "updated_at = :updated REMOVE stock_limit_override"
+                        ),
+                        "ConditionExpression": (
+                            "attribute_exists(PK) AND "
+                            "(attribute_not_exists(quota_cycle) OR quota_cycle = :cycle)"
+                        ),
+                        "ExpressionAttributeNames": {"#plan": "plan"},
+                        "ExpressionAttributeValues": profile_values,
+                    }},
+                ])
+                return self.get_plan(user_id)
+            except ClientError as exc:
+                if exc.response.get("Error", {}).get("Code") != "TransactionCanceledException":
+                    raise
+        raise RuntimeError("Paid plan activation was busy; please retry")
 
     def _apply_expired_downgrades(self, profile):
         tier = profile.get("plan", "free")

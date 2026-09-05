@@ -6,3 +6,4 @@ requests
 yfinance
 boto3
 botocore[crt]
+razorpay
