@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from services.plan_service import PlanService
 from services.payment_service import PaymentService
+from services.secret_loader import load_runtime_secrets
 from services.stock_service import StockService
 
 load_dotenv()
+load_runtime_secrets()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -79,7 +81,7 @@ def _guest_stock_access(symbol, *, record=False, limit=2, session_key="guest_sto
 def _plan_limit_response(usage):
     return jsonify({
         "plan_limit_reached": True,
-        "error": "Your monthly stock limit is used. Refer a friend to upgrade your plan.",
+        "error": "Your monthly stock limit is used. Upgrade your plan to continue.",
         **usage,
     }), 403
 
