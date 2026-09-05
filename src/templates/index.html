@@ -491,8 +491,8 @@
         {% if current_user %}
           <span id="header-plan-status" class="header-plan-status" role="button" tabindex="0" aria-label="Open subscription details">
             <span class="header-plan-field"><span class="header-plan-label">Current plan</span><span id="header-plan-tier" class="header-plan-value">Loading…</span></span>
-            <span class="header-plan-field"><span class="header-plan-label">Stocks quota left</span><span id="header-plan-quota" class="header-plan-value">—</span></span>
-            <span class="header-plan-field"><span class="header-plan-label">Expires on</span><span id="header-plan-expiry" class="header-plan-value">—</span></span>
+            <span class="header-plan-field"><span class="header-plan-label">Stocks quota</span><span id="header-plan-quota" class="header-plan-value">—</span></span>
+            <span class="header-plan-field"><span id="header-plan-date-label" class="header-plan-label">Expires on</span><span id="header-plan-expiry" class="header-plan-value">—</span></span>
           </span>
           <button id="subscription-open" class="account-link plan-open" type="button">Upgrade</button>
           <span class="signed-in-user">
@@ -697,6 +697,7 @@
       const headerPlanTier = document.getElementById('header-plan-tier');
       const headerPlanQuota = document.getElementById('header-plan-quota');
       const headerPlanExpiry = document.getElementById('header-plan-expiry');
+      const headerPlanDateLabel = document.getElementById('header-plan-date-label');
       const headerPlanStatus = document.getElementById('header-plan-status');
       let visibleIndexEndpoint = '';
       let visibleIndexLabel = '';
@@ -709,6 +710,20 @@
         return new Intl.DateTimeFormat('en-IN', {
           day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
         }).format(new Date(value));
+      }
+      function nextMonthlyQuotaReset() {
+        const now = new Date();
+        const currentMonthInIndia = Number(new Intl.DateTimeFormat('en-IN', {
+          month: 'numeric', timeZone: 'Asia/Kolkata',
+        }).format(now));
+        const currentYearInIndia = Number(new Intl.DateTimeFormat('en-IN', {
+          year: 'numeric', timeZone: 'Asia/Kolkata',
+        }).format(now));
+        const nextMonth = currentMonthInIndia === 12 ? 1 : currentMonthInIndia + 1;
+        const nextYear = currentMonthInIndia === 12 ? currentYearInIndia + 1 : currentYearInIndia;
+        return new Intl.DateTimeFormat('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
+        }).format(new Date(Date.UTC(nextYear, nextMonth - 1, 1, 0, 0, 0)));
       }
       async function loadPlanCard() {
         if (!currentUserAuthenticated || !planCard) return;
@@ -731,8 +746,19 @@
           if (headerPlanTier) {
             headerPlanTier.textContent = tier[0].toUpperCase() + tier.slice(1);
           }
-          if (headerPlanQuota) headerPlanQuota.textContent = plan.stocks_remaining == null ? 'Unlimited' : String(plan.stocks_remaining);
-          if (headerPlanExpiry) headerPlanExpiry.textContent = plan.expires_at ? formatPlanExpiry(plan.expires_at) : 'No expiry';
+          if (headerPlanQuota) {
+            headerPlanQuota.textContent = plan.stocks_remaining == null
+              ? 'Unlimited'
+              : `${plan.stocks_remaining} left this month`;
+          }
+          if (headerPlanDateLabel) {
+            headerPlanDateLabel.textContent = plan.expires_at ? 'Expires on' : 'Quota resets on';
+          }
+          if (headerPlanExpiry) {
+            headerPlanExpiry.textContent = plan.expires_at
+              ? formatPlanExpiry(plan.expires_at)
+              : nextMonthlyQuotaReset();
+          }
           document.querySelectorAll('.plan-option').forEach((option) => {
             option.classList.toggle('current', option.dataset.plan === tier);
             option.querySelector('.current-plan-mark')?.remove();
