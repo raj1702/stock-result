@@ -30,12 +30,15 @@
       .header-plan-field + .header-plan-field { border-left: 1px solid #e4dcf5; }
       .header-plan-label { color: #7f7197; font-size: 7px; font-weight: 800; letter-spacing: .045em; line-height: 1.2; text-transform: uppercase; white-space: nowrap; }
       .header-plan-value { margin-top: 1px; color: #4a2c85; font-size: 10px; font-weight: 850; line-height: 1.2; white-space: nowrap; }
-      .plan-open { align-self: stretch; border-color: #6941c6; background: #6941c6; color: #fff; cursor: pointer; }
+      .plan-open { position: relative; isolation: isolate; align-self: stretch; overflow: hidden; border-color: #7f56d9; background: linear-gradient(135deg, #7f56d9, #4f2aa2); color: #fff; cursor: pointer; box-shadow: 0 0 0 1px rgba(255,255,255,.28) inset, 0 4px 13px rgba(105,65,198,.38); animation: upgrade-button-glow 2.8s ease-in-out infinite; }
+      .plan-open::before { content: ''; position: absolute; z-index: -1; top: -80%; left: -55%; width: 34%; height: 260%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent); transform: rotate(22deg); animation: upgrade-button-shine 3.8s ease-in-out infinite; }
       .plan-open[hidden] { display: none; }
-      .plan-open.free { border-color: #475467; background: #475467; }
-      .plan-open.bronze { border-color: #96552c; background: #96552c; }
-      .plan-open.silver { border-color: #667085; background: #667085; }
-      .plan-open.gold { border-color: #b46f00; background: #b46f00; }
+      .plan-open.free { border-color: #7f56d9; background: linear-gradient(135deg, #9b6df2, #5f35ba); }
+      .plan-open.bronze { border-color: #c77942; background: linear-gradient(135deg, #d99562, #8f4825); }
+      .plan-open.silver { border-color: #98a2b3; background: linear-gradient(135deg, #b8c0cc, #5d6879); }
+      .plan-open.gold { border-color: #eaaa08; background: linear-gradient(135deg, #f8c94c, #a86400); }
+      @keyframes upgrade-button-shine { 0%, 28% { left: -55%; opacity: 0; } 38% { opacity: 1; } 62% { left: 125%; opacity: 1; } 63%, 100% { left: 125%; opacity: 0; } }
+      @keyframes upgrade-button-glow { 0%, 100% { filter: brightness(1); transform: translateY(0); } 50% { filter: brightness(1.14); transform: translateY(-1px); } }
       .header-plan-status.bronze .header-plan-value { color: #854a25; }
       .header-plan-status.gold .header-plan-value { color: #8a5000; }
       .header-plan-status.free .header-plan-value, .header-plan-status.silver .header-plan-value { color: #344054; }
@@ -290,7 +293,7 @@
         50% { transform: scale(1.04); filter: brightness(1.15) saturate(1.18); box-shadow: 0 2px 10px var(--signal-glow); }
       }
       @media (prefers-reduced-motion: reduce) {
-        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before, .india-market-mark, .india-market-chakra { animation: none; }
+        #analysis-box, .ai-calculated-badge, .ai-calculated-badge::before, .ai-calculated-badge::after, .analysis-badge, .beta-badge, .beta-badge::before, .india-market-mark, .india-market-chakra, .plan-open, .plan-open::before { animation: none; }
       }
       .analysis-badge { --signal-glow: rgba(102, 112, 133, .45); --signal-glow-faded: rgba(102, 112, 133, 0); flex: 0 0 auto; padding: 5px 9px; border-radius: 999px; background: #667085; color: white; font-size: 12px; font-weight: 800; letter-spacing: .04em; animation: recommendation-pulse 2.6s ease-in-out infinite; }
       .strong .analysis-badge, .healthy .analysis-badge { --signal-glow: rgba(6, 118, 71, .55); --signal-glow-faded: rgba(6, 118, 71, 0); background: #067647; }
