@@ -103,6 +103,10 @@
       .payment-status { min-height: 18px; margin: 10px 0 0; color: #475467; font-size: 11px; font-weight: 700; text-align: right; }
       .payment-status.success { color: #067647; }
       .payment-status.error { color: #b42318; }
+      .upgrade-support { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(105,65,198,.16); color: #655b7c; font-size: 10px; }
+      .upgrade-support a { color: #6941c6; font-weight: 750; text-decoration: none; }
+      .upgrade-support a:hover { text-decoration: underline; }
+      .upgrade-policy-links { display: inline-flex; flex-wrap: wrap; gap: 10px; }
       .india-market-mark { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 5px; margin-right: 7px; padding: 2px 8px 3px; overflow: hidden; border: 1px solid rgba(19,136,8,.4); border-radius: 6px; background: repeating-linear-gradient(105deg, transparent 0, transparent 26px, rgba(255,255,255,.96) 38px, transparent 50px, transparent 76px), linear-gradient(180deg, rgba(255, 153, 51, .62) 0 31%, #fff 31% 66%, rgba(19, 136, 8, .48) 66% 100%); background-size: 100px 100%, 100% 100%; color: #173b71; font-weight: 850; letter-spacing: -.025em; text-shadow: 0 1px 1px rgba(255,255,255,.9); box-shadow: 0 2px 7px rgba(16, 24, 40, .1); vertical-align: 1px; transform-origin: left center; will-change: transform, background-position; animation: india-flag-glitter 4.2s linear infinite, india-flag-glow 3s ease-in-out infinite, india-flag-ripple 5.4s ease-in-out infinite; }
       .india-market-text { position: relative; z-index: 1; }
       .india-market-chakra { position: relative; z-index: 1; color: #000080; font-size: .7em; line-height: 1; text-shadow: 0 0 4px rgba(255,255,255,.95); animation: india-chakra-glimmer 3s ease-in-out infinite; }
@@ -700,6 +704,7 @@
         #subscription-overlay { padding: 16px 14px; }
         .plan-options { grid-template-columns: minmax(0,1fr); }
         .plan-option { min-height: 0; grid-template-columns: 74px minmax(0,1fr); padding: 14px; }
+        .upgrade-support { align-items: flex-start; flex-direction: column; gap: 5px; }
         .site-footer { align-items: flex-start; flex-direction: column; width: calc(100% - 28px); gap: 5px; margin-top: 24px; }
       }
     </style>
@@ -753,6 +758,7 @@
             <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong class="plan-price"><s>₹2,500</s>₹250 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="gold">Pay ₹250</button></article>
           </div>
           <p id="payment-status" class="payment-status" aria-live="polite"></p>
+          <div class="upgrade-support"><span>Payment or plan issue? <a href="mailto:resultlens.support@gmail.com">resultlens.support@gmail.com</a></span><span class="upgrade-policy-links"><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a><a href="/privacy">Privacy</a></span></div>
         </div>
       </section>
     {% endif %}
@@ -828,7 +834,7 @@
       <div id="charts"></div>
     </section>
     </main>
-    <footer class="site-footer"><span class="site-footer-links"><a href="/methodology">Methodology &amp; data sources</a><a href="/privacy">Privacy</a></span><span>ResultLens is an analytical aid, not investment advice.</span></footer>
+    <footer class="site-footer"><span class="site-footer-links"><a href="/methodology">Methodology</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a></span><span>ResultLens is an analytical aid, not investment advice.</span></footer>
     <section id="screening-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="screening-title">
       <div class="screening-overlay-header">
         <h2 id="screening-title">Index stock screening</h2>

@@ -127,6 +127,8 @@ def test_sitemap_contains_canonical_homepage(client):
     assert "<loc>https://resultlens.in/</loc>" in response.text
     assert "<loc>https://resultlens.in/methodology</loc>" in response.text
     assert "<loc>https://resultlens.in/privacy</loc>" in response.text
+    assert "<loc>https://resultlens.in/terms</loc>" in response.text
+    assert "<loc>https://resultlens.in/refund-policy</loc>" in response.text
 
 
 def test_homepage_exposes_canonical_search_metadata(client):
@@ -137,6 +139,8 @@ def test_homepage_exposes_canonical_search_metadata(client):
     assert '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">' in response.text
     assert '<meta name="description"' in response.text
     assert '"@type": "WebApplication"' in response.text
+    assert 'mailto:resultlens.support@gmail.com' in response.text
+    assert 'href="/refund-policy"' in response.text
 
 
 def test_methodology_page_is_public_and_canonical(client):
@@ -155,3 +159,18 @@ def test_privacy_page_is_public_and_identifies_contact(client):
     assert '<link rel="canonical" href="https://resultlens.in/privacy">' in response.text
     assert "resultlens.support@gmail.com" in response.text
     assert "Razorpay processes payment credentials" in response.text
+
+
+@pytest.mark.parametrize(
+    ("path", "canonical", "expected_text"),
+    [
+        ("/terms", "https://resultlens.in/terms", "Financial-information disclaimer"),
+        ("/refund-policy", "https://resultlens.in/refund-policy", "one-time purchases valid for 30 days"),
+    ],
+)
+def test_commercial_policy_pages_are_public(client, path, canonical, expected_text):
+    browser, _stock, _plan = client
+    response = browser.get(path)
+    assert response.status_code == 200
+    assert f'<link rel="canonical" href="{canonical}">' in response.text
+    assert expected_text in response.text

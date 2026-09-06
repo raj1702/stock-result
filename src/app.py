@@ -152,6 +152,8 @@ def sitemap_xml():
         f"  <url><loc>{SEO_BASE_URL}/</loc></url>\n"
         f"  <url><loc>{SEO_BASE_URL}/methodology</loc></url>\n"
         f"  <url><loc>{SEO_BASE_URL}/privacy</loc></url>\n"
+        f"  <url><loc>{SEO_BASE_URL}/terms</loc></url>\n"
+        f"  <url><loc>{SEO_BASE_URL}/refund-policy</loc></url>\n"
         '</urlset>\n'
     )
     return Response(body, mimetype="application/xml")
@@ -170,6 +172,16 @@ def methodology():
 @app.route('/privacy', methods=['GET'])
 def privacy():
     return render_template('privacy.html')
+
+
+@app.route('/terms', methods=['GET'])
+def terms():
+    return render_template('terms.html')
+
+
+@app.route('/refund-policy', methods=['GET'])
+def refund_policy():
+    return render_template('refund_policy.html')
 
 
 @app.route('/login', methods=['GET'])
