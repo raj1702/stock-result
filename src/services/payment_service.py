@@ -81,7 +81,7 @@ class PaymentService:
             "currency": "INR",
             "tier": tier,
             "price_rupees": plan["price_rupees"],
-            "name": "NSE · BSE Earnings Decision Assistant",
+            "name": "ResultLens",
             "description": f"{tier.title()} plan · 30 days",
             "prefill": {"email": user.get("email") or ""},
         }

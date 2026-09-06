@@ -129,6 +129,7 @@ def test_sitemap_contains_canonical_homepage(client):
     assert "<loc>https://resultlens.in/privacy</loc>" in response.text
     assert "<loc>https://resultlens.in/terms</loc>" in response.text
     assert "<loc>https://resultlens.in/refund-policy</loc>" in response.text
+    assert "<loc>https://resultlens.in/about</loc>" in response.text
 
 
 def test_homepage_exposes_canonical_search_metadata(client):
@@ -141,6 +142,7 @@ def test_homepage_exposes_canonical_search_metadata(client):
     assert '"@type": "WebApplication"' in response.text
     assert 'mailto:resultlens.support@gmail.com' in response.text
     assert 'href="/refund-policy"' in response.text
+    assert "By purchasing, you agree to our" in response.text
 
 
 def test_methodology_page_is_public_and_canonical(client):
@@ -174,3 +176,12 @@ def test_commercial_policy_pages_are_public(client, path, canonical, expected_te
     assert response.status_code == 200
     assert f'<link rel="canonical" href="{canonical}">' in response.text
     assert expected_text in response.text
+
+
+def test_about_page_identifies_product_operator(client):
+    browser, _stock, _plan = client
+    response = browser.get("/about")
+    assert response.status_code == 200
+    assert '<link rel="canonical" href="https://resultlens.in/about">' in response.text
+    assert "Raj Gopalachari" in response.text
+    assert "resultlens.support@gmail.com" in response.text
