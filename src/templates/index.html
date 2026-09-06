@@ -276,8 +276,7 @@
       .mobile-period-toggle { display: none; }
       .mobile-metric-cards { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 14px; }
       .mobile-metric-card { grid-column: span 2; }
-      .mobile-metric-card:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
-      .mobile-metric-card:nth-child(5):last-child { grid-column: 4 / span 2; }
+      .mobile-metric-card:nth-child(-n+2) { grid-column: span 3; }
       .mobile-metric-card { position: relative; overflow: hidden; padding: 18px 16px 16px; border: 1px solid #dbe3ef; border-radius: 16px; background: linear-gradient(145deg,#fff,#f8fafc); box-shadow: 0 8px 24px rgba(15,23,42,.07); }
       .mobile-metric-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 4px; background: linear-gradient(90deg,#155eef,#7f56d9); }
       .mobile-metric-head { display: flex; min-height: 40px; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
@@ -292,7 +291,7 @@
       .mobile-quarter { min-width: 0; padding: 10px 3px; border: 1px solid #edf1f6; border-radius: 9px; background: #fff; text-align: center; }
       .mobile-quarter.latest { border-color: #b2ccff; background: #eff4ff; }
       .mobile-quarter-label { display: block; overflow: hidden; color: #98a2b3; font-size: 9px; font-weight: 800; letter-spacing: .015em; text-overflow: ellipsis; white-space: nowrap; }
-      .mobile-quarter-number { display: block; overflow: hidden; margin-top: 5px; color: #344054; font-size: 11px; font-weight: 850; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+      .mobile-quarter-number { display: block; margin-top: 5px; color: #344054; font-size: 11px; font-weight: 850; letter-spacing: -.03em; white-space: nowrap; }
       .mobile-quarter.latest .mobile-quarter-label { color: #175cd3; }
       .mobile-quarter.latest .mobile-quarter-number { color: #004eeb; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
@@ -746,10 +745,9 @@
         .account-controls { flex-wrap: wrap; justify-content: flex-end; }
         .app-main { width: calc(100% - 40px); }
         #search-results-layout, #tables { width: 100%; max-width: none; }
-        .mobile-metric-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
-        .mobile-metric-card { grid-column: auto; }
-        .mobile-metric-card:nth-child(4):nth-last-child(2) { grid-column: auto; }
-        .mobile-metric-card:nth-child(5):last-child { grid-column: 1 / -1; width: calc(50% - 7px); justify-self: center; }
+        .mobile-metric-cards { grid-template-columns: repeat(6,minmax(0,1fr)); }
+        .mobile-metric-card { grid-column: span 2; }
+        .mobile-metric-card:nth-child(-n+2) { grid-column: span 3; }
       }
       @media (max-width: 760px) {
         html { background: #f4f7fb; }
@@ -821,7 +819,7 @@
         .mobile-period-toggle button { min-width: 46px; min-height: 29px; padding: 6px 8px; border-radius: 6px; background: transparent; color: #64748b; font-size: 10px; font-weight: 800; box-shadow: none; }
         .mobile-period-toggle button.active { background: #155eef; color: #fff; box-shadow: 0 3px 7px rgba(21,94,239,.22); }
         .mobile-metric-cards { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .mobile-metric-card, .mobile-metric-card:nth-child(4):nth-last-child(2), .mobile-metric-card:nth-child(5):last-child { grid-column: auto; width: auto; justify-self: stretch; }
+        .mobile-metric-card, .mobile-metric-card:nth-child(-n+2), .mobile-metric-card:nth-child(4):nth-last-child(2), .mobile-metric-card:nth-child(5):last-child { grid-column: auto; width: auto; justify-self: stretch; }
         .mobile-metric-card { position: relative; overflow: hidden; padding: 13px 11px 11px; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#f8fafc); box-shadow: 0 6px 18px rgba(15,23,42,.07); }
         .mobile-metric-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg,#155eef,#7f56d9); }
         .mobile-metric-head { display: flex; min-height: 34px; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 11px; }
@@ -834,7 +832,7 @@
         .mobile-quarter { min-width: 0; padding: 7px 2px; border: 1px solid #edf1f6; border-radius: 8px; background: #fff; text-align: center; }
         .mobile-quarter.latest { border-color: #b2ccff; background: #eff4ff; }
         .mobile-quarter-label { display: block; overflow: hidden; color: #98a2b3; font-size: 7px; font-weight: 800; letter-spacing: .015em; text-overflow: ellipsis; white-space: nowrap; }
-        .mobile-quarter-number { display: block; margin-top: 4px; color: #344054; font-size: clamp(7px,2.3vw,9px); font-weight: 850; letter-spacing: -.05em; white-space: nowrap; }
+        .mobile-quarter-number, .mobile-metric-card:nth-child(n+3) .mobile-quarter-number { display: block; margin-top: 4px; color: #344054; font-size: clamp(7px,2.3vw,9px); font-weight: 850; letter-spacing: -.05em; white-space: nowrap; }
         .mobile-quarter.latest .mobile-quarter-label { color: #175cd3; }
         .mobile-quarter.latest .mobile-quarter-number { color: #004eeb; }
         #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
@@ -1567,6 +1565,8 @@
           isCompactTableView = compactNow;
           renderQuarterlyTable(currentQuarterlyTable);
           renderMetricCharts(currentQuarterlyTable);
+        } else if (currentQuarterlyTable) {
+          requestAnimationFrame(fitQuarterValueFonts);
         }
       });
       async function readJson(response) {
@@ -1974,6 +1974,17 @@
         const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
         return match ? `${match[1]} ’${match[2].slice(-2)}` : quarter?.label || '—';
       }
+      function fitQuarterValueFonts() {
+        mobileMetricCards.querySelectorAll('.mobile-quarter-number').forEach((value) => {
+          value.style.fontSize = '';
+          const availableWidth = Math.max(0, value.parentElement.clientWidth - 6);
+          const naturalWidth = value.scrollWidth;
+          if (!availableWidth || naturalWidth <= availableWidth) return;
+          const defaultSize = Number.parseFloat(getComputedStyle(value).fontSize);
+          const fittedSize = Math.max(6, Math.floor((defaultSize * availableWidth / naturalWidth) * 10) / 10);
+          value.style.fontSize = `${fittedSize}px`;
+        });
+      }
       function renderMobileResults(table) {
         if (!table?.quarters?.length || !table?.rows?.length) {
           mobileMetricCards.replaceChildren();
@@ -2036,6 +2047,7 @@
         mobileMetricCards.replaceChildren(...cards);
         mobileComparisonButtons.forEach((button) => button.classList.toggle('active', button.dataset.mobileComparison === comparisonMode));
         mobileResults.hidden = false;
+        requestAnimationFrame(fitQuarterValueFonts);
       }
       function renderComparisonTable() {
         const comparisons = currentQuarterlyTable?.comparisons || {};
