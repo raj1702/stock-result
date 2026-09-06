@@ -268,7 +268,33 @@
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
       #back-to-screening:hover, #back-to-screening:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
-      #mobile-results { display: none; }
+      #mobile-results { display: block; margin-top: 28px; }
+      #mobile-results[hidden] { display: none; }
+      .mobile-results-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+      .mobile-results-title { margin: 0; color: #0f2447; font-size: 24px; letter-spacing: -.03em; }
+      .mobile-results-subtitle { display: block; margin-top: 3px; color: #64748b; font-size: 11px; font-weight: 650; }
+      .mobile-period-toggle { display: none; }
+      .mobile-metric-cards { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 14px; }
+      .mobile-metric-card { grid-column: span 2; }
+      .mobile-metric-card:nth-child(4):nth-last-child(2) { grid-column: 2 / span 2; }
+      .mobile-metric-card:nth-child(5):last-child { grid-column: 4 / span 2; }
+      .mobile-metric-card { position: relative; overflow: hidden; padding: 18px 16px 16px; border: 1px solid #dbe3ef; border-radius: 16px; background: linear-gradient(145deg,#fff,#f8fafc); box-shadow: 0 8px 24px rgba(15,23,42,.07); }
+      .mobile-metric-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 4px; background: linear-gradient(90deg,#155eef,#7f56d9); }
+      .mobile-metric-head { display: flex; min-height: 40px; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+      .mobile-metric-head > div:first-child { min-width: max-content; }
+      .mobile-metric-name { color: #172b4d; font-size: 15px; font-weight: 850; white-space: nowrap; }
+      .mobile-metric-unit { display: block; margin-top: 2px; color: #98a2b3; font-size: 10px; font-weight: 650; }
+      .mobile-change-badges { display: flex; flex-wrap: nowrap; align-items: center; justify-content: flex-end; gap: 5px; }
+      .mobile-change-badge { flex: 0 0 auto; padding: 6px 8px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 10px; font-weight: 850; white-space: nowrap; }
+      .mobile-change-badge.positive { background: #dcfae6; color: #067647; }
+      .mobile-change-badge.negative { background: #fee4e2; color: #b42318; }
+      .mobile-quarter-strip { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+      .mobile-quarter { min-width: 0; padding: 10px 3px; border: 1px solid #edf1f6; border-radius: 9px; background: #fff; text-align: center; }
+      .mobile-quarter.latest { border-color: #b2ccff; background: #eff4ff; }
+      .mobile-quarter-label { display: block; overflow: hidden; color: #98a2b3; font-size: 9px; font-weight: 800; letter-spacing: .015em; text-overflow: ellipsis; white-space: nowrap; }
+      .mobile-quarter-number { display: block; overflow: hidden; margin-top: 5px; color: #344054; font-size: 11px; font-weight: 850; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+      .mobile-quarter.latest .mobile-quarter-label { color: #175cd3; }
+      .mobile-quarter.latest .mobile-quarter-number { color: #004eeb; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
@@ -281,7 +307,7 @@
       @keyframes loading-spin { to { transform: rotate(360deg); } }
       #search-results-layout { width: var(--content-width); max-width: 100%; }
       #results-column { min-width: 0; }
-      #tables { display: grid; grid-template-columns: minmax(0, 1fr) max-content; width: var(--content-width); max-width: 100%; gap: 14px; align-items: stretch; margin: 28px 0 0; }
+      #tables { display: none; }
       #tables[hidden] { display: none; }
       #results-panel, #comparison-panel { box-sizing: border-box; height: 100%; overflow-x: auto; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; color: #172033; }
       #comparison-column { position: relative; display: flex; min-width: 0; align-self: stretch; }
@@ -720,12 +746,17 @@
         .account-controls { flex-wrap: wrap; justify-content: flex-end; }
         .app-main { width: calc(100% - 40px); }
         #search-results-layout, #tables { width: 100%; max-width: none; }
+        .mobile-metric-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+        .mobile-metric-card { grid-column: auto; }
+        .mobile-metric-card:nth-child(4):nth-last-child(2) { grid-column: auto; }
+        .mobile-metric-card:nth-child(5):last-child { grid-column: 1 / -1; width: calc(50% - 7px); justify-self: center; }
       }
       @media (max-width: 760px) {
         html { background: #f4f7fb; }
         body { width: 100%; max-width: none; min-width: 0; margin: 0; padding: 0 0 40px; }
         .page-header { gap: 12px; padding: 14px 16px; background: rgba(255,255,255,.96); }
-        h1 { width: 100%; min-width: 0; font-size: 19px; }
+        h1 { width: 100%; min-width: 0; font-size: clamp(12px,3.75vw,15px); white-space: nowrap; }
+        .brand-title { min-width: 0; white-space: nowrap; }
         .brand-title::before { width: 31px; height: 31px; margin-right: 8px; border-radius: 9px; }
         .beta-badge { margin-left: 6px; }
         .mobile-view-tip { display: none; }
@@ -789,10 +820,11 @@
         .mobile-period-toggle { display: inline-flex; flex: 0 0 auto; gap: 3px; padding: 3px; border: 1px solid #dbe3ef; border-radius: 9px; background: #fff; box-shadow: 0 3px 10px rgba(15,23,42,.07); }
         .mobile-period-toggle button { min-width: 46px; min-height: 29px; padding: 6px 8px; border-radius: 6px; background: transparent; color: #64748b; font-size: 10px; font-weight: 800; box-shadow: none; }
         .mobile-period-toggle button.active { background: #155eef; color: #fff; box-shadow: 0 3px 7px rgba(21,94,239,.22); }
-        .mobile-metric-cards { display: grid; gap: 10px; }
+        .mobile-metric-cards { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .mobile-metric-card, .mobile-metric-card:nth-child(4):nth-last-child(2), .mobile-metric-card:nth-child(5):last-child { grid-column: auto; width: auto; justify-self: stretch; }
         .mobile-metric-card { position: relative; overflow: hidden; padding: 13px 11px 11px; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#f8fafc); box-shadow: 0 6px 18px rgba(15,23,42,.07); }
         .mobile-metric-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg,#155eef,#7f56d9); }
-        .mobile-metric-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 11px; }
+        .mobile-metric-head { display: flex; min-height: 34px; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 11px; }
         .mobile-metric-name { color: #172b4d; font-size: 12px; font-weight: 850; }
         .mobile-metric-unit { display: block; margin-top: 2px; color: #98a2b3; font-size: 8px; font-weight: 650; }
         .mobile-change-badge { flex: 0 0 auto; padding: 5px 7px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 10px; font-weight: 850; }
@@ -802,7 +834,7 @@
         .mobile-quarter { min-width: 0; padding: 7px 2px; border: 1px solid #edf1f6; border-radius: 8px; background: #fff; text-align: center; }
         .mobile-quarter.latest { border-color: #b2ccff; background: #eff4ff; }
         .mobile-quarter-label { display: block; overflow: hidden; color: #98a2b3; font-size: 7px; font-weight: 800; letter-spacing: .015em; text-overflow: ellipsis; white-space: nowrap; }
-        .mobile-quarter-number { display: block; overflow: hidden; margin-top: 4px; color: #344054; font-size: 9px; font-weight: 850; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+        .mobile-quarter-number { display: block; margin-top: 4px; color: #344054; font-size: clamp(7px,2.3vw,9px); font-weight: 850; letter-spacing: -.05em; white-space: nowrap; }
         .mobile-quarter.latest .mobile-quarter-label { color: #175cd3; }
         .mobile-quarter.latest .mobile-quarter-number { color: #004eeb; }
         #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
@@ -1559,16 +1591,7 @@
           : '—';
       }
       function formatQuarterlyValue(value, unit) {
-        if (value === null || value === undefined) return '—';
-        if (!window.matchMedia('(max-width: 760px)').matches || unit === '%') {
-          return formatValue(value, unit);
-        }
-        const number = Number(value);
-        if (!Number.isFinite(number)) return '—';
-        // Quarterly currency rows are already in ₹ crore. A compact "k"
-        // suffix keeps all five periods visible on a phone.
-        if (Math.abs(number) >= 1000) return `₹${Math.round(number / 1000)}k`;
-        return `₹${Math.round(number)}`;
+        return formatValue(value, unit);
       }
       function formatChange(value, unit) {
         if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
@@ -1945,20 +1968,22 @@
         renderRows(resultsHead, resultsBody, displayQuarters, rows, formatQuarterlyValue, true);
         renderComparisonTable();
         renderMobileResults(table);
-        tables.hidden = isCompactTableView;
+        tables.hidden = true;
       }
       function mobileQuarterLabel(quarter) {
         const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
         return match ? `${match[1]} ’${match[2].slice(-2)}` : quarter?.label || '—';
       }
       function renderMobileResults(table) {
-        if (!isCompactTableView || !table?.quarters?.length || !table?.rows?.length) {
+        if (!table?.quarters?.length || !table?.rows?.length) {
           mobileMetricCards.replaceChildren();
           mobileResults.hidden = true;
           return;
         }
-        const comparisonRows = table.comparisons?.[comparisonMode] || [];
-        const comparisonByKey = new Map(comparisonRows.map((row) => [row.key, row]));
+        const comparisonMaps = Object.fromEntries(['qoq', 'yoy'].map((mode) => [
+          mode,
+          new Map((table.comparisons?.[mode] || []).map((row) => [row.key, row])),
+        ]));
         const cards = table.rows.map((row) => {
           const card = document.createElement('article');
           card.className = 'mobile-metric-card';
@@ -1974,17 +1999,22 @@
           unit.textContent = row.unit || '';
           identity.append(name, unit);
 
-          const comparisonRow = comparisonByKey.get(row.key);
-          const comparisonValues = comparisonRow?.values || [];
-          const change = comparisonValues.length ? comparisonValues[comparisonValues.length - 1] : null;
-          const badge = document.createElement('span');
-          badge.className = 'mobile-change-badge';
-          const numericChange = Number(change);
-          if (change !== null && change !== undefined && Number.isFinite(numericChange)) {
+          const badges = document.createElement('div');
+          badges.className = 'mobile-change-badges';
+          const modes = isCompactTableView ? [comparisonMode] : ['qoq', 'yoy'];
+          modes.forEach((mode) => {
+            const comparisonRow = comparisonMaps[mode].get(row.key);
+            const comparisonValues = comparisonRow?.values || [];
+            const change = comparisonValues.length ? comparisonValues[comparisonValues.length - 1] : null;
+            const numericChange = Number(change);
+            if (change === null || change === undefined || !Number.isFinite(numericChange)) return;
+            const badge = document.createElement('span');
+            badge.className = 'mobile-change-badge';
             badge.classList.add(numericChange > 0 ? 'positive' : numericChange < 0 ? 'negative' : 'neutral');
-          }
-          badge.textContent = `${comparisonMode.toUpperCase()} ${formatChange(change, comparisonRow?.unit || '%')}`;
-          head.append(identity, badge);
+            badge.textContent = `${mode.toUpperCase()} ${formatChange(change, comparisonRow?.unit || '%')}`;
+            badges.append(badge);
+          });
+          head.append(identity, badges);
 
           const strip = document.createElement('div');
           strip.className = 'mobile-quarter-strip';
