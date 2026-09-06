@@ -485,6 +485,190 @@
         .chart-title { margin-bottom: 5px; font-size: 12px; }
         .chart-unit { font-size: 10px; }
       }
+
+      /* Product UI refresh: a restrained, data-first fintech visual system. */
+      :root {
+        --content-width: 1120px;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --line: #e2e8f0;
+        --surface: #ffffff;
+        --surface-soft: #f8fafc;
+        --brand: #2563eb;
+        --brand-dark: #1d4ed8;
+        --radius-lg: 18px;
+        --radius-md: 12px;
+        --shadow-card: 0 1px 2px rgba(15,23,42,.04), 0 12px 32px rgba(15,23,42,.06);
+      }
+      * { box-sizing: border-box; }
+      html { min-height: 100%; background: #f4f7fb; }
+      body {
+        width: 100%;
+        max-width: none;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0 0 64px;
+        overflow-x: hidden;
+        background:
+          radial-gradient(circle at 10% -5%, rgba(37,99,235,.08), transparent 28rem),
+          radial-gradient(circle at 92% 0, rgba(14,165,233,.06), transparent 24rem),
+          #f4f7fb;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page-header {
+        position: relative;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 76px;
+        padding: 14px max(24px, calc((100vw - 1240px) / 2));
+        border-bottom: 1px solid rgba(226,232,240,.9);
+        background: rgba(255,255,255,.9);
+        box-shadow: 0 1px 2px rgba(15,23,42,.03);
+        backdrop-filter: blur(16px);
+      }
+      h1 { display: flex; align-items: center; min-width: 285px; margin: 0; font-size: clamp(18px, 1.75vw, 25px); line-height: 1.15; }
+      .brand-title { display: inline-flex; align-items: center; color: #0f2447; font-weight: 760; letter-spacing: -.035em; }
+      .brand-title::before { content: "EA"; display: inline-grid; place-items: center; width: 34px; height: 34px; margin-right: 10px; border-radius: 10px; background: linear-gradient(145deg,#2563eb,#173ea5); color: #fff; font-size: 11px; font-weight: 850; letter-spacing: .04em; box-shadow: 0 6px 16px rgba(37,99,235,.22); }
+      .beta-badge { top: 0; padding: 3px 7px; border-color: #cbd5e1; background: #f8fafc; color: #475569; box-shadow: none; animation: beta-glow 4.8s ease-in-out infinite; }
+      .account-controls { min-width: 0; margin-left: auto; gap: 8px; padding: 0; }
+      .account-link { min-height: 36px; padding: 8px 12px; border-color: #dbe3ef; border-radius: 9px; background: #fff; color: #334155; font-size: 12px; font-weight: 700; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+      .account-link:hover, .account-link:focus-visible { filter: none; border-color: #94a3b8; outline: none; box-shadow: 0 3px 10px rgba(15,23,42,.08); transform: translateY(-1px); }
+      .account-link.primary { border-color: var(--brand); background: var(--brand); }
+      .signed-in-user { min-height: 36px; padding: 7px 10px; border-color: #dbe3ef; border-radius: 9px; background: #fff; }
+      .signed-in-label { color: #64748b; }
+      .signed-in-email { color: #1e293b; font-weight: 650; }
+      .header-plan-status { min-height: 38px; border-color: #dbe3ef !important; border-radius: 10px; background: #f8fafc !important; }
+      .header-plan-field { min-width: 78px; padding: 6px 10px; }
+      .header-plan-field + .header-plan-field { border-left-color: #e2e8f0; }
+      .header-plan-label { color: #64748b; font-size: 7px; }
+      .header-plan-value, .header-plan-status.bronze .header-plan-value, .header-plan-status.gold .header-plan-value { color: #1e293b; font-size: 10px; }
+      .plan-open { min-height: 38px; border-radius: 9px; }
+      .app-main { width: min(1120px, calc(100% - 48px)); margin: 38px auto 0; }
+      .search-surface { position: relative; overflow: hidden; padding: 30px; border: 1px solid rgba(203,213,225,.8); border-radius: var(--radius-lg); background: rgba(255,255,255,.94); box-shadow: var(--shadow-card); }
+      .search-surface::after { content: ""; position: absolute; right: -90px; top: -110px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle,rgba(37,99,235,.09),transparent 68%); pointer-events: none; }
+      .search-kicker { margin: 0 0 7px; color: var(--brand); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+      .search-heading { max-width: 650px; margin: 0 0 8px; color: #0f2447; font-size: clamp(24px,3vw,38px); font-weight: 760; letter-spacing: -.045em; line-height: 1.12; }
+      .search-surface > p { max-width: 650px; margin: 0 0 22px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+      #search-results-layout, #results-column { width: 100%; max-width: none; }
+      form { position: relative; z-index: 1; width: min(780px,100%); gap: 8px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 13px; background: #fff; box-shadow: 0 3px 12px rgba(15,23,42,.06); transition: border-color .18s ease, box-shadow .18s ease; }
+      form:focus-within { border-color: #60a5fa; box-shadow: 0 0 0 4px rgba(37,99,235,.1), 0 5px 18px rgba(15,23,42,.08); }
+      input { min-height: 46px; padding: 10px 13px; border: 0; border-radius: 9px; background: transparent; color: #0f172a; font-size: 15px; outline: none; }
+      input::placeholder { color: #94a3b8; }
+      button { min-height: 42px; border-radius: 9px; background: var(--brand); font-weight: 700; transition: background .18s ease, transform .18s ease, box-shadow .18s ease; }
+      form button { min-width: 112px; background: linear-gradient(135deg,var(--brand),var(--brand-dark)); box-shadow: 0 5px 12px rgba(37,99,235,.2); }
+      form button:hover { box-shadow: 0 7px 16px rgba(37,99,235,.25); transform: translateY(-1px); }
+      #nifty-screening { position: relative; z-index: 1; width: min(780px,100%); margin-top: 14px; }
+      .screening-buttons { gap: 8px; }
+      .index-screening-button { min-height: 36px; padding: 8px 12px; border-color: #dbe3ef; border-radius: 9px; background: #f8fafc; color: #334155; font-size: 11px; box-shadow: none; }
+      .screening-info { width: 17px; height: 17px; background: #e0eaff; color: #2455b7; font-family: inherit; font-size: 10px; font-style: normal; font-weight: 800; }
+      #nifty-picker { margin-top: 10px; padding: 12px; border-color: #dbe3ef; border-radius: 12px; background: #f8fafc; }
+      #message { margin: 22px 0 10px; }
+      #message.stock-summary { width: 100%; margin: 20px 0 0; padding: 10px; border-color: #dbe3ef; border-radius: 14px; background: #fff; box-shadow: var(--shadow-card); }
+      .summary-item { flex: 1 1 150px; justify-content: space-between; min-height: 42px; padding: 9px 11px; border-color: #edf1f6; border-radius: 9px; background: #f8fafc; box-shadow: none; }
+      .summary-label { color: #64748b; font-size: 9px; }
+      .summary-value { color: #0f172a; font-size: 12px; }
+      #tables { grid-template-columns: minmax(0,1fr) 260px; width: 100%; max-width: none; gap: 16px; margin-top: 20px; }
+      #results-panel, #comparison-panel { padding: 18px; border: 1px solid #dbe3ef; border-top: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-card); }
+      #comparison-panel { width: 260px; border-color: #dbe3ef; background: #fff; }
+      #comparison-panel table { width: 100%; min-width: 100%; table-layout: fixed; }
+      .table-heading h2 { color: #0f2447; font-size: 16px; letter-spacing: -.015em; }
+      .table-heading h2::before { background: #eaf1ff; }
+      table { font-size: 12px; }
+      th, td { padding: 11px 12px; border-color: #edf1f6; }
+      #results-panel thead tr, #comparison-panel thead tr { height: 42px; }
+      #results-panel tbody tr, #comparison-panel tbody tr { height: 52px; }
+      #results-panel tbody th, #results-panel tbody td, #comparison-panel tbody td { height: 52px; }
+      #results-panel thead th, #comparison-panel thead th { border-bottom: 1px solid #dbe3ef; background: #f8fafc; color: #475569; }
+      #results-panel tbody tr:nth-child(odd) > *, #results-panel tbody tr:nth-child(even) > *, #comparison-panel tbody tr:nth-child(odd) > *, #comparison-panel tbody tr:nth-child(even) > * { background: #fff; }
+      #results-panel tbody tr:hover > *, #comparison-panel tbody tr:hover > * { background: #f8fafc; }
+      #results-panel tbody td:last-child { background: #f8fafc; }
+      #comparison-controls { display: none; right: 10px; }
+      .comparison-toggle { border-color: #dbe3ef; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.06); }
+      #interpretation-section { width: 100%; max-width: none; margin-top: 26px; }
+      #interpretation-section > h2 { margin-bottom: 12px; color: #0f2447; font-size: 20px; letter-spacing: -.025em; }
+      #analysis-box { padding: 20px; border: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-card); }
+      .analysis-metric { min-height: 78px; padding: 13px; border: 1px solid #edf1f6; border-radius: 11px; background: #f8fafc; }
+      .analysis-label { color: #64748b; }
+      .quality-progress { height: 7px; }
+      #charts { margin-top: 18px; }
+      .chart-card.combined-chart { padding: 20px; border: 1px solid #dbe3ef; border-top: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-card); }
+      .chart-summary { border-color: #e2e8f0; border-radius: 12px; background: #f8fafc; }
+      .chart-svg { border-color: #edf1f6; border-radius: 12px; background: #fff; }
+      #subscription-overlay, #screening-overlay { background: #f4f7fb; }
+      .subscription-shell { width: min(1040px,100%); }
+      .subscription-header { padding: 6px 0 18px; border-bottom-color: #dbe3ef; }
+      .subscription-header h2 { color: #0f2447; }
+      .plan-card { border-radius: 14px; }
+      .plan-options { grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-rows: auto; gap: 12px; }
+      .plan-option { grid-template-columns: 90px minmax(0,1fr); align-content: start; min-height: 150px; padding: 18px; border: 1px solid #dbe3ef; border-left: 1px solid #dbe3ef; border-radius: 14px; background: #fff !important; box-shadow: 0 4px 16px rgba(15,23,42,.05); }
+      .plan-option strong, .plan-option .plan-pay-button { grid-column: 2; justify-self: start; }
+      .plan-option.current { box-shadow: 0 0 0 2px #3b82f6 inset, 0 6px 20px rgba(37,99,235,.09); }
+      .plan-pay-button { min-height: 36px; }
+
+      @media (min-width: 761px) and (max-width: 1100px) {
+        body { min-width: 0; margin: 0; overflow-x: hidden; }
+        .page-header { padding-inline: 20px; }
+        .page-header { align-items: flex-start; }
+        .account-controls { flex-wrap: wrap; justify-content: flex-end; }
+        .app-main { width: calc(100% - 40px); }
+        #search-results-layout, #tables { width: 100%; max-width: none; }
+      }
+      @media (max-width: 760px) {
+        html { background: #f4f7fb; }
+        body { width: 100%; max-width: none; min-width: 0; margin: 0; padding: 0 0 40px; }
+        .page-header { gap: 12px; padding: 14px 16px; background: rgba(255,255,255,.96); }
+        h1 { width: 100%; min-width: 0; font-size: 19px; }
+        .brand-title::before { width: 31px; height: 31px; margin-right: 8px; border-radius: 9px; }
+        .beta-badge { margin-left: 6px; }
+        .mobile-view-tip { display: none; }
+        .account-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto; width: 100%; gap: 7px; }
+        .header-plan-status { grid-column: 1 / -1; grid-row: 2; order: initial; width: 100%; }
+        .header-plan-field { min-width: 0; padding: 7px 6px; text-align: center; }
+        .header-plan-label { font-size: 6.5px; }
+        .header-plan-value { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
+        .signed-in-user { grid-column: 1; grid-row: 1; width: 100%; }
+        .signed-in-email { max-width: calc(100vw - 155px); }
+        .account-link.logout { grid-column: 3; grid-row: 1; }
+        .plan-open { grid-column: 2; grid-row: 1; order: initial; }
+        .app-main { width: calc(100% - 28px); margin-top: 18px; }
+        .search-surface { padding: 20px 16px; border-radius: 15px; }
+        .search-kicker { margin-bottom: 6px; font-size: 9px; }
+        .search-heading { margin-bottom: 7px; font-size: 25px; }
+        .search-surface > p { margin-bottom: 17px; font-size: 13px; }
+        form { width: 100%; padding: 5px; border-radius: 11px; }
+        input { min-height: 42px; padding: 8px 9px; font-size: 14px; }
+        form button { min-width: 82px; min-height: 40px; padding: 9px 12px; font-size: 13px; }
+        .screening-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+        .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
+        #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
+        .summary-item { display: flex; min-height: 48px; padding: 8px; }
+        #tables { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; margin-top: 14px; }
+        #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 12px; border-radius: 14px; }
+        #results-panel { overflow-x: auto; }
+        #results-panel table { width: 680px; min-width: 680px; table-layout: auto; }
+        #results-panel th, #results-panel td { padding: 9px 8px; font-size: 10px; line-height: 1.3; white-space: nowrap; }
+        #results-panel thead tr, #comparison-panel thead tr { height: 38px; }
+        #results-panel tbody tr, #comparison-panel tbody tr,
+        #results-panel tbody th, #results-panel tbody td, #comparison-panel tbody td { height: 44px; }
+        #results-panel th:first-child, #results-panel td:first-child { width: 105px; }
+        #comparison-column { display: block; width: 100%; max-width: 100%; padding: 0; }
+        #comparison-controls { position: static; display: flex; justify-content: flex-end; margin: 0 0 7px; }
+        #comparison-panel { overflow: hidden; }
+        #comparison-panel table { width: 100%; table-layout: fixed; }
+        #comparison-panel th, #comparison-panel td { padding: 9px 6px; font-size: 10px; }
+        #comparison-panel .table-heading { visibility: visible; width: auto; overflow: visible; }
+        #interpretation-section { margin-top: 18px; }
+        #analysis-box { padding: 14px; border-radius: 14px; }
+        .analysis-metrics { grid-template-columns: minmax(0,1fr); }
+        .chart-card.combined-chart { padding: 13px; border-radius: 14px; }
+        #subscription-overlay { padding: 16px 14px; }
+        .plan-options { grid-template-columns: minmax(0,1fr); }
+        .plan-option { min-height: 0; grid-template-columns: 74px minmax(0,1fr); padding: 14px; }
+      }
     </style>
   </head>
   <body>
@@ -539,9 +723,13 @@
         </div>
       </section>
     {% endif %}
-    <p>Enter a company name or NSE symbol.</p>
+    <main class="app-main">
     <div id="search-results-layout">
       <div id="results-column">
+        <section class="search-surface" aria-labelledby="search-heading">
+        <p class="search-kicker">Indian earnings intelligence</p>
+        <h2 id="search-heading" class="search-heading">Understand a company’s latest results in minutes.</h2>
+        <p>Search by company name or NSE symbol for an auditable earnings-quality view.</p>
         <form id="search-form">
           <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
           <button type="submit">Search</button>
@@ -565,6 +753,7 @@
             </select>
           </div>
         </div>
+        </section>
         <button id="back-to-screening" type="button" hidden>← Back to screening results</button>
         <p id="message"></p>
         <div id="tables" hidden>
@@ -605,6 +794,7 @@
       <article id="analysis-box" hidden aria-live="polite"></article>
       <div id="charts"></div>
     </section>
+    </main>
     <section id="screening-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="screening-title">
       <div class="screening-overlay-header">
         <h2 id="screening-title">Index stock screening</h2>
@@ -1339,8 +1529,10 @@
         tables.hidden = false;
       }
       function renderComparisonTable() {
-        const comparisonRows = currentQuarterlyTable?.comparisons?.[comparisonMode] || [];
-        if (!currentQuarterlyTable || !comparisonRows.length) {
+        const comparisons = currentQuarterlyTable?.comparisons || {};
+        const qoqRows = comparisons.qoq || [];
+        const yoyRows = comparisons.yoy || [];
+        if (!currentQuarterlyTable || (!qoqRows.length && !yoyRows.length)) {
           comparisonPanel.hidden = true;
           return;
         }
@@ -1352,26 +1544,46 @@
           const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
           return match ? `${match[1]} FY${match[2].slice(-2)}` : quarter?.label || 'Latest';
         };
-        let comparisonLabel = comparisonMode === 'qoq'
-          ? `${shortQuarter(latestQuarter)} vs ${shortQuarter(previousQuarter)}`
-          : `${shortQuarter(latestQuarter)} vs prior FY`;
+        const qoqLabel = `${shortQuarter(latestQuarter)} vs ${shortQuarter(previousQuarter)}`;
+        let yoyLabel = `${shortQuarter(latestQuarter)} vs prior FY`;
         const yearMatch = latestQuarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
-        if (comparisonMode === 'yoy' && yearMatch) {
-          comparisonLabel = `${shortQuarter(latestQuarter)} vs ${yearMatch[1]} FY${String(Number(yearMatch[2]) - 1).slice(-2)}`;
+        if (yearMatch) {
+          yoyLabel = `${shortQuarter(latestQuarter)} vs ${yearMatch[1]} FY${String(Number(yearMatch[2]) - 1).slice(-2)}`;
         }
-        const comparisonName = comparisonMode === 'qoq' ? 'QoQ' : 'YoY';
-        const latestRows = comparisonRows.map((row) => ({
-          ...row,
-          values: [row.values[row.values.length - 1]],
-        }));
+        let headers;
+        let latestRows;
+        if (isCompactTableView) {
+          const comparisonRows = comparisons[comparisonMode] || [];
+          const comparisonName = comparisonMode === 'qoq' ? 'QoQ' : 'YoY';
+          const comparisonLabel = comparisonMode === 'qoq' ? qoqLabel : yoyLabel;
+          headers = [{ label: comparisonName, date: '', help: `${comparisonName}: ${comparisonLabel}` }];
+          latestRows = comparisonRows.map((row) => ({
+            ...row,
+            values: [row.values[row.values.length - 1]],
+          }));
+          comparisonTitle.textContent = `${comparisonName} change`;
+        } else {
+          const yoyByKey = new Map(yoyRows.map((row) => [row.key, row]));
+          latestRows = qoqRows.map((row) => {
+            const yoyRow = yoyByKey.get(row.key);
+            return {
+              ...row,
+              values: [
+                row.values[row.values.length - 1],
+                yoyRow?.values?.[yoyRow.values.length - 1] ?? null,
+              ],
+            };
+          });
+          headers = [
+            { label: 'QoQ', date: '', help: `QoQ: ${qoqLabel}` },
+            { label: 'YoY', date: '', help: `YoY: ${yoyLabel}` },
+          ];
+          comparisonTitle.textContent = 'Latest change';
+        }
         renderRows(
           comparisonHead,
           comparisonBody,
-          [{
-            label: comparisonName,
-            date: '',
-            help: `${comparisonName}: ${comparisonLabel}`,
-          }],
+          headers,
           latestRows,
           formatChange,
           true,
