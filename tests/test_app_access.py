@@ -67,6 +67,15 @@ class FakePlanService:
             "used_symbols": [],
         }
 
+    def list_wishlist(self, _user_id):
+        return [{"symbol": "INFY", "company": "Infosys", "created_at": "2026-09-07T10:00:00+05:30"}]
+
+    def save_to_wishlist(self, _user_id, symbol, company):
+        return {"symbol": symbol, "company": company, "created_at": "2026-09-07T10:00:00+05:30"}
+
+    def remove_from_wishlist(self, _user_id, _symbol):
+        return None
+
 
 @pytest.fixture
 def client(monkeypatch):
@@ -132,6 +141,19 @@ def test_advanced_screener_rejects_stock_outside_selected_index(client):
     browser, stock, plan = client
     response = browser.get("/screener-data/nifty-50/PIDILITIND")
     assert response.status_code == 404
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_wishlist_actions_do_not_consume_stock_quota(client):
+    browser, stock, plan = client
+    saved = browser.post("/api/wishlist", json={"symbol": "INFY", "company": "Infosys"})
+    listed = browser.get("/api/wishlist")
+    removed = browser.delete("/api/wishlist/INFY")
+    assert saved.status_code == 201
+    assert listed.status_code == 200
+    assert listed.get_json()["items"][0]["symbol"] == "INFY"
+    assert removed.status_code == 200
     assert stock.fetch_calls == 0
     assert plan.recorded == []
 

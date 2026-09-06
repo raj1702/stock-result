@@ -168,10 +168,27 @@
       #advanced-results-table { width: 100%; min-width: 620px; font-size: 12px; }
       #advanced-results-table th { background: #eef4ff; color: #194185; text-align: left; }
       #advanced-results-table td { text-align: left; }
-      #advanced-results-table th:last-child, #advanced-results-table td:last-child { width: 120px; text-align: right; }
+      #advanced-results-table th:last-child, #advanced-results-table td:last-child { width: 150px; text-align: right; }
       .advanced-metric-chips { display: flex; flex-wrap: wrap; gap: 5px; }
       .advanced-metric-chip { padding: 4px 7px; border-radius: 999px; background: #f2f4f7; color: #344054; font-size: 10px; font-weight: 700; }
       .advanced-empty { padding: 24px !important; color: #667085; text-align: center !important; }
+      button.wishlist-heart { display: inline-grid; place-items: center; width: 27px; height: 27px; min-height: 27px; margin-left: 7px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #d92d20; font-size: 21px; line-height: 1; vertical-align: middle; box-shadow: none; }
+      .wishlist-heart:hover, .wishlist-heart:focus-visible { background: transparent; outline: 2px solid #fda29b; outline-offset: 1px; transform: scale(1.1); }
+      .wishlist-heart.saved { background: transparent; color: #d92d20; }
+      .wishlist-heart:disabled { cursor: wait; opacity: .55; }
+      .wishlist-open { gap: 5px; }
+      #wishlist-overlay { position: fixed; z-index: 65; inset: 0; box-sizing: border-box; overflow-y: auto; padding: 24px; background: #f5f7fb; }
+      #wishlist-overlay[hidden] { display: none; }
+      .wishlist-shell { width: min(760px,100%); margin: 0 auto; }
+      .wishlist-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+      .wishlist-header h2 { margin: 0 0 4px; color: #101828; font-size: 24px; }
+      .wishlist-header p { margin: 0; color: #667085; font-size: 12px; }
+      #wishlist-close { padding: 8px 11px; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-size: 12px; }
+      .wishlist-list { display: grid; gap: 8px; }
+      .wishlist-item { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 8px; padding: 12px 14px; border: 1px solid #dbe3ef; border-radius: 11px; background: #fff; box-shadow: 0 4px 12px rgba(16,24,40,.06); }
+      .wishlist-company { min-width: 0; color: #101828; font-size: 13px; font-weight: 800; }
+      .wishlist-company span { display: block; margin-top: 2px; color: #667085; font-size: 10px; font-weight: 650; }
+      .wishlist-empty { padding: 34px 18px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; color: #667085; text-align: center; font-size: 12px; }
       #nifty-picker { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
       #nifty-picker[hidden] { display: none; }
       #nifty-picker label { flex: 0 0 auto; color: #475467; font-size: 11px; font-weight: 700; }
@@ -208,7 +225,7 @@
       #screening-results-table th:first-child, #screening-results-table td:first-child { position: sticky; left: 0; width: 220px; background: #fff; text-align: left; }
       #screening-results-table thead th:first-child { z-index: 3; background: #eff4ff; }
       #screening-results-table td { text-align: left; white-space: normal; line-height: 1.45; }
-      #screening-results-table th:last-child, #screening-results-table td:last-child { width: 118px; text-align: center; }
+      #screening-results-table th:last-child, #screening-results-table td:last-child { width: 150px; text-align: center; }
       .screening-stock-symbol { display: block; color: #667085; font-size: 10px; }
       .screening-row-status { color: #667085; font-style: italic; }
       .screening-row-status.complete { color: #344054; font-style: normal; }
@@ -220,9 +237,11 @@
       .screening-details-button { padding: 6px 8px; border: 1px solid #84adff; border-radius: 6px; background: #eff4ff; color: #175cd3; font-size: 10px; font-weight: 750; white-space: nowrap; }
       .screening-details-button:hover, .screening-details-button:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
       .screening-details-button:disabled { cursor: not-allowed; border-color: #d0d5dd; background: #f2f4f7; color: #98a2b3; box-shadow: none; }
+      .stock-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+      .stock-row-actions .wishlist-heart { flex: 0 0 auto; margin-left: 0; }
       .screening-locked-row td { position: relative !important; isolation: isolate; height: 220px; padding: 0 !important; overflow: hidden; background: #eef2f7; text-align: center !important; }
       .screening-locked-blur { position: absolute; z-index: 0; inset: -8px; display: grid; align-content: stretch; filter: blur(5px); opacity: .62; pointer-events: none; transform: scale(1.025); }
-      .screening-fake-row { display: grid; grid-template-columns: 220px minmax(300px,1fr) 118px; align-items: center; min-height: 47px; padding: 0 12px; border-bottom: 1px solid #d0d5dd; background: #fff; }
+      .screening-fake-row { display: grid; grid-template-columns: 220px minmax(300px,1fr) 150px; align-items: center; min-height: 47px; padding: 0 12px; border-bottom: 1px solid #d0d5dd; background: #fff; }
       .screening-fake-row:nth-child(even) { background: #f9fafb; }
       .screening-fake-cell { display: block; height: 11px; margin: 0 10px; border-radius: 4px; background: #98a2b3; }
       .screening-fake-cell.company { width: 72%; background: linear-gradient(90deg,#667085 0 65%,#b2ccff 65%); }
@@ -698,22 +717,24 @@
         .brand-title::before { width: 31px; height: 31px; margin-right: 8px; border-radius: 9px; }
         .beta-badge { margin-left: 6px; }
         .mobile-view-tip { display: none; }
-        .account-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto; width: 100%; gap: 7px; }
+        .account-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; width: 100%; gap: 7px; }
         .header-plan-status { grid-column: 1 / -1; grid-row: 2; order: initial; width: 100%; }
         .header-plan-field { min-width: 0; padding: 7px 6px; text-align: center; }
         .header-plan-label { font-size: 6.5px; }
         .header-plan-value { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
         .signed-in-user { grid-column: 1; grid-row: 1; width: 100%; }
-        .signed-in-email { max-width: calc(100vw - 155px); }
-        .account-link.logout { grid-column: 3; grid-row: 1; }
-        .plan-open { grid-column: 2; grid-row: 1; order: initial; }
+        .signed-in-email { max-width: calc(100vw - 245px); }
+        .wishlist-open { grid-column: 2; grid-row: 1; padding: 7px 8px; }
+        .account-link.logout { grid-column: 4; grid-row: 1; }
+        .plan-open { grid-column: 3; grid-row: 1; order: initial; }
         .app-main { width: calc(100% - 28px); margin-top: 18px; }
         .search-surface { padding: 20px 16px; border-radius: 15px; }
         .search-kicker { margin-bottom: 6px; font-size: 9px; }
         .search-heading { margin-bottom: 7px; font-size: 25px; }
         .search-surface > p { margin-bottom: 17px; font-size: 13px; }
         form { width: 100%; padding: 5px; border-radius: 11px; }
-        input { min-height: 42px; padding: 8px 9px; font-size: 14px; }
+        input { min-height: 42px; padding: 8px 9px; font-size: 16px; }
+        input, select, textarea { font-size: 16px !important; }
         form button { min-width: 82px; min-height: 40px; padding: 9px 12px; font-size: 13px; }
         .screening-buttons { display: grid; grid-template-columns: 1fr 1fr; }
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
@@ -737,6 +758,11 @@
         #advanced-results-table tr { display: grid; gap: 7px; padding: 11px; border: 1px solid #d6e0ef; border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(16,24,40,.06); }
         #advanced-results-table th, #advanced-results-table td { display: block; box-sizing: border-box; width: 100% !important; padding: 0; border: 0; text-align: left !important; }
         #advanced-results-table td:last-child { padding-top: 2px; }
+        #wishlist-overlay { padding: 14px; }
+        .wishlist-header h2 { font-size: 20px; }
+        .wishlist-item { grid-template-columns: minmax(0,1fr) auto; }
+        .wishlist-item .screening-details-button { grid-column: 1 / -1; width: 100%; }
+        .wishlist-heart { width: 25px; height: 25px; margin-left: 4px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
         #tables { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 6px; margin-top: 14px; }
@@ -783,6 +809,7 @@
             <span class="header-plan-field"><span class="header-plan-label">Stocks quota</span><span id="header-plan-quota" class="header-plan-value">—</span></span>
             <span class="header-plan-field"><span id="header-plan-date-label" class="header-plan-label">Expires on</span><span id="header-plan-expiry" class="header-plan-value">—</span></span>
           </span>
+          <button id="wishlist-open" class="account-link wishlist-open" type="button"><span aria-hidden="true">♥</span> Wishlist</button>
           <button id="subscription-open" class="account-link plan-open" type="button">Upgrade</button>
           <span class="signed-in-user">
             <span class="signed-in-dot" aria-hidden="true"></span>
@@ -834,7 +861,7 @@
         <h2 id="search-heading" class="search-heading">Understand a company’s latest results in minutes.</h2>
         <p>Search by company name or NSE symbol for an auditable earnings-quality view.</p>
         <form id="search-form">
-          <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required autofocus>
+          <input id="query" name="query" placeholder="e.g. Muthoot Finance or Reliance" required>
           <button type="submit">Search</button>
         </form>
         <div id="nifty-screening">
@@ -948,6 +975,14 @@
         </div>
       </div>
     </section>
+    {% if current_user %}
+    <section id="wishlist-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="wishlist-title">
+      <div class="wishlist-shell">
+        <div class="wishlist-header"><div><h2 id="wishlist-title">My Wishlist</h2><p>Stocks you saved for quick access.</p></div><button id="wishlist-close" type="button">Close</button></div>
+        <div id="wishlist-list" class="wishlist-list"><div class="wishlist-empty">Loading your wishlist…</div></div>
+      </div>
+    </section>
+    {% endif %}
     <section id="auth-gate" hidden aria-modal="true" role="dialog" aria-labelledby="auth-gate-title">
       <div class="auth-gate-card">
         <button id="auth-gate-close" class="auth-gate-close" type="button" aria-label="Close">×</button>
@@ -987,9 +1022,15 @@
       const advancedScreenerStatus = document.getElementById('advanced-screener-status');
       const advancedProgressBar = document.getElementById('advanced-progress-bar');
       const advancedResultsBody = document.getElementById('advanced-results-body');
+      const wishlistOpen = document.getElementById('wishlist-open');
+      const wishlistOverlay = document.getElementById('wishlist-overlay');
+      const wishlistClose = document.getElementById('wishlist-close');
+      const wishlistList = document.getElementById('wishlist-list');
       const backToScreeningButton = document.getElementById('back-to-screening');
       const authGate = document.getElementById('auth-gate');
       const authGateClose = document.getElementById('auth-gate-close');
+      const authGateTitle = document.getElementById('auth-gate-title');
+      const authGateMessage = authGate?.querySelector('.auth-gate-card p');
       const authGateSignin = document.getElementById('auth-gate-signin');
       const authGateSignup = document.getElementById('auth-gate-signup');
       const message = document.getElementById('message');
@@ -1016,6 +1057,119 @@
       const stockResultCacheTtlMs = 12 * 60 * 60 * 1000;
       const minimumAnalysisDisplayMs = 1800;
       const currentUserAuthenticated = {{ (current_user is not none)|tojson }};
+      const wishlistItems = new Map();
+      let wishlistLoaded = false;
+      function updateWishlistHearts() {
+        document.querySelectorAll('.wishlist-heart').forEach((button) => {
+          const saved = wishlistItems.has(button.dataset.symbol);
+          button.classList.toggle('saved', saved);
+          button.textContent = saved ? '♥' : '♡';
+          button.setAttribute('aria-pressed', String(saved));
+          button.setAttribute('aria-label', `${saved ? 'Remove' : 'Add'} ${button.dataset.symbol} ${saved ? 'from' : 'to'} wishlist`);
+          button.title = saved ? 'Remove from wishlist' : 'Add to wishlist';
+        });
+      }
+      async function loadWishlist(force = false) {
+        if (!currentUserAuthenticated || (wishlistLoaded && !force)) return;
+        const response = await fetch('/api/wishlist');
+        const data = await readJson(response);
+        if (!response.ok) throw new Error(data.error || 'Unable to load wishlist.');
+        wishlistItems.clear();
+        (data.items || []).forEach((item) => wishlistItems.set(item.symbol, item));
+        wishlistLoaded = true;
+        updateWishlistHearts();
+      }
+      async function toggleWishlist(symbol, company, button) {
+        if (!currentUserAuthenticated) {
+          showAuthGate({
+            title: 'Save stocks to your wishlist',
+            message: 'Sign in or create a free account to keep your saved stocks available across devices.',
+          });
+          return;
+        }
+        button.disabled = true;
+        try {
+          const saved = wishlistItems.has(symbol);
+          const response = await fetch(saved ? `/api/wishlist/${encodeURIComponent(symbol)}` : '/api/wishlist', {
+            method: saved ? 'DELETE' : 'POST',
+            headers: saved ? {} : { 'Content-Type': 'application/json' },
+            body: saved ? null : JSON.stringify({ symbol, company }),
+          });
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || 'Unable to update wishlist.');
+          if (saved) wishlistItems.delete(symbol);
+          else wishlistItems.set(symbol, data.item);
+          updateWishlistHearts();
+          if (wishlistOverlay && !wishlistOverlay.hidden) renderWishlist();
+        } catch (error) {
+          window.alert(error.message);
+        } finally {
+          button.disabled = false;
+        }
+      }
+      function makeWishlistHeart(symbol, company = symbol) {
+        const normalizedSymbol = String(symbol).toUpperCase();
+        const button = Object.assign(document.createElement('button'), {
+          className: 'wishlist-heart', type: 'button', textContent: '♡',
+        });
+        button.dataset.symbol = normalizedSymbol;
+        const saved = wishlistItems.has(normalizedSymbol);
+        button.classList.toggle('saved', saved);
+        button.textContent = saved ? '♥' : '♡';
+        button.setAttribute('aria-pressed', String(saved));
+        button.setAttribute('aria-label', `${saved ? 'Remove' : 'Add'} ${normalizedSymbol} ${saved ? 'from' : 'to'} wishlist`);
+        button.title = saved ? 'Remove from wishlist' : 'Add to wishlist';
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          toggleWishlist(normalizedSymbol, company || normalizedSymbol, button);
+        });
+        updateWishlistHearts();
+        return button;
+      }
+      function renderWishlist() {
+        if (!wishlistList) return;
+        wishlistList.replaceChildren();
+        const items = [...wishlistItems.values()].sort((a, b) => (a.company || a.symbol).localeCompare(b.company || b.symbol));
+        if (!items.length) {
+          wishlistList.append(Object.assign(document.createElement('div'), { className: 'wishlist-empty', textContent: 'Your wishlist is empty. Tap the heart beside any stock to save it here.' }));
+          return;
+        }
+        items.forEach((item) => {
+          const row = Object.assign(document.createElement('article'), { className: 'wishlist-item' });
+          const company = Object.assign(document.createElement('div'), { className: 'wishlist-company', textContent: item.company || item.symbol });
+          company.append(Object.assign(document.createElement('span'), { textContent: item.symbol }));
+          const details = Object.assign(document.createElement('button'), { className: 'screening-details-button', type: 'button', textContent: 'More details →' });
+          details.addEventListener('click', () => {
+            closeWishlist();
+            query.value = item.symbol;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            form.requestSubmit();
+          });
+          row.append(company, makeWishlistHeart(item.symbol, item.company), details);
+          wishlistList.append(row);
+        });
+      }
+      async function openWishlist() {
+        wishlistOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        wishlistList.innerHTML = '<div class="wishlist-empty">Loading your wishlist…</div>';
+        try {
+          await loadWishlist(true);
+          renderWishlist();
+        } catch (error) {
+          wishlistList.replaceChildren(Object.assign(document.createElement('div'), {
+            className: 'wishlist-empty', textContent: error.message,
+          }));
+        }
+        wishlistClose.focus();
+      }
+      function closeWishlist() {
+        if (!wishlistOverlay) return;
+        wishlistOverlay.hidden = true;
+        document.body.style.removeProperty('overflow');
+        wishlistOpen?.focus();
+      }
       const planCard = document.getElementById('plan-card');
       const planTier = document.getElementById('plan-tier');
       const planSummary = document.getElementById('plan-summary');
@@ -1225,6 +1379,8 @@
       });
       function showAuthGate(details = {}) {
         sessionStorage.setItem('pendingStockSearch', query.value.trim());
+        authGateTitle.textContent = details.title || 'Continue your analysis';
+        authGateMessage.textContent = details.message || 'You’ve explored two stocks. Create a free account or sign in to analyse more companies.';
         authGateSignin.href = details.login_url || '/login?next=/';
         authGateSignup.href = details.signup_url || '/signup?next=/';
         authGate.hidden = false;
@@ -1920,7 +2076,9 @@
           const detailsCell = document.createElement('td');
           const button = Object.assign(document.createElement('button'), { className: 'screening-details-button', type: 'button', textContent: 'More details →', disabled: !complete });
           button.addEventListener('click', () => openAdvancedStockDetails(stock.symbol));
-          detailsCell.append(button);
+          const actions = Object.assign(document.createElement('div'), { className: 'stock-row-actions' });
+          actions.append(button, makeWishlistHeart(stock.symbol, stock.company));
+          detailsCell.append(actions);
           row.append(stockCell, metricsCell, detailsCell);
           advancedResultsBody.append(row);
         });
@@ -2048,7 +2206,9 @@
             disabled: true,
           });
           detailsButton.addEventListener('click', () => openStockDetails(stock.symbol));
-          detailsCell.append(detailsButton);
+          const actions = Object.assign(document.createElement('div'), { className: 'stock-row-actions' });
+          actions.append(detailsButton, makeWishlistHeart(stock.symbol, stock.company));
+          detailsCell.append(actions);
           resultCells.push(resultCell);
           detailsButtons.push(detailsButton);
           row.append(stockCell, resultCell, detailsCell);
@@ -2248,7 +2408,8 @@
         const pe = Number(data.pe_ratio);
         const lastClose = Number(data.last_close_price);
         const marketCapCrore = Number(data.market_cap_crore);
-        addSummaryItem('NSE Symbol', data.symbol, 'symbol');
+        const symbolItem = addSummaryItem('NSE Symbol', data.symbol, 'symbol');
+        symbolItem.append(makeWishlistHeart(data.symbol, data.company || data.symbol));
         if (Number.isFinite(pe) && pe > 0) addSummaryItem('P/E', Math.round(pe).toLocaleString('en-IN'));
         if (Number.isFinite(marketCapCrore) && marketCapCrore > 0) {
           addSummaryItem('Market Cap', `₹${Math.round(marketCapCrore).toLocaleString('en-IN')} Cr`, 'market-cap');
@@ -2269,6 +2430,7 @@
       }
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        query.blur();
         if (chartRotationTimer) {
           clearInterval(chartRotationTimer);
           chartRotationTimer = null;
@@ -2344,6 +2506,12 @@
           // Authentication status is non-critical; the user can search again.
         }
       })();
+      wishlistOpen?.addEventListener('click', openWishlist);
+      wishlistClose?.addEventListener('click', closeWishlist);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && wishlistOverlay && !wishlistOverlay.hidden) closeWishlist();
+      });
+      loadWishlist().catch(() => {});
       loadPlanCard();
     </script>
   </body>

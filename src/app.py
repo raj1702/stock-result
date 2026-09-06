@@ -344,6 +344,49 @@ def plan_status():
         return jsonify({"error": "Your plan is temporarily unavailable."}), 503
 
 
+@app.route('/api/wishlist', methods=['GET', 'POST'])
+def wishlist():
+    user = session.get("user")
+    if not user:
+        return jsonify({
+            "auth_required": True,
+            "error": "Sign in to use your wishlist.",
+            "login_url": "/login?next=/",
+            "signup_url": "/signup?next=/",
+        }), 401
+    try:
+        if request.method == 'GET':
+            items = plan_service.list_wishlist(user["sub"])
+            return jsonify({"items": items, "count": len(items)}), 200
+
+        payload = request.get_json(silent=True) or {}
+        symbol = str(payload.get("symbol") or "").strip().upper()
+        company = str(payload.get("company") or symbol).strip()[:120]
+        if not re.fullmatch(r"[A-Z0-9&.-]{1,30}", symbol):
+            return jsonify({"error": "Invalid stock symbol."}), 400
+        item = plan_service.save_to_wishlist(user["sub"], symbol, company)
+        return jsonify({"saved": True, "item": item}), 201
+    except Exception:
+        app.logger.exception("Wishlist request failed")
+        return jsonify({"error": "Your wishlist is temporarily unavailable."}), 503
+
+
+@app.route('/api/wishlist/<symbol>', methods=['DELETE'])
+def remove_wishlist_item(symbol):
+    user = session.get("user")
+    if not user:
+        return jsonify({"auth_required": True, "error": "Sign in to use your wishlist."}), 401
+    symbol = symbol.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9&.-]{1,30}", symbol):
+        return jsonify({"error": "Invalid stock symbol."}), 400
+    try:
+        plan_service.remove_from_wishlist(user["sub"], symbol)
+        return jsonify({"removed": True, "symbol": symbol}), 200
+    except Exception:
+        app.logger.exception("Unable to remove wishlist item")
+        return jsonify({"error": "Your wishlist is temporarily unavailable."}), 503
+
+
 @app.route('/api/payments/order', methods=['POST'])
 def create_payment_order():
     user = session.get("user")

@@ -52,6 +52,17 @@ def test_free_plan_counts_distinct_stocks_and_enforces_limit(plan_service):
     assert blocked["stocks_remaining"] == 0
 
 
+def test_wishlist_items_are_stored_separately_from_usage(plan_service):
+    plan_service.ensure_user(user("owner"))
+    saved = plan_service.save_to_wishlist("owner", "INFY", "Infosys")
+    assert saved["symbol"] == "INFY"
+    assert plan_service.list_wishlist("owner")[0]["company"] == "Infosys"
+    assert plan_service.get_usage("owner")["used_symbols"] == []
+
+    plan_service.remove_from_wishlist("owner", "INFY")
+    assert plan_service.list_wishlist("owner") == []
+
+
 def test_paid_upgrade_starts_with_fresh_quota(plan_service):
     plan_service.ensure_user(user("owner"))
     plan_service.record_stock_usage("owner", "RELIANCE")

@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 import boto3
 from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Key
 
 
 TIER_ORDER = ("free", "bronze", "silver", "gold")
@@ -49,6 +50,34 @@ class PlanService:
     def ensure_user(self, user):
         plan, _created = self.ensure_user_with_status(user)
         return plan
+
+    def list_wishlist(self, user_id):
+        """Return the user's saved stocks without affecting plan usage."""
+        response = self.table.query(
+            KeyConditionExpression=(
+                Key("PK").eq(f"USER#{user_id}")
+                & Key("SK").begins_with("WISHLIST#")
+            ),
+        )
+        return sorted(response.get("Items", []), key=lambda item: item["symbol"])
+
+    def save_to_wishlist(self, user_id, symbol, company):
+        now = self._format_datetime(self._now())
+        item = {
+            "PK": f"USER#{user_id}",
+            "SK": f"WISHLIST#{symbol}",
+            "symbol": symbol,
+            "company": company or symbol,
+            "created_at": now,
+        }
+        self.table.put_item(Item=item)
+        return {key: item[key] for key in ("symbol", "company", "created_at")}
+
+    def remove_from_wishlist(self, user_id, symbol):
+        self.table.delete_item(Key={
+            "PK": f"USER#{user_id}",
+            "SK": f"WISHLIST#{symbol}",
+        })
 
     def ensure_user_with_status(self, user):
         """Create the default Free profile once and report whether it was new."""
