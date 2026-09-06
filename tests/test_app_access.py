@@ -125,3 +125,12 @@ def test_sitemap_contains_canonical_homepage(client):
     assert response.status_code == 200
     assert response.mimetype == "application/xml"
     assert "<loc>https://resultlens.in/</loc>" in response.text
+
+
+def test_homepage_exposes_canonical_search_metadata(client):
+    browser, _stock, _plan = client
+    response = browser.get("/")
+    assert response.status_code == 200
+    assert '<link rel="canonical" href="https://resultlens.in/">' in response.text
+    assert '<meta name="description"' in response.text
+    assert '"@type": "WebApplication"' in response.text
