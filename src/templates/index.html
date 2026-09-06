@@ -641,20 +641,22 @@
       .page-header {
         position: relative;
         z-index: 20;
+        box-sizing: border-box;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         width: 100%;
         min-height: 76px;
-        padding: 14px max(24px, calc((100vw - 1240px) / 2));
+        padding: 14px 18px;
         border-bottom: 1px solid rgba(226,232,240,.9);
         background: rgba(255,255,255,.9);
         box-shadow: 0 1px 2px rgba(15,23,42,.03);
         backdrop-filter: blur(16px);
       }
-      h1 { display: flex; align-items: center; min-width: 285px; margin: 0; font-size: clamp(18px, 1.75vw, 25px); line-height: 1.15; }
-      .brand-title { display: inline-flex; align-items: center; color: #0f2447; font-weight: 760; letter-spacing: -.035em; }
-      .brand-title::before { content: "EA"; display: inline-grid; place-items: center; width: 34px; height: 34px; margin-right: 10px; border-radius: 10px; background: linear-gradient(145deg,#2563eb,#173ea5); color: #fff; font-size: 11px; font-weight: 850; letter-spacing: .04em; box-shadow: 0 6px 16px rgba(37,99,235,.22); }
-      .beta-badge { top: 0; padding: 3px 7px; border-color: #cbd5e1; background: #f8fafc; color: #475569; box-shadow: none; animation: beta-glow 4.8s ease-in-out infinite; }
+      h1 { display: flex; flex: 0 0 auto; align-items: center; min-width: 0; margin: 0; font-size: clamp(18px, 1.65vw, 25px); line-height: 1.15; white-space: nowrap; }
+      .brand-title { display: inline-flex; align-items: center; min-width: 0; color: #0f2447; font-weight: 760; letter-spacing: -.035em; white-space: nowrap; }
+      .brand-title::before { content: "EA"; display: inline-grid; flex: 0 0 34px; place-items: center; width: 34px; height: 34px; margin-right: 10px; border-radius: 10px; background: linear-gradient(145deg,#2563eb,#173ea5); color: #fff; font-size: 11px; font-weight: 850; letter-spacing: .04em; box-shadow: 0 6px 16px rgba(37,99,235,.22); }
+      .beta-badge { flex: 0 0 auto; top: 0; padding: 3px 7px; border-color: #cbd5e1; background: #f8fafc; color: #475569; box-shadow: none; animation: beta-glow 4.8s ease-in-out infinite; }
       .account-controls { min-width: 0; margin-left: auto; gap: 8px; padding: 0; }
       .account-link { min-height: 36px; padding: 8px 12px; border-color: #dbe3ef; border-radius: 9px; background: #fff; color: #334155; font-size: 12px; font-weight: 700; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
       .account-link:hover, .account-link:focus-visible { filter: none; border-color: #94a3b8; outline: none; box-shadow: 0 3px 10px rgba(15,23,42,.08); transform: translateY(-1px); }
@@ -742,6 +744,8 @@
         body { min-width: 0; margin: 0; overflow-x: hidden; }
         .page-header { padding-inline: 20px; }
         .page-header { align-items: flex-start; }
+        h1 { font-size: 18px; }
+        .account-controls { width: auto; margin-top: 0; }
         .account-controls { flex-wrap: wrap; justify-content: flex-end; }
         .app-main { width: calc(100% - 40px); }
         #search-results-layout, #tables { width: 100%; max-width: none; }
