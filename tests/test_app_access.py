@@ -132,5 +132,6 @@ def test_homepage_exposes_canonical_search_metadata(client):
     response = browser.get("/")
     assert response.status_code == 200
     assert '<link rel="canonical" href="https://resultlens.in/">' in response.text
+    assert '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">' in response.text
     assert '<meta name="description"' in response.text
     assert '"@type": "WebApplication"' in response.text
