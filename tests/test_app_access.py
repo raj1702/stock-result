@@ -125,6 +125,7 @@ def test_sitemap_contains_canonical_homepage(client):
     assert response.status_code == 200
     assert response.mimetype == "application/xml"
     assert "<loc>https://resultlens.in/</loc>" in response.text
+    assert "<loc>https://resultlens.in/methodology</loc>" in response.text
 
 
 def test_homepage_exposes_canonical_search_metadata(client):
@@ -135,3 +136,12 @@ def test_homepage_exposes_canonical_search_metadata(client):
     assert '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">' in response.text
     assert '<meta name="description"' in response.text
     assert '"@type": "WebApplication"' in response.text
+
+
+def test_methodology_page_is_public_and_canonical(client):
+    browser, _stock, _plan = client
+    response = browser.get("/methodology")
+    assert response.status_code == 200
+    assert '<link rel="canonical" href="https://resultlens.in/methodology">' in response.text
+    assert "Operating-company model" in response.text
+    assert "Bank and lender model" in response.text

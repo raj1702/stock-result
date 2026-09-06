@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Methodology &amp; Data Sources | ResultLens</title>
+    <meta name="description" content="See how ResultLens calculates its transparent Earnings Quality Score for NSE and BSE companies, including component weights, missing-data treatment and limitations.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://resultlens.in/methodology">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+      :root { color-scheme: light; --ink: #0f2447; --muted: #526075; --brand: #2563eb; --line: #dbe3ef; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: #f4f7fb; color: var(--ink); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; line-height: 1.65; }
+      header { border-bottom: 1px solid var(--line); background: rgba(255,255,255,.94); }
+      .header-inner { display: flex; align-items: center; justify-content: space-between; width: min(960px, calc(100% - 40px)); min-height: 70px; margin: auto; gap: 16px; }
+      .brand { display: inline-flex; align-items: center; color: var(--ink); font-size: 18px; font-weight: 800; letter-spacing: -.03em; text-decoration: none; }
+      .brand::before { content: "RL"; display: inline-grid; place-items: center; width: 34px; height: 34px; margin-right: 9px; border-radius: 10px; background: linear-gradient(145deg,#3b82f6,#173ea5); color: #fff; font-size: 11px; letter-spacing: .04em; }
+      .back { padding: 8px 11px; border: 1px solid #b2ccff; border-radius: 9px; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; text-decoration: none; }
+      main { width: min(880px, calc(100% - 32px)); margin: 32px auto 56px; }
+      .hero, section { border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 10px 28px rgba(15,36,71,.06); }
+      .hero { padding: 34px; background: radial-gradient(circle at 90% 0,rgba(37,99,235,.12),transparent 38%),#fff; }
+      .eyebrow { margin: 0 0 8px; color: var(--brand); font-size: 11px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(29px,5vw,44px); line-height: 1.12; letter-spacing: -.045em; }
+      .lead { max-width: 700px; margin: 14px 0 0; color: var(--muted); font-size: 15px; }
+      .updated { margin: 14px 0 0; color: #667085; font-size: 11px; font-weight: 700; }
+      section { margin-top: 16px; padding: 26px 28px; }
+      h2 { margin: 0 0 10px; font-size: 21px; letter-spacing: -.025em; }
+      h3 { margin: 22px 0 6px; font-size: 16px; }
+      p { margin: 8px 0; color: #344054; }
+      ul { margin: 10px 0; padding-left: 21px; color: #344054; }
+      li + li { margin-top: 7px; }
+      .formula { padding: 14px 16px; border-left: 4px solid var(--brand); border-radius: 8px; background: #eff4ff; color: #194185; font-weight: 750; }
+      .table-wrap { overflow-x: auto; margin-top: 12px; }
+      table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 13px; }
+      th, td { padding: 10px 12px; border-bottom: 1px solid #e4e7ec; text-align: left; }
+      th { background: #f8fafc; color: #475467; font-size: 11px; text-transform: uppercase; }
+      td:last-child, th:last-child { width: 90px; text-align: right; font-weight: 800; }
+      .notice { border-color: #fec84b; background: #fffcf5; }
+      .notice strong { color: #93370d; }
+      footer { padding: 22px 16px; color: #667085; font-size: 11px; text-align: center; }
+      @media (max-width: 600px) {
+        .header-inner { width: calc(100% - 28px); }
+        main { margin-top: 18px; }
+        .hero, section { padding: 21px 18px; border-radius: 13px; }
+        .lead { font-size: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header><div class="header-inner"><a class="brand" href="/">ResultLens</a><a class="back" href="/">← Back to assistant</a></div></header>
+    <main>
+      <article class="hero">
+        <p class="eyebrow">Transparent by design</p>
+        <h1>Methodology &amp; data sources</h1>
+        <p class="lead">ResultLens converts reported financial trends into an auditable Earnings Quality Score. It describes the consistency and alignment of recent results; it does not predict a share price or issue a buy/sell recommendation.</p>
+        <p class="updated">Methodology last updated: 6 September 2026</p>
+      </article>
+
+      <section>
+        <h2>Data used</h2>
+        <p>The analysis uses the five most recent reported quarters available. A future or unreported quarter is never treated as a zero.</p>
+        <ul>
+          <li><strong>Primary financial source:</strong> NSE corporate financial filings and their reported XBRL facts.</li>
+          <li><strong>Fallback financial source:</strong> Upstox Fundamentals when comparable NSE filing history cannot be obtained.</li>
+          <li><strong>Quote and valuation fallbacks:</strong> selected values such as P/E or market capitalisation may use Yahoo Finance when NSE leaves the field blank.</li>
+          <li>Unavailable observations remain blank. The result screen identifies the financial source used for that company.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Operating-company model</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Component</th><th>What it measures</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td>Revenue consistency</td><td>Persistence of reported topline improvement</td><td>25</td></tr>
+            <tr><td>PAT consistency</td><td>Persistence of profit-after-tax improvement</td><td>25</td></tr>
+            <tr><td>Profit margin</td><td>Current profitability and margin consistency</td><td>20</td></tr>
+            <tr><td>Operating-profit consistency</td><td>Persistence of operating-profit improvement</td><td>15</td></tr>
+            <tr><td>Operating margin</td><td>Current operating profitability and consistency</td><td>15</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section>
+        <h2>Bank and lender model</h2>
+        <p>For lenders, operating-company measures are replaced with sector-relevant metrics.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Component</th><th>What it measures</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td>Revenue / total-income consistency</td><td>Persistence of reported income improvement</td><td>20</td></tr>
+            <tr><td>NII consistency</td><td>Persistence of net-interest-income improvement</td><td>20</td></tr>
+            <tr><td>PAT consistency</td><td>Persistence of profit-after-tax improvement</td><td>20</td></tr>
+            <tr><td>Profit margin</td><td>Current profitability and margin consistency</td><td>20</td></tr>
+            <tr><td>Loan-book consistency</td><td>Direction of reported loans or advances</td><td>20</td></tr>
+          </tbody>
+        </table></div>
+        <p>Loan books are often disclosed half-yearly. Blank quarters are skipped and consecutive reported observations are compared instead.</p>
+      </section>
+
+      <section>
+        <h2>How points are earned</h2>
+        <h3>Consistency components</h3>
+        <p>Each consecutive pair of reported observations is evaluated: an improvement earns full credit, an unchanged value earns half credit, and a decline earns no credit. The component receives that proportion of its weight.</p>
+        <h3>Margin components</h3>
+        <p>Half of the component weight reflects whether the latest margin is positive. The other half reflects how consistently the margin improved across reported periods.</p>
+        <h3>Missing information</h3>
+        <p>A component without enough observations is marked unavailable rather than scored as zero.</p>
+        <p class="formula">Final score = earned points ÷ available component weight × 100</p>
+        <h3>Losses and PAT quality</h3>
+        <p>A narrowing loss counts as an improvement for PAT consistency, while the screen still states that the company remains loss-making. PAT points can be reduced when PAT rises without revenue support and expanding margins appear to be the main driver, because that pattern may be less durable.</p>
+      </section>
+
+      <section>
+        <h2>Rating bands</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Score</th><th>Rating</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>80–100</td><td>Strong</td><td>Broadly consistent recent earnings signals</td></tr>
+            <tr><td>65–79</td><td>Healthy</td><td>Generally supportive signals with some gaps</td></tr>
+            <tr><td>50–64</td><td>Mixed</td><td>Material strengths and weaknesses coexist</td></tr>
+            <tr><td>35–49</td><td>Weak</td><td>Recent trends show limited consistency</td></tr>
+            <tr><td>0–34</td><td>Fragile</td><td>Recent reported trends are predominantly weak</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section>
+        <h2>Automated explanation</h2>
+        <p>The AI Smart Signal is an automated narrative built from the same displayed metrics. It checks whether PAT is supported by revenue or NII, whether margins explain a gap, and whether operating profit or the loan book supports the topline trend. The component calculations remain visible so users can audit the conclusion.</p>
+      </section>
+
+      <section class="notice">
+        <h2>Limitations and responsible use</h2>
+        <p><strong>ResultLens is an analytical aid, not investment advice.</strong> Filing data can be delayed, restated, incomplete or affected by exceptional items and accounting changes. A five-quarter trend cannot capture valuation, balance-sheet risk, asset quality, management quality, industry conditions or every cash-flow consideration. Verify figures against the original exchange filing and consider qualified professional advice before making an investment decision.</p>
+      </section>
+    </main>
+    <footer>© 2026 ResultLens · Earnings analysis for Indian listed companies</footer>
+  </body>
+</html>

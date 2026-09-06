@@ -150,6 +150,7 @@ def sitemap_xml():
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         f"  <url><loc>{SEO_BASE_URL}/</loc></url>\n"
+        f"  <url><loc>{SEO_BASE_URL}/methodology</loc></url>\n"
         '</urlset>\n'
     )
     return Response(body, mimetype="application/xml")
@@ -158,6 +159,11 @@ def sitemap_xml():
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html', current_user=session.get("user"))
+
+
+@app.route('/methodology', methods=['GET'])
+def methodology():
+    return render_template('methodology.html')
 
 
 @app.route('/login', methods=['GET'])
