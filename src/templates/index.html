@@ -646,7 +646,7 @@
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
-        #tables { display: grid; grid-template-columns: minmax(0,1fr) 82px; gap: 6px; margin-top: 14px; }
+        #tables { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 6px; margin-top: 14px; }
         #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
         #results-panel { min-width: 0; overflow: hidden; }
         #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
@@ -657,14 +657,14 @@
         #results-panel th:first-child, #results-panel td:first-child { width: 70px; }
         #results-panel .unit { font-size: 7px; }
         #results-panel .metric-info { width: 11px; height: 11px; margin-left: 2px; font-size: 7px; }
-        #comparison-column { display: flex; width: 82px; max-width: 82px; padding: 0; }
-        #comparison-controls { position: absolute; z-index: 2; top: 7px; right: calc(100% + 10px); display: flex; justify-content: flex-end; margin: 0; }
+        #comparison-column { display: flex; width: 96px; max-width: 96px; padding: 0; }
+        #comparison-controls { position: absolute; z-index: 2; top: 7px; right: 5px; left: 5px; display: flex; justify-content: stretch; margin: 0; }
         #comparison-panel { overflow: hidden; }
         #comparison-panel table { width: 100%; table-layout: fixed; }
         #comparison-panel th, #comparison-panel td { overflow: hidden; padding: 7px 3px; font-size: 9px; }
         #comparison-panel .table-heading { visibility: hidden; width: 0; overflow: hidden; }
-        .comparison-toggle { align-items: center; min-height: 28px; gap: 2px; padding: 3px; border-radius: 8px; box-shadow: 0 2px 7px rgba(15,23,42,.08); }
-        .comparison-option { justify-content: center; min-width: 38px; min-height: 22px; gap: 0; padding: 5px 7px; font-size: 10px; line-height: 1; }
+        .comparison-toggle { width: 100%; align-items: center; min-height: 28px; gap: 2px; padding: 3px; border-radius: 8px; box-shadow: 0 2px 7px rgba(15,23,42,.08); }
+        .comparison-option { flex: 1 1 0; justify-content: center; min-width: 0; min-height: 22px; gap: 0; padding: 5px 3px; font-size: 9px; line-height: 1; }
         .comparison-option button { display: none; }
         #interpretation-section { margin-top: 18px; }
         #analysis-box { padding: 14px; border-radius: 14px; }
