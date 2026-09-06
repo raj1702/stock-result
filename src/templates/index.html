@@ -646,26 +646,26 @@
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
-        #tables { display: grid; grid-template-columns: minmax(0,1fr) 58px; gap: 4px; margin-top: 14px; }
+        #tables { display: grid; grid-template-columns: minmax(0,1fr) 82px; gap: 6px; margin-top: 14px; }
         #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
         #results-panel { min-width: 0; overflow: hidden; }
         #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
-        #results-panel th, #results-panel td { overflow: hidden; padding: 7px 2px; font-size: 8px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+        #results-panel th, #results-panel td { overflow: hidden; padding: 7px 2px; font-size: 8px; line-height: 1.2; white-space: nowrap; }
         #results-panel thead tr, #comparison-panel thead tr { height: 38px; }
         #results-panel tbody tr, #comparison-panel tbody tr,
         #results-panel tbody th, #results-panel tbody td, #comparison-panel tbody td { height: 44px; }
-        #results-panel th:first-child, #results-panel td:first-child { width: 78px; }
+        #results-panel th:first-child, #results-panel td:first-child { width: 70px; }
         #results-panel .unit { font-size: 7px; }
         #results-panel .metric-info { width: 11px; height: 11px; margin-left: 2px; font-size: 7px; }
-        #comparison-column { display: flex; width: 58px; max-width: 58px; padding: 0; }
-        #comparison-controls { position: absolute; right: 0; bottom: calc(100% + 6px); display: flex; justify-content: flex-end; margin: 0; }
+        #comparison-column { display: flex; width: 82px; max-width: 82px; padding: 0; }
+        #comparison-controls { position: absolute; z-index: 2; top: 7px; right: 5px; display: flex; justify-content: flex-end; margin: 0; }
         #comparison-panel { overflow: hidden; }
         #comparison-panel table { width: 100%; table-layout: fixed; }
-        #comparison-panel th, #comparison-panel td { overflow: hidden; padding: 7px 2px; font-size: 8px; text-overflow: ellipsis; }
+        #comparison-panel th, #comparison-panel td { overflow: hidden; padding: 7px 3px; font-size: 9px; }
         #comparison-panel .table-heading { visibility: hidden; width: 0; overflow: hidden; }
-        .comparison-toggle { gap: 1px; padding: 2px; }
-        .comparison-option { gap: 2px; padding: 3px 5px; font-size: 9px; }
-        .comparison-option button { width: 9px; height: 9px; }
+        .comparison-toggle { gap: 1px; padding: 2px; border-radius: 7px; box-shadow: none; }
+        .comparison-option { gap: 0; padding: 4px 6px; font-size: 8px; line-height: 1; }
+        .comparison-option button { display: none; }
         #interpretation-section { margin-top: 18px; }
         #analysis-box { padding: 14px; border-radius: 14px; }
         .analysis-metrics { grid-template-columns: minmax(0,1fr); }
@@ -1529,7 +1529,13 @@
           return;
         }
         currentQuarterlyTable = table;
-        renderRows(resultsHead, resultsBody, quarters, rows, formatQuarterlyValue, true);
+        const displayQuarters = isCompactTableView
+          ? quarters.map((quarter) => ({
+              ...quarter,
+              label: quarter.label.replace(/^(Q[1-4])\s+(\d{4})$/, (_, q, year) => `${q} ’${year.slice(-2)}`),
+            }))
+          : quarters;
+        renderRows(resultsHead, resultsBody, displayQuarters, rows, formatQuarterlyValue, true);
         renderComparisonTable();
         tables.hidden = false;
       }
