@@ -170,6 +170,7 @@ def test_homepage_exposes_canonical_search_metadata(client):
     assert '"@type": "WebApplication"' in response.text
     assert 'mailto:resultlens.support@gmail.com' in response.text
     assert 'href="/refund-policy"' in response.text
+    assert 'href="/stocks"' in response.text
     assert "By purchasing, you agree to our" in response.text
 
 
