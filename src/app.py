@@ -472,6 +472,17 @@ def search_stock():
         return jsonify({"error": f"Stock search failed: {exc}"}), 502
 
 
+@app.route('/search-options', methods=['GET'])
+def search_options():
+    """Return company matches without checking or consuming stock quota."""
+    try:
+        matches = stock_service.search_symbol_candidates(request.args.get('query', ''))
+        return jsonify(matches), 200
+    except Exception:
+        app.logger.exception("Stock search suggestions failed")
+        return jsonify({"error": "Unable to find matching companies."}), 502
+
+
 @app.route('/search-access', methods=['GET'])
 def search_access():
     """Apply the guest limit before serving a browser-cached stock result."""

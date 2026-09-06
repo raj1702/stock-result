@@ -1215,6 +1215,92 @@ class StockService:
             return None
         return min(fuzzy_matches)[-1] if fuzzy_matches else None
 
+    def search_symbol_candidates(self, query: str, limit: int = 8) -> dict:
+        """Return ranked company matches before a search can consume quota."""
+        lookup = self._normalise_lookup(query)
+        raw_query = str(query or "").strip()
+        explicitly_typed_symbol = bool(raw_query and raw_query == raw_query.upper())
+        if not lookup:
+            return {"exact": False, "options": []}
+        if lookup in self.BSE_ONLY_ISINS and explicitly_typed_symbol:
+            return {"exact": True, "options": [{"symbol": lookup, "company": lookup}]}
+        if lookup in self.SYMBOL_ALIASES and explicitly_typed_symbol:
+            symbol = self.SYMBOL_ALIASES[lookup]
+            return {"exact": True, "options": [{"symbol": symbol, "company": symbol}]}
+
+        try:
+            response = requests.get(
+                self.EQUITY_MASTER_URL, headers=self.XBRL_HEADERS, timeout=20
+            )
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            logger.warning("Unable to download NSE equity master list for suggestions: %s", exc)
+            return {"exact": False, "options": []}
+
+        exact = []
+        ranked = []
+        special_symbol = (
+            lookup if lookup in self.BSE_ONLY_ISINS
+            else self.SYMBOL_ALIASES.get(lookup)
+        )
+        query_words = lookup.split()
+        for row in csv.DictReader(StringIO(response.text)):
+            symbol = str(row.get("SYMBOL", "")).strip().upper()
+            company = str(row.get("NAME OF COMPANY", "")).strip()
+            series = str(row.get(" SERIES", row.get("SERIES", ""))).strip()
+            if not symbol or not company or series not in {"EQ", "BE"}:
+                continue
+            symbol_lookup = self._normalise_lookup(symbol)
+            company_lookup = self._normalise_lookup(company)
+            option = {"symbol": symbol, "company": company}
+            if lookup == company_lookup:
+                exact.append(option)
+                continue
+            if lookup == symbol_lookup:
+                if explicitly_typed_symbol:
+                    return {"exact": True, "options": [option]}
+                ranked.append((0, len(company_lookup), option))
+                continue
+            company_words = self._meaningful_lookup_words(company_lookup)
+            if lookup in company_words:
+                ranked.append((0, len(company_lookup), option))
+            elif company_lookup.startswith(lookup):
+                ranked.append((1, len(company_lookup), option))
+            elif lookup in company_lookup or lookup in symbol_lookup:
+                ranked.append((2, len(company_lookup), option))
+            elif query_words and all(word in company_lookup for word in query_words):
+                ranked.append((3, len(company_lookup), option))
+            else:
+                company_core = " ".join(company_words)
+                score = max(
+                    SequenceMatcher(None, lookup, company_core).ratio(),
+                    SequenceMatcher(None, lookup, symbol_lookup).ratio(),
+                    *(SequenceMatcher(None, lookup, word).ratio() for word in company_words),
+                )
+                threshold = 0.88 if len(lookup) <= 5 and " " not in lookup else 0.72
+                if len(lookup) >= 4 and score >= threshold:
+                    ranked.append((4, -score, option))
+
+        if exact:
+            return {"exact": True, "options": exact[:1]}
+        if special_symbol and not any(item[-1]["symbol"] == special_symbol for item in ranked):
+            ranked.append((0, len(special_symbol), {
+                "symbol": special_symbol, "company": special_symbol,
+            }))
+        if ranked:
+            strongest_rank = min(item[0] for item in ranked)
+            ranked = [item for item in ranked if item[0] == strongest_rank]
+        seen = set()
+        options = []
+        for *_rank, option in sorted(ranked, key=lambda item: item[:-1]):
+            if option["symbol"] in seen:
+                continue
+            seen.add(option["symbol"])
+            options.append(option)
+            if len(options) >= limit:
+                break
+        return {"exact": False, "options": options}
+
     def generate_interpretation(self, symbol: str, metrics: Mapping[str, Any]):
         """Create an exact, rule-based explanation from the NSE comparison values."""
         source_note = str(metrics.get("data_note", ""))

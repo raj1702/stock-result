@@ -6,6 +6,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import app as app_module  # noqa: E402
+from services import stock_service as stock_service_module  # noqa: E402
 
 
 class FakeStockService:
@@ -23,6 +24,14 @@ class FakeStockService:
             "profit_margin": 18.2,
             "analysis": {"available": True, "score": 82},
         }
+
+    def search_symbol_candidates(self, query):
+        if query.lower() == "shriram":
+            return {"exact": False, "options": [
+                {"symbol": "SHRIRAMFIN", "company": "Shriram Finance Limited"},
+                {"symbol": "DCMSHRIRAM", "company": "DCM Shriram Limited"},
+            ]}
+        return {"exact": True, "options": [{"symbol": query.upper(), "company": query.upper()}]}
 
     def generate_interpretation(self, _symbol, _data):
         return [{"text": "Healthy"}]
@@ -113,6 +122,52 @@ def test_search_access_checks_quota_before_cached_result(client):
     response = browser.get("/search-access?query=INFY")
     assert response.status_code == 403
     assert plan.recorded == []
+
+
+def test_search_options_are_returned_without_consuming_quota(client):
+    browser, stock, plan = client
+    plan.allowed = False
+    response = browser.get("/search-options?query=shriram")
+    assert response.status_code == 200
+    assert response.get_json()["exact"] is False
+    assert [item["symbol"] for item in response.get_json()["options"]] == [
+        "SHRIRAMFIN", "DCMSHRIRAM",
+    ]
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_candidate_ranking_keeps_only_strong_company_matches(monkeypatch):
+    csv_text = """SYMBOL,NAME OF COMPANY,SERIES
+HDFCBANK,HDFC Bank Limited,EQ
+HDFCLIFE,HDFC Life Insurance Company Limited,EQ
+HDFCAMC,HDFC Asset Management Company Limited,EQ
+SHRIRAMFIN,Shriram Finance Limited,EQ
+DCMSHRIRAM,DCM Shriram Limited,EQ
+SHIVAMAUTO,Shivam Autotech Limited,EQ
+SHREERAMA,Shree Rama Multi-Tech Limited,EQ
+"""
+
+    class Response:
+        text = csv_text
+
+        @staticmethod
+        def raise_for_status():
+            return None
+
+    monkeypatch.setattr(stock_service_module.requests, "get", lambda *args, **kwargs: Response())
+    service = stock_service_module.StockService(api_client=None)
+
+    hdfc = service.search_symbol_candidates("hdfc")
+    assert hdfc["exact"] is False
+    assert {item["symbol"] for item in hdfc["options"]} == {
+        "HDFCBANK", "HDFCLIFE", "HDFCAMC",
+    }
+
+    shriram = service.search_symbol_candidates("shriram")
+    assert {item["symbol"] for item in shriram["options"]} == {
+        "SHRIRAMFIN", "DCMSHRIRAM",
+    }
 
 
 def test_screening_result_does_not_consume_quota(client):

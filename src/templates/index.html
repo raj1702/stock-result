@@ -189,6 +189,17 @@
       .wishlist-company { min-width: 0; color: #101828; font-size: 13px; font-weight: 800; }
       .wishlist-company span { display: block; margin-top: 2px; color: #667085; font-size: 10px; font-weight: 650; }
       .wishlist-empty { padding: 34px 18px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff; color: #667085; text-align: center; font-size: 12px; }
+      #search-match-overlay { position: fixed; z-index: 110; inset: 0; display: grid; place-items: center; box-sizing: border-box; padding: 18px; background: rgba(15,23,42,.58); backdrop-filter: blur(4px); }
+      #search-match-overlay[hidden] { display: none; }
+      .search-match-card { position: relative; width: min(480px,100%); max-height: min(620px,calc(100vh - 36px)); overflow: auto; box-sizing: border-box; padding: 22px; border: 1px solid #dbe3ef; border-radius: 16px; background: #fff; box-shadow: 0 24px 60px rgba(15,23,42,.28); }
+      .search-match-card h2 { margin: 0 38px 5px 0; color: #101828; font-size: 20px; }
+      .search-match-card > p { margin: 0 0 14px; color: #667085; font-size: 12px; line-height: 1.5; }
+      #search-match-close { position: absolute; top: 13px; right: 13px; display: grid; place-items: center; width: 30px; height: 30px; min-height: 30px; padding: 0; border: 1px solid #d0d5dd; background: #fff; color: #475467; font-size: 17px; }
+      .search-match-list { display: grid; gap: 7px; }
+      .search-match-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 0; padding: 11px 12px; border: 1px solid #dbe3ef; background: #f8fafc; color: #101828; text-align: left; }
+      .search-match-option:hover, .search-match-option:focus-visible { border-color: #84adff; background: #eff4ff; outline: none; }
+      .search-match-company { min-width: 0; font-size: 12px; font-weight: 750; line-height: 1.35; }
+      .search-match-symbol { flex: 0 0 auto; padding: 3px 6px; border-radius: 5px; background: #dbe8ff; color: #175cd3; font-size: 9px; font-weight: 850; }
       #nifty-picker { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
       #nifty-picker[hidden] { display: none; }
       #nifty-picker label { flex: 0 0 auto; color: #475467; font-size: 11px; font-weight: 700; }
@@ -763,6 +774,9 @@
         .wishlist-item { grid-template-columns: minmax(0,1fr) auto; }
         .wishlist-item .screening-details-button { grid-column: 1 / -1; width: 100%; }
         .wishlist-heart { width: 25px; height: 25px; margin-left: 4px; }
+        .search-match-card { padding: 18px 14px; border-radius: 13px; }
+        .search-match-card h2 { font-size: 18px; }
+        .search-match-option { padding: 10px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
         #tables { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 6px; margin-top: 14px; }
@@ -995,6 +1009,14 @@
         </div>
       </div>
     </section>
+    <section id="search-match-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="search-match-title">
+      <div class="search-match-card">
+        <button id="search-match-close" type="button" aria-label="Close">×</button>
+        <h2 id="search-match-title">Did you mean?</h2>
+        <p>Multiple companies match your search. Choose one before its analysis counts towards your quota.</p>
+        <div id="search-match-list" class="search-match-list"></div>
+      </div>
+    </section>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       const form = document.getElementById('search-form');
@@ -1033,6 +1055,9 @@
       const authGateMessage = authGate?.querySelector('.auth-gate-card p');
       const authGateSignin = document.getElementById('auth-gate-signin');
       const authGateSignup = document.getElementById('auth-gate-signup');
+      const searchMatchOverlay = document.getElementById('search-match-overlay');
+      const searchMatchClose = document.getElementById('search-match-close');
+      const searchMatchList = document.getElementById('search-match-list');
       const message = document.getElementById('message');
       const tables = document.getElementById('tables');
       const resultsPanel = document.getElementById('results-panel');
@@ -1143,6 +1168,7 @@
           details.addEventListener('click', () => {
             closeWishlist();
             query.value = item.symbol;
+            query.dataset.confirmedSymbol = item.symbol;
             window.scrollTo({ top: 0, behavior: 'smooth' });
             form.requestSubmit();
           });
@@ -1169,6 +1195,58 @@
         wishlistOverlay.hidden = true;
         document.body.style.removeProperty('overflow');
         wishlistOpen?.focus();
+      }
+      function closeSearchMatches() {
+        searchMatchOverlay.hidden = true;
+        document.body.style.removeProperty('overflow');
+        query.focus();
+      }
+      function showSearchMatches(options) {
+        searchMatchList.replaceChildren();
+        options.forEach((option) => {
+          const button = Object.assign(document.createElement('button'), {
+            className: 'search-match-option', type: 'button',
+          });
+          button.append(
+            Object.assign(document.createElement('span'), { className: 'search-match-company', textContent: option.company }),
+            Object.assign(document.createElement('span'), { className: 'search-match-symbol', textContent: option.symbol }),
+          );
+          button.addEventListener('click', () => {
+            query.value = option.symbol;
+            query.dataset.confirmedSymbol = option.symbol;
+            searchMatchOverlay.hidden = true;
+            document.body.style.removeProperty('overflow');
+            form.requestSubmit();
+          });
+          searchMatchList.append(button);
+        });
+        searchMatchOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        searchMatchList.querySelector('button')?.focus();
+      }
+      async function confirmSearchSelection() {
+        const entered = query.value.trim();
+        if (query.dataset.confirmedSymbol === entered.toUpperCase()) return true;
+        try {
+          const response = await fetch(`/search-options?query=${encodeURIComponent(entered)}`);
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || 'Unable to verify the company name.');
+          const options = data.options || [];
+          if (options.length === 1) {
+            query.value = options[0].symbol;
+            query.dataset.confirmedSymbol = options[0].symbol;
+            return true;
+          }
+          if (options.length) {
+            showSearchMatches(options);
+            return false;
+          }
+          message.textContent = 'No matching NSE equity company was found. Try its full name or NSE symbol.';
+          return false;
+        } catch (error) {
+          message.textContent = `${error.message} No stock quota was used.`;
+          return false;
+        }
       }
       const planCard = document.getElementById('plan-card');
       const planTier = document.getElementById('plan-tier');
@@ -1959,6 +2037,7 @@
         closeFullScreening();
         backToScreeningButton.hidden = false;
         query.value = symbol;
+        query.dataset.confirmedSymbol = symbol;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         form.requestSubmit();
       }
@@ -2052,6 +2131,7 @@
       function openAdvancedStockDetails(symbol) {
         closeAdvancedScreener();
         query.value = symbol;
+        query.dataset.confirmedSymbol = symbol;
         window.scrollTo({ top: 0, behavior: 'smooth' });
         form.requestSubmit();
       }
@@ -2385,7 +2465,11 @@
       niftySelect.addEventListener('change', () => {
         if (!niftySelect.value) return;
         query.value = niftySelect.value;
+        query.dataset.confirmedSymbol = niftySelect.value;
         form.requestSubmit();
+      });
+      query.addEventListener('input', () => {
+        delete query.dataset.confirmedSymbol;
       });
       function renderFullStockData(data) {
         message.classList.add('stock-summary');
@@ -2431,6 +2515,7 @@
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         query.blur();
+        if (!await confirmSearchSelection()) return;
         if (chartRotationTimer) {
           clearInterval(chartRotationTimer);
           chartRotationTimer = null;
@@ -2508,8 +2593,13 @@
       })();
       wishlistOpen?.addEventListener('click', openWishlist);
       wishlistClose?.addEventListener('click', closeWishlist);
+      searchMatchClose.addEventListener('click', closeSearchMatches);
+      searchMatchOverlay.addEventListener('click', (event) => {
+        if (event.target === searchMatchOverlay) closeSearchMatches();
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && wishlistOverlay && !wishlistOverlay.hidden) closeWishlist();
+        if (event.key === 'Escape' && !searchMatchOverlay.hidden) closeSearchMatches();
       });
       loadWishlist().catch(() => {});
       loadPlanCard();
