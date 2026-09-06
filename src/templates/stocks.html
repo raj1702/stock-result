@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% if selected_stock %}
+      <title>{{ selected_stock.company }} Quarterly Results Analysis | ResultLens</title>
+      <meta name="description" content="Explore {{ selected_stock.company }} ({{ selected_stock.symbol }}) quarterly results through ResultLens earnings-quality analysis, trends and transparent scoring.">
+      <link rel="canonical" href="https://resultlens.in/stocks/{{ selected_stock.slug }}">
+    {% else %}
+      <title>Indian Stock Earnings Directory | ResultLens</title>
+      <meta name="description" content="Browse Nifty 50 and Nifty Next 50 companies and open transparent quarterly earnings-quality analysis on ResultLens.">
+      <link rel="canonical" href="https://resultlens.in/stocks">
+    {% endif %}
+    <meta name="robots" content="index, follow">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+      :root{--ink:#0f2447;--muted:#526075;--brand:#2563eb;--line:#dbe3ef}
+      *{box-sizing:border-box} body{margin:0;background:#f4f7fb;color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.6}
+      header{border-bottom:1px solid var(--line);background:rgba(255,255,255,.95)} .header-inner{display:flex;align-items:center;justify-content:space-between;width:min(1040px,calc(100% - 40px));min-height:70px;margin:auto;gap:16px}
+      .brand{display:inline-flex;align-items:center;color:var(--ink);font-size:18px;font-weight:800;letter-spacing:-.03em;text-decoration:none}.brand::before{content:"RL";display:inline-grid;place-items:center;width:34px;height:34px;margin-right:9px;border-radius:10px;background:linear-gradient(145deg,#3b82f6,#173ea5);color:#fff;font-size:11px;letter-spacing:.04em}
+      .back{padding:8px 11px;border:1px solid #b2ccff;border-radius:9px;background:#eff4ff;color:#175cd3;font-size:12px;font-weight:750;text-decoration:none}
+      main{width:min(980px,calc(100% - 32px));margin:32px auto 56px}.hero,.directory{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(15,36,71,.07)}.hero{padding:38px;background:radial-gradient(circle at 90% 0,rgba(37,99,235,.14),transparent 40%),#fff}
+      .eyebrow{margin:0 0 8px;color:var(--brand);font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}h1{margin:0;font-size:clamp(30px,5vw,46px);line-height:1.1;letter-spacing:-.045em}.lead{max-width:740px;margin:14px 0 0;color:var(--muted);font-size:15px}.index-tag{display:inline-block;margin:18px 6px 0 0;padding:5px 9px;border-radius:999px;background:#eff4ff;color:#175cd3;font-size:11px;font-weight:800}
+      .cta{display:inline-block;margin-top:22px;padding:12px 18px;border-radius:10px;background:#2563eb;color:#fff;font-size:13px;font-weight:850;text-decoration:none;box-shadow:0 8px 18px rgba(37,99,235,.2)}.note{margin:12px 0 0;color:#667085;font-size:11px}
+      .directory{margin-top:16px;padding:26px}.directory h2{margin:0 0 4px;font-size:22px;letter-spacing:-.025em}.directory-intro{margin:0 0 18px;color:var(--muted);font-size:13px}.stock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stock-card{display:flex;flex-direction:column;min-width:0;padding:14px;border:1px solid #e4e7ec;border-radius:11px;background:#f8fafc;color:var(--ink);text-decoration:none;transition:.18s ease}.stock-card:hover{border-color:#98b7f4;background:#f3f7ff;transform:translateY(-1px)}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.stock-card span{margin-top:3px;color:#667085;font-size:10px;font-weight:750}
+      footer{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:22px 16px;color:#667085;font-size:11px}footer a{color:#175cd3;font-weight:700;text-decoration:none}
+      @media(max-width:760px){.header-inner{width:calc(100% - 28px)}main{margin-top:18px}.hero,.directory{padding:21px 18px;border-radius:14px}.stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lead{font-size:14px}}
+      @media(max-width:420px){.stock-grid{grid-template-columns:1fr}}
+    </style>
+    {% include '_analytics_head.html' %}
+  </head>
+  <body>
+    {% include '_analytics_consent.html' %}
+    <header><div class="header-inner"><a class="brand" href="/">ResultLens</a><a class="back" href="/">Open assistant</a></div></header>
+    <main>
+      {% if selected_stock %}
+        <article class="hero">
+          <p class="eyebrow">Indian company earnings</p>
+          <h1>{{ selected_stock.company }}</h1>
+          <p class="lead">Review the quarterly results of {{ selected_stock.company }} (NSE: {{ selected_stock.symbol }}) using ResultLens. Compare reported trends and examine a transparent Earnings Quality Score before making your own assessment.</p>
+          {% for index_name in selected_stock.indices %}<span class="index-tag">{{ index_name }}</span>{% endfor %}
+          <div><a class="cta" href="{{ url_for('home', query=selected_stock.symbol) }}">Open full {{ selected_stock.symbol }} analysis</a></div>
+          <p class="note">Opening the full analysis is subject to your existing ResultLens stock quota. This page itself does not consume quota.</p>
+        </article>
+      {% else %}
+        <article class="hero"><p class="eyebrow">Company directory</p><h1>Explore Indian company earnings</h1><p class="lead">Browse the current Nifty 50 and Nifty Next 50 universe, then open a company’s ResultLens earnings-quality analysis.</p></article>
+      {% endif %}
+      <section class="directory">
+        <h2>{% if selected_stock %}Explore more companies{% else %}Nifty 50 and Nifty Next 50 companies{% endif %}</h2>
+        <p class="directory-intro">Constituent membership is sourced from the current NSE index lists.</p>
+        <div class="stock-grid">
+          {% for stock in stocks %}<a class="stock-card" href="/stocks/{{ stock.slug }}"><strong>{{ stock.company }}</strong><span>NSE: {{ stock.symbol }}</span></a>{% endfor %}
+        </div>
+      </section>
+    </main>
+    <footer><a href="/">Home</a><span>·</span><a href="/about">About</a><span>·</span><a href="/methodology">Methodology</a><span>·</span><a href="/privacy">Privacy</a><span>·</span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
+  </body>
+</html>

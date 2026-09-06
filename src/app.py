@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from datetime import timedelta
 from urllib.parse import urlencode
 
@@ -56,6 +57,34 @@ if all((COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET, COGNITO_
 
 def _authentication_ready():
     return bool(cognito and app.secret_key and COGNITO_REDIRECT_URI and COGNITO_LOGOUT_URI)
+
+
+def _stock_slug(symbol):
+    """Create a stable, readable URL segment from an NSE symbol."""
+    return re.sub(r"[^a-z0-9]+", "-", symbol.lower().replace("&", "-and-")).strip("-")
+
+
+def _public_stock_universe():
+    """Return the current Nifty 50 and Next 50 universe without financial calls."""
+    stocks = {}
+    loaders = (
+        ("Nifty 50", stock_service.nifty_50_constituents),
+        ("Nifty Next 50", stock_service.nifty_next_50_constituents),
+    )
+    for index_name, loader in loaders:
+        for item in loader():
+            symbol = str(item.get("symbol", "")).strip().upper()
+            if not symbol:
+                continue
+            existing = stocks.setdefault(symbol, {
+                "symbol": symbol,
+                "company": str(item.get("company") or symbol).strip(),
+                "slug": _stock_slug(symbol),
+                "indices": [],
+            })
+            if index_name not in existing["indices"]:
+                existing["indices"].append(index_name)
+    return sorted(stocks.values(), key=lambda item: item["company"].casefold())
 
 
 def _guest_stock_access(symbol, *, record=False, limit=2, session_key="guest_stock_symbols"):
@@ -146,16 +175,20 @@ def robots_txt():
 
 @app.route('/sitemap.xml', methods=['GET'])
 def sitemap_xml():
+    paths = ("/", "/methodology", "/privacy", "/terms", "/refund-policy", "/about", "/stocks")
+    urls = [f"  <url><loc>{SEO_BASE_URL}{path}</loc></url>" for path in paths]
+    try:
+        urls.extend(
+            f"  <url><loc>{SEO_BASE_URL}/stocks/{stock['slug']}</loc></url>"
+            for stock in _public_stock_universe()
+        )
+    except Exception:
+        app.logger.exception("Unable to add stock pages to sitemap")
     body = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        f"  <url><loc>{SEO_BASE_URL}/</loc></url>\n"
-        f"  <url><loc>{SEO_BASE_URL}/methodology</loc></url>\n"
-        f"  <url><loc>{SEO_BASE_URL}/privacy</loc></url>\n"
-        f"  <url><loc>{SEO_BASE_URL}/terms</loc></url>\n"
-        f"  <url><loc>{SEO_BASE_URL}/refund-policy</loc></url>\n"
-        f"  <url><loc>{SEO_BASE_URL}/about</loc></url>\n"
-        '</urlset>\n'
+        + "\n".join(urls)
+        + '\n</urlset>\n'
     )
     return Response(body, mimetype="application/xml")
 
@@ -188,6 +221,29 @@ def refund_policy():
 @app.route('/about', methods=['GET'])
 def about():
     return render_template('about.html')
+
+
+@app.route('/stocks', methods=['GET'])
+def public_stocks():
+    try:
+        stocks = _public_stock_universe()
+    except Exception:
+        app.logger.exception("Public stock directory unavailable")
+        return render_template('stocks.html', stocks=[], selected_stock=None), 503
+    return render_template('stocks.html', stocks=stocks, selected_stock=None)
+
+
+@app.route('/stocks/<slug>', methods=['GET'])
+def public_stock(slug):
+    try:
+        stocks = _public_stock_universe()
+    except Exception:
+        app.logger.exception("Public stock page unavailable")
+        return render_template('stocks.html', stocks=[], selected_stock=None), 503
+    selected_stock = next((stock for stock in stocks if stock["slug"] == slug.lower()), None)
+    if not selected_stock:
+        return render_template('stocks.html', stocks=stocks, selected_stock=None), 404
+    return render_template('stocks.html', stocks=stocks, selected_stock=selected_stock)
 
 
 @app.route('/login', methods=['GET'])

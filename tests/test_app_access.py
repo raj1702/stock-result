@@ -130,6 +130,34 @@ def test_sitemap_contains_canonical_homepage(client):
     assert "<loc>https://resultlens.in/terms</loc>" in response.text
     assert "<loc>https://resultlens.in/refund-policy</loc>" in response.text
     assert "<loc>https://resultlens.in/about</loc>" in response.text
+    assert "<loc>https://resultlens.in/stocks</loc>" in response.text
+    assert "<loc>https://resultlens.in/stocks/reliance</loc>" in response.text
+    assert "<loc>https://resultlens.in/stocks/pidilitind</loc>" in response.text
+
+
+def test_public_stock_pages_are_indexable_without_fetching_financial_data(client):
+    browser, stock, plan = client
+    directory = browser.get("/stocks")
+    assert directory.status_code == 200
+    assert 'href="/stocks/reliance"' in directory.text
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+    page = browser.get("/stocks/reliance")
+    assert page.status_code == 200
+    assert "Reliance Industries Quarterly Results Analysis" in page.text
+    assert '<link rel="canonical" href="https://resultlens.in/stocks/reliance">' in page.text
+    assert 'href="/?query=RELIANCE"' in page.text
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_unknown_public_stock_page_returns_not_found(client):
+    browser, stock, plan = client
+    response = browser.get("/stocks/not-a-stock")
+    assert response.status_code == 404
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
 
 
 def test_homepage_exposes_canonical_search_metadata(client):

@@ -2031,6 +2031,12 @@
         }
       });
       (async () => {
+        const linkedSearch = new URLSearchParams(window.location.search).get('query');
+        if (linkedSearch) {
+          query.value = linkedSearch;
+          form.requestSubmit();
+          return;
+        }
         const pendingSearch = sessionStorage.getItem('pendingStockSearch');
         if (!pendingSearch) return;
         try {
