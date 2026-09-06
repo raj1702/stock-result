@@ -268,6 +268,7 @@
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
       #back-to-screening:hover, #back-to-screening:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
+      #mobile-results { display: none; }
       #message { min-height: 24px; margin: 18px 0 8px; color: #526075; text-align: left; }
       #message.loading { display: flex; align-items: center; gap: 8px; }
       #message.loading::before { content: ""; width: 15px; height: 15px; border: 2px solid #cbd5e1; border-top-color: #155eef; border-radius: 50%; animation: loading-spin .7s linear infinite; }
@@ -779,7 +780,31 @@
         .search-match-option { padding: 10px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
-        #tables { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 6px; margin-top: 14px; }
+        #tables { display: none !important; }
+        #mobile-results { display: block; margin-top: 16px; }
+        #mobile-results[hidden] { display: none; }
+        .mobile-results-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+        .mobile-results-title { margin: 0; color: #0f2447; font-size: 18px; letter-spacing: -.025em; }
+        .mobile-results-subtitle { display: block; margin-top: 2px; color: #64748b; font-size: 9px; font-weight: 650; }
+        .mobile-period-toggle { display: inline-flex; flex: 0 0 auto; gap: 3px; padding: 3px; border: 1px solid #dbe3ef; border-radius: 9px; background: #fff; box-shadow: 0 3px 10px rgba(15,23,42,.07); }
+        .mobile-period-toggle button { min-width: 46px; min-height: 29px; padding: 6px 8px; border-radius: 6px; background: transparent; color: #64748b; font-size: 10px; font-weight: 800; box-shadow: none; }
+        .mobile-period-toggle button.active { background: #155eef; color: #fff; box-shadow: 0 3px 7px rgba(21,94,239,.22); }
+        .mobile-metric-cards { display: grid; gap: 10px; }
+        .mobile-metric-card { position: relative; overflow: hidden; padding: 13px 11px 11px; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#f8fafc); box-shadow: 0 6px 18px rgba(15,23,42,.07); }
+        .mobile-metric-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px; background: linear-gradient(90deg,#155eef,#7f56d9); }
+        .mobile-metric-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 11px; }
+        .mobile-metric-name { color: #172b4d; font-size: 12px; font-weight: 850; }
+        .mobile-metric-unit { display: block; margin-top: 2px; color: #98a2b3; font-size: 8px; font-weight: 650; }
+        .mobile-change-badge { flex: 0 0 auto; padding: 5px 7px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 10px; font-weight: 850; }
+        .mobile-change-badge.positive { background: #dcfae6; color: #067647; }
+        .mobile-change-badge.negative { background: #fee4e2; color: #b42318; }
+        .mobile-quarter-strip { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 4px; }
+        .mobile-quarter { min-width: 0; padding: 7px 2px; border: 1px solid #edf1f6; border-radius: 8px; background: #fff; text-align: center; }
+        .mobile-quarter.latest { border-color: #b2ccff; background: #eff4ff; }
+        .mobile-quarter-label { display: block; overflow: hidden; color: #98a2b3; font-size: 7px; font-weight: 800; letter-spacing: .015em; text-overflow: ellipsis; white-space: nowrap; }
+        .mobile-quarter-number { display: block; overflow: hidden; margin-top: 4px; color: #344054; font-size: 9px; font-weight: 850; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+        .mobile-quarter.latest .mobile-quarter-label { color: #175cd3; }
+        .mobile-quarter.latest .mobile-quarter-number { color: #004eeb; }
         #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
         #results-panel { min-width: 0; overflow: hidden; }
         #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
@@ -932,6 +957,13 @@
         </section>
       </div>
         </div>
+        <section id="mobile-results" hidden aria-labelledby="mobile-results-title">
+          <div class="mobile-results-head">
+            <div><h2 id="mobile-results-title" class="mobile-results-title">Quarterly results</h2><span class="mobile-results-subtitle">Five latest reported quarters</span></div>
+            <div class="mobile-period-toggle" role="group" aria-label="Comparison period"><button class="active" type="button" data-mobile-comparison="qoq">QoQ</button><button type="button" data-mobile-comparison="yoy">YoY</button></div>
+          </div>
+          <div id="mobile-metric-cards" class="mobile-metric-cards"></div>
+        </section>
       </div>
     </div>
     <p id="data-note" hidden></p>
@@ -1068,6 +1100,9 @@
       const comparisonBody = document.getElementById('comparison-body');
       const comparisonOptions = document.querySelectorAll('.comparison-option');
       const comparisonTitle = document.getElementById('comparison-title');
+      const mobileResults = document.getElementById('mobile-results');
+      const mobileMetricCards = document.getElementById('mobile-metric-cards');
+      const mobileComparisonButtons = document.querySelectorAll('[data-mobile-comparison]');
       const dataNote = document.getElementById('data-note');
       const interpretationSection = document.getElementById('interpretation-section');
       const analysisBox = document.getElementById('analysis-box');
@@ -1895,6 +1930,8 @@
         if (!quarters.length || !rows.length) {
           resultsHead.replaceChildren();
           resultsBody.replaceChildren();
+          mobileMetricCards.replaceChildren();
+          mobileResults.hidden = true;
           tables.hidden = true;
           return;
         }
@@ -1907,7 +1944,68 @@
           : quarters;
         renderRows(resultsHead, resultsBody, displayQuarters, rows, formatQuarterlyValue, true);
         renderComparisonTable();
-        tables.hidden = false;
+        renderMobileResults(table);
+        tables.hidden = isCompactTableView;
+      }
+      function mobileQuarterLabel(quarter) {
+        const match = quarter?.label?.match(/^(Q[1-4])\s+(\d{4})$/);
+        return match ? `${match[1]} ’${match[2].slice(-2)}` : quarter?.label || '—';
+      }
+      function renderMobileResults(table) {
+        if (!isCompactTableView || !table?.quarters?.length || !table?.rows?.length) {
+          mobileMetricCards.replaceChildren();
+          mobileResults.hidden = true;
+          return;
+        }
+        const comparisonRows = table.comparisons?.[comparisonMode] || [];
+        const comparisonByKey = new Map(comparisonRows.map((row) => [row.key, row]));
+        const cards = table.rows.map((row) => {
+          const card = document.createElement('article');
+          card.className = 'mobile-metric-card';
+
+          const head = document.createElement('div');
+          head.className = 'mobile-metric-head';
+          const identity = document.createElement('div');
+          const name = document.createElement('span');
+          name.className = 'mobile-metric-name';
+          name.textContent = row.label;
+          const unit = document.createElement('span');
+          unit.className = 'mobile-metric-unit';
+          unit.textContent = row.unit || '';
+          identity.append(name, unit);
+
+          const comparisonRow = comparisonByKey.get(row.key);
+          const comparisonValues = comparisonRow?.values || [];
+          const change = comparisonValues.length ? comparisonValues[comparisonValues.length - 1] : null;
+          const badge = document.createElement('span');
+          badge.className = 'mobile-change-badge';
+          const numericChange = Number(change);
+          if (change !== null && change !== undefined && Number.isFinite(numericChange)) {
+            badge.classList.add(numericChange > 0 ? 'positive' : numericChange < 0 ? 'negative' : 'neutral');
+          }
+          badge.textContent = `${comparisonMode.toUpperCase()} ${formatChange(change, comparisonRow?.unit || '%')}`;
+          head.append(identity, badge);
+
+          const strip = document.createElement('div');
+          strip.className = 'mobile-quarter-strip';
+          table.quarters.forEach((quarter, index) => {
+            const item = document.createElement('div');
+            item.className = `mobile-quarter${index === table.quarters.length - 1 ? ' latest' : ''}`;
+            const label = document.createElement('span');
+            label.className = 'mobile-quarter-label';
+            label.textContent = mobileQuarterLabel(quarter);
+            const value = document.createElement('strong');
+            value.className = 'mobile-quarter-number';
+            value.textContent = formatQuarterlyValue(row.values?.[index], row.unit);
+            item.append(label, value);
+            strip.append(item);
+          });
+          card.append(head, strip);
+          return card;
+        });
+        mobileMetricCards.replaceChildren(...cards);
+        mobileComparisonButtons.forEach((button) => button.classList.toggle('active', button.dataset.mobileComparison === comparisonMode));
+        mobileResults.hidden = false;
       }
       function renderComparisonTable() {
         const comparisons = currentQuarterlyTable?.comparisons || {};
@@ -1975,6 +2073,14 @@
         comparisonMode = option.dataset.comparisonMode;
         comparisonOptions.forEach((item) => item.classList.toggle('active', item === option));
         renderComparisonTable();
+        renderMobileResults(currentQuarterlyTable);
+      }));
+      mobileComparisonButtons.forEach((button) => button.addEventListener('click', () => {
+        comparisonMode = button.dataset.mobileComparison;
+        mobileComparisonButtons.forEach((item) => item.classList.toggle('active', item === button));
+        comparisonOptions.forEach((item) => item.classList.toggle('active', item.dataset.comparisonMode === comparisonMode));
+        renderComparisonTable();
+        renderMobileResults(currentQuarterlyTable);
       }));
       function showIndexStocks(endpoint, label, stocks, button) {
         const options = stocks.map((stock) => Object.assign(document.createElement('option'), {
