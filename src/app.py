@@ -511,6 +511,50 @@ def get_screening_result(index_name, symbol):
         return jsonify({"error": f"Screening result unavailable: {exc}"}), 502
 
 
+@app.route('/screener-data/<index_name>/<symbol>', methods=['GET'])
+def get_screener_data(index_name, symbol):
+    """Return filterable index metrics without consuming a stock allowance."""
+    try:
+        constituent_loaders = {
+            "nifty-50": stock_service.nifty_50_constituents,
+            "nifty-next-50": stock_service.nifty_next_50_constituents,
+        }
+        loader = constituent_loaders.get(index_name)
+        if not loader:
+            return jsonify({"error": "Unknown stock index."}), 404
+
+        symbol = symbol.upper()
+        constituents = loader()
+        constituent = next(
+            (stock for stock in constituents if stock["symbol"].upper() == symbol),
+            None,
+        )
+        if not constituent:
+            return jsonify({"error": "Stock is not a current constituent of this index."}), 404
+
+        data = stock_service.fetch_stock_data(symbol)
+        analysis = data.get("analysis") or {}
+        metric_keys = (
+            "pe_ratio", "market_cap_crore", "last_close_price", "profit_margin",
+            "yoy_revenue", "yoy_profit", "profit_margin_yoy_change",
+        )
+        metrics = {key: data[key] for key in metric_keys if data.get(key) is not None}
+        for positive_only_metric in ("pe_ratio", "market_cap_crore", "last_close_price"):
+            if metrics.get(positive_only_metric, 0) <= 0:
+                metrics.pop(positive_only_metric, None)
+        if analysis.get("available") and analysis.get("score") is not None:
+            metrics["earnings_quality_score"] = analysis["score"]
+
+        return jsonify({
+            "symbol": symbol,
+            "company": constituent.get("company") or symbol,
+            "metrics": metrics,
+        }), 200
+    except Exception as exc:
+        app.logger.exception("Advanced screener data lookup failed")
+        return jsonify({"error": f"Screener data unavailable: {exc}"}), 502
+
+
 @app.route('/interpretation/<symbol>', methods=['GET'])
 def get_interpretation(symbol):
     try:

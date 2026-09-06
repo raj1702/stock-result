@@ -137,6 +137,41 @@
       .index-screening-button[aria-expanded="true"] .screening-info { background: #fff; color: #175cd3; }
       .index-screening-button:disabled { cursor: wait; opacity: .65; }
       .screening-info { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: #155eef; color: #fff; font-family: Georgia, serif; font-size: 11px; font-style: italic; }
+      .advanced-screener-open { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 12px; border: 1px solid #7f56d9; border-radius: 8px; background: linear-gradient(120deg,#53389e,#155eef); color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 5px 14px rgba(83,56,158,.2); }
+      .advanced-screener-open:hover, .advanced-screener-open:focus-visible { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(83,56,158,.28); outline: none; }
+      .screener-free-badge { padding: 2px 6px; border-radius: 999px; background: #dcfae6; color: #067647; font-size: 8px; letter-spacing: .08em; }
+      #advanced-screener-overlay { position: fixed; z-index: 60; inset: 0; box-sizing: border-box; overflow: auto; padding: 20px; background: #f5f7fb; }
+      #advanced-screener-overlay[hidden] { display: none; }
+      .advanced-screener-shell { width: min(1100px,100%); margin: 0 auto; }
+      .advanced-screener-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+      .advanced-screener-header h2 { margin: 0 0 4px; color: #101828; font-size: 24px; }
+      .advanced-screener-header p { margin: 0; color: #667085; font-size: 12px; }
+      #advanced-screener-close { padding: 8px 12px; border: 1px solid #d0d5dd; background: #fff; color: #344054; font-size: 12px; }
+      .advanced-filter-card { padding: 16px; border: 1px solid #d6e0ef; border-radius: 14px; background: #fff; box-shadow: 0 8px 22px rgba(16,24,40,.07); }
+      .advanced-filter-top { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+      .advanced-filter-top label { display: grid; gap: 5px; color: #344054; font-size: 11px; font-weight: 800; }
+      #advanced-index-select { min-width: 210px; padding: 9px 10px; border: 1px solid #98a2b3; border-radius: 7px; background: #fff; color: #101828; }
+      .advanced-filter-note { color: #667085; font-size: 10px; }
+      #advanced-criteria { display: grid; gap: 8px; }
+      .advanced-criterion { display: grid; grid-template-columns: minmax(220px,1.7fr) minmax(150px,1fr) minmax(120px,.8fr) 34px; gap: 8px; }
+      .advanced-criterion select, .advanced-criterion input { box-sizing: border-box; width: 100%; min-width: 0; padding: 9px; border: 1px solid #d0d5dd; border-radius: 7px; background: #f9fafb; color: #101828; font-size: 12px; }
+      .advanced-criterion input.invalid { border-color: #f04438; background: #fff7f6; box-shadow: 0 0 0 3px rgba(240,68,56,.1); }
+      #advanced-filter-error { margin: 10px 0 0; color: #b42318; font-size: 11px; font-weight: 750; }
+      #advanced-filter-error[hidden] { display: none; }
+      .criterion-remove { display: grid; place-items: center; padding: 0; border: 1px solid #fecdca; background: #fff; color: #b42318; font-size: 17px; }
+      .advanced-filter-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+      #add-criterion { border: 1px solid #b2ccff; background: #eff4ff; color: #175cd3; font-size: 11px; }
+      #run-advanced-screener { margin-left: auto; background: linear-gradient(135deg,#7f56d9,#155eef); font-size: 12px; font-weight: 800; }
+      #advanced-screener-status { margin: 14px 0 7px; color: #475467; font-size: 12px; font-weight: 700; }
+      #advanced-progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#7f56d9,#155eef); transition: width .25s ease; }
+      .advanced-results-wrap { overflow: auto; border: 1px solid #d6e0ef; border-radius: 12px; background: #fff; box-shadow: 0 8px 22px rgba(16,24,40,.07); }
+      #advanced-results-table { width: 100%; min-width: 620px; font-size: 12px; }
+      #advanced-results-table th { background: #eef4ff; color: #194185; text-align: left; }
+      #advanced-results-table td { text-align: left; }
+      #advanced-results-table th:last-child, #advanced-results-table td:last-child { width: 120px; text-align: right; }
+      .advanced-metric-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+      .advanced-metric-chip { padding: 4px 7px; border-radius: 999px; background: #f2f4f7; color: #344054; font-size: 10px; font-weight: 700; }
+      .advanced-empty { padding: 24px !important; color: #667085; text-align: center !important; }
       #nifty-picker { box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; margin-top: 8px; padding: 8px; border: 1px solid #d0d5dd; border-radius: 8px; background: #f8fafc; }
       #nifty-picker[hidden] { display: none; }
       #nifty-picker label { flex: 0 0 auto; color: #475467; font-size: 11px; font-weight: 700; }
@@ -572,6 +607,10 @@
       .signed-in-label { color: #64748b; }
       .signed-in-email { color: #1e293b; font-weight: 650; }
       .header-plan-status { min-height: 38px; border-color: #dbe3ef !important; border-radius: 10px; background: #f8fafc !important; }
+      .header-plan-status.free { border-color: #cbd5e1 !important; background: #f8fafc !important; }
+      .header-plan-status.bronze { border-color: #e7b995 !important; background: #fff8f2 !important; }
+      .header-plan-status.silver { border-color: #bdc6d2 !important; background: #f4f6f8 !important; }
+      .header-plan-status.gold { border-color: #f1ce73 !important; background: #fffbeb !important; }
       .header-plan-field { min-width: 78px; padding: 6px 10px; }
       .header-plan-field + .header-plan-field { border-left-color: #e2e8f0; }
       .header-plan-label { color: #64748b; font-size: 7px; }
@@ -678,6 +717,26 @@
         form button { min-width: 82px; min-height: 40px; padding: 9px 12px; font-size: 13px; }
         .screening-buttons { display: grid; grid-template-columns: 1fr 1fr; }
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
+        .advanced-screener-open { width: 100%; justify-content: center; }
+        #advanced-screener-overlay { padding: 14px; }
+        .advanced-screener-header h2 { font-size: 20px; }
+        .advanced-filter-card { padding: 12px; }
+        .advanced-filter-top { align-items: stretch; flex-direction: column; }
+        #advanced-index-select { box-sizing: border-box; width: 100%; min-width: 0; }
+        .advanced-criterion { grid-template-columns: minmax(0,1fr) 34px; }
+        .advanced-criterion .criterion-metric { grid-column: 1 / -1; }
+        .advanced-criterion .criterion-operator { grid-column: 1; }
+        .advanced-criterion .criterion-value { grid-column: 1; }
+        .criterion-remove { grid-column: 2; grid-row: 2 / span 2; }
+        .advanced-filter-actions { flex-wrap: wrap; }
+        #run-advanced-screener { width: 100%; margin-left: 0; }
+        .advanced-results-wrap { overflow: visible; border: 0; background: transparent; box-shadow: none; }
+        #advanced-results-table { display: block; min-width: 0; }
+        #advanced-results-table thead { display: none; }
+        #advanced-results-table tbody { display: grid; gap: 8px; }
+        #advanced-results-table tr { display: grid; gap: 7px; padding: 11px; border: 1px solid #d6e0ef; border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(16,24,40,.06); }
+        #advanced-results-table th, #advanced-results-table td { display: block; box-sizing: border-box; width: 100% !important; padding: 0; border: 0; text-align: left !important; }
+        #advanced-results-table td:last-child { padding-top: 2px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
         #tables { display: grid; grid-template-columns: minmax(0,1fr) 96px; gap: 6px; margin-top: 14px; }
@@ -787,6 +846,7 @@
               <span class="screening-info">i</span><span>Select from Nifty Next 50</span>
             </button>
           </div>
+          <button id="advanced-screener-open" class="advanced-screener-open" type="button"><span aria-hidden="true">⌁</span><span>Advanced Stock Screener</span><span class="screener-free-badge">FREE</span></button>
           <div id="nifty-picker" hidden>
             <div class="index-picker-heading">
               <label id="index-picker-label" for="nifty-select">Current constituents</label>
@@ -866,6 +926,28 @@
         </table>
       </div>
     </section>
+    <section id="advanced-screener-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="advanced-screener-title">
+      <div class="advanced-screener-shell">
+        <div class="advanced-screener-header">
+          <div><h2 id="advanced-screener-title">Advanced Stock Screener</h2><p>Find index stocks matching all your selected financial criteria.</p></div>
+          <button id="advanced-screener-close" type="button">Close</button>
+        </div>
+        <div class="advanced-filter-card">
+          <div class="advanced-filter-top">
+            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option></select></label>
+            <span class="advanced-filter-note">Free to screen · Full stock analysis uses your plan quota</span>
+          </div>
+          <div id="advanced-criteria"></div>
+          <p id="advanced-filter-error" hidden role="alert"></p>
+          <div class="advanced-filter-actions"><button id="add-criterion" type="button">+ Add criterion</button><button id="run-advanced-screener" type="button">Run screener</button></div>
+        </div>
+        <p id="advanced-screener-status" aria-live="polite">Choose your filters and run the screener.</p>
+        <div class="screening-progress-track"><div id="advanced-progress-bar"></div></div>
+        <div class="advanced-results-wrap">
+          <table id="advanced-results-table" aria-label="Advanced stock screener results"><thead><tr><th>Stock</th><th>Matching metrics</th><th>Details</th></tr></thead><tbody id="advanced-results-body"><tr><td colspan="3" class="advanced-empty">Your matching stocks will appear here.</td></tr></tbody></table>
+        </div>
+      </div>
+    </section>
     <section id="auth-gate" hidden aria-modal="true" role="dialog" aria-labelledby="auth-gate-title">
       <div class="auth-gate-card">
         <button id="auth-gate-close" class="auth-gate-close" type="button" aria-label="Close">×</button>
@@ -894,6 +976,17 @@
       const screeningProgressBar = document.getElementById('screening-progress-bar');
       const screeningResultsBody = document.getElementById('screening-results-body');
       const screeningFilterButtons = document.querySelectorAll('.screening-filter');
+      const advancedScreenerOpen = document.getElementById('advanced-screener-open');
+      const advancedScreenerOverlay = document.getElementById('advanced-screener-overlay');
+      const advancedScreenerClose = document.getElementById('advanced-screener-close');
+      const advancedIndexSelect = document.getElementById('advanced-index-select');
+      const advancedCriteria = document.getElementById('advanced-criteria');
+      const advancedFilterError = document.getElementById('advanced-filter-error');
+      const addCriterionButton = document.getElementById('add-criterion');
+      const runAdvancedScreenerButton = document.getElementById('run-advanced-screener');
+      const advancedScreenerStatus = document.getElementById('advanced-screener-status');
+      const advancedProgressBar = document.getElementById('advanced-progress-bar');
+      const advancedResultsBody = document.getElementById('advanced-results-body');
       const backToScreeningButton = document.getElementById('back-to-screening');
       const authGate = document.getElementById('auth-gate');
       const authGateClose = document.getElementById('auth-gate-close');
@@ -943,6 +1036,7 @@
       let visibleIndexStocks = [];
       let screeningRunId = 0;
       let activeScreeningFilter = 'all';
+      let advancedScreenerRunId = 0;
       let currentPlanData = null;
       function formatPlanExpiry(value) {
         if (!value) return '';
@@ -979,7 +1073,8 @@
           planCard.className = `plan-card ${tier}`;
           if (headerPlanStatus) headerPlanStatus.className = `header-plan-status ${tier}`;
           if (subscriptionOpen) {
-            subscriptionOpen.className = `account-link plan-open ${tier}`;
+            const nextTier = { free: 'bronze', bronze: 'silver', silver: 'gold' }[tier];
+            subscriptionOpen.className = `account-link plan-open ${nextTier || tier}`;
             subscriptionOpen.hidden = tier === 'gold';
           }
           if (headerPlanTier) {
@@ -1711,6 +1806,190 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
         form.requestSubmit();
       }
+      const advancedMetricDefinitions = {
+        pe_ratio: { label: 'P/E ratio', suffix: '', hint: 'e.g. 25 · usual range 0–100' },
+        market_cap_crore: { label: 'Market cap', suffix: ' Cr', hint: 'e.g. 50000 · value in ₹ crore' },
+        last_close_price: { label: 'Last closing price', prefix: '₹', hint: 'e.g. 1500 · value in ₹' },
+        profit_margin: { label: 'Profit margin', suffix: '%', hint: 'e.g. 15 · value in %' },
+        yoy_revenue: { label: 'Revenue YoY growth', suffix: '%', hint: 'e.g. 10 · value in %' },
+        yoy_profit: { label: 'PAT YoY growth', suffix: '%', hint: 'e.g. 20 · value in %' },
+        profit_margin_yoy_change: { label: 'Profit margin YoY change', suffix: '%', hint: 'e.g. 2 · percentage-point change' },
+        earnings_quality_score: { label: 'Earnings Quality Score', suffix: '/100', hint: 'e.g. 70 · range 0–100' },
+      };
+      const advancedOperators = {
+        gte: { label: 'Greater than or equal to', test: (actual, expected) => actual >= expected },
+        gt: { label: 'Greater than', test: (actual, expected) => actual > expected },
+        eq: { label: 'Equal to', test: (actual, expected) => Math.abs(actual - expected) < 0.000001 },
+        lte: { label: 'Less than or equal to', test: (actual, expected) => actual <= expected },
+        lt: { label: 'Less than', test: (actual, expected) => actual < expected },
+      };
+      function refreshAdvancedMetricOptions() {
+        const rows = [...advancedCriteria.children];
+        const selectedMetrics = new Set(rows.map((row) => row.querySelector('.criterion-metric').value));
+        rows.forEach((row) => {
+          const select = row.querySelector('.criterion-metric');
+          [...select.options].forEach((option) => {
+            option.disabled = option.value !== select.value && selectedMetrics.has(option.value);
+          });
+        });
+        addCriterionButton.disabled = rows.length >= Object.keys(advancedMetricDefinitions).length;
+      }
+      function addAdvancedCriterion(metric = null, operator = 'gte', value = '') {
+        const selectedMetrics = new Set(
+          [...advancedCriteria.children].map((row) => row.querySelector('.criterion-metric').value),
+        );
+        const availableMetric = Object.keys(advancedMetricDefinitions).find((key) => !selectedMetrics.has(key));
+        const selectedMetric = metric && !selectedMetrics.has(metric) ? metric : availableMetric;
+        if (!selectedMetric) return;
+        const row = Object.assign(document.createElement('div'), { className: 'advanced-criterion' });
+        const metricSelect = Object.assign(document.createElement('select'), { className: 'criterion-metric', ariaLabel: 'Financial metric' });
+        Object.entries(advancedMetricDefinitions).forEach(([key, definition]) => metricSelect.add(new Option(definition.label, key, false, key === selectedMetric)));
+        const operatorSelect = Object.assign(document.createElement('select'), { className: 'criterion-operator', ariaLabel: 'Comparison operator' });
+        Object.entries(advancedOperators).forEach(([key, definition]) => operatorSelect.add(new Option(definition.label, key, false, key === operator)));
+        const valueInput = Object.assign(document.createElement('input'), { className: 'criterion-value', type: 'number', step: 'any', required: true, placeholder: 'Enter value', value, ariaLabel: 'Filter value' });
+        const updateValueHint = () => {
+          valueInput.placeholder = advancedMetricDefinitions[metricSelect.value].hint;
+          valueInput.setAttribute('aria-label', `${advancedMetricDefinitions[metricSelect.value].label} value; ${advancedMetricDefinitions[metricSelect.value].hint}`);
+        };
+        metricSelect.addEventListener('change', () => {
+          updateValueHint();
+          refreshAdvancedMetricOptions();
+        });
+        valueInput.addEventListener('input', () => {
+          valueInput.classList.remove('invalid');
+          if (![...advancedCriteria.querySelectorAll('.criterion-value')].some((input) => input.value.trim() === '')) {
+            advancedFilterError.hidden = true;
+          }
+        });
+        updateValueHint();
+        const remove = Object.assign(document.createElement('button'), { className: 'criterion-remove', type: 'button', textContent: '×', ariaLabel: 'Remove criterion' });
+        remove.addEventListener('click', () => {
+          if (advancedCriteria.children.length > 1) row.remove();
+          refreshAdvancedMetricOptions();
+        });
+        row.append(metricSelect, operatorSelect, valueInput, remove);
+        advancedCriteria.append(row);
+        refreshAdvancedMetricOptions();
+      }
+      function readAdvancedCriteria() {
+        return [...advancedCriteria.children].map((row) => {
+          const rawValue = row.querySelector('.criterion-value').value.trim();
+          const value = rawValue === '' ? Number.NaN : Number(rawValue);
+          return { metric: row.querySelector('.criterion-metric').value, operator: row.querySelector('.criterion-operator').value, value };
+        });
+      }
+      function numericMetric(value) {
+        if (value === null || value === undefined || value === '') return null;
+        const number = Number(String(value).replace(/,/g, ''));
+        return Number.isFinite(number) ? number : null;
+      }
+      function formatAdvancedMetric(metric, value) {
+        const definition = advancedMetricDefinitions[metric];
+        const formatted = Number(value).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        return `${definition.label}: ${definition.prefix || ''}${formatted}${definition.suffix || ''}`;
+      }
+      function closeAdvancedScreener() {
+        advancedScreenerRunId += 1;
+        advancedScreenerOverlay.hidden = true;
+        document.body.style.removeProperty('overflow');
+      }
+      function openAdvancedStockDetails(symbol) {
+        closeAdvancedScreener();
+        query.value = symbol;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        form.requestSubmit();
+      }
+      function renderAdvancedMatches(matches, criteria, complete) {
+        advancedResultsBody.replaceChildren();
+        if (!matches.length) {
+          const row = document.createElement('tr');
+          const cell = Object.assign(document.createElement('td'), { colSpan: 3, className: 'advanced-empty', textContent: complete ? 'No stocks match all selected criteria.' : 'Scanning for matches…' });
+          row.append(cell);
+          advancedResultsBody.append(row);
+          return;
+        }
+        matches.sort((a, b) => a.company.localeCompare(b.company)).forEach((stock) => {
+          const row = document.createElement('tr');
+          const stockCell = document.createElement('th');
+          stockCell.scope = 'row';
+          stockCell.append(document.createTextNode(stock.company), Object.assign(document.createElement('span'), { className: 'screening-stock-symbol', textContent: stock.symbol }));
+          const metricsCell = document.createElement('td');
+          const chips = Object.assign(document.createElement('div'), { className: 'advanced-metric-chips' });
+          criteria.forEach((criterion) => chips.append(Object.assign(document.createElement('span'), { className: 'advanced-metric-chip', textContent: formatAdvancedMetric(criterion.metric, stock.metrics[criterion.metric]) })));
+          metricsCell.append(chips);
+          const detailsCell = document.createElement('td');
+          const button = Object.assign(document.createElement('button'), { className: 'screening-details-button', type: 'button', textContent: 'More details →', disabled: !complete });
+          button.addEventListener('click', () => openAdvancedStockDetails(stock.symbol));
+          detailsCell.append(button);
+          row.append(stockCell, metricsCell, detailsCell);
+          advancedResultsBody.append(row);
+        });
+      }
+      async function runAdvancedScreener() {
+        const criteria = readAdvancedCriteria();
+        const valueInputs = [...advancedCriteria.querySelectorAll('.criterion-value')];
+        const invalidInputs = valueInputs.filter((input) => input.value.trim() === '' || !Number.isFinite(Number(input.value)));
+        valueInputs.forEach((input) => input.classList.toggle('invalid', invalidInputs.includes(input)));
+        if (!criteria.length || invalidInputs.length) {
+          advancedFilterError.textContent = `Enter a value for ${invalidInputs.length === 1 ? 'the highlighted criterion' : `all ${invalidInputs.length} highlighted criteria`} before running the screener.`;
+          advancedFilterError.hidden = false;
+          advancedScreenerStatus.textContent = 'Screening has not started.';
+          invalidInputs[0]?.focus();
+          return;
+        }
+        advancedFilterError.hidden = true;
+        const runId = ++advancedScreenerRunId;
+        const indexName = advancedIndexSelect.value;
+        const endpoint = `/${indexName}`;
+        runAdvancedScreenerButton.disabled = true;
+        advancedProgressBar.style.width = '0%';
+        advancedResultsBody.innerHTML = '<tr><td colspan="3" class="advanced-empty">Loading current index constituents…</td></tr>';
+        try {
+          let stocks = indexStocksCache.get(endpoint);
+          if (!stocks) {
+            const response = await fetch(endpoint);
+            const data = await readJson(response);
+            if (!response.ok) throw new Error(data.error || 'Unable to load index stocks.');
+            stocks = data.stocks;
+            indexStocksCache.set(endpoint, stocks);
+          }
+          let cursor = 0;
+          let completed = 0;
+          const matches = [];
+          advancedScreenerStatus.textContent = `Scanning 0 of ${stocks.length} stocks…`;
+          renderAdvancedMatches(matches, criteria, false);
+          const worker = async () => {
+            while (cursor < stocks.length && runId === advancedScreenerRunId) {
+              const stock = stocks[cursor++];
+              try {
+                const response = await fetch(`/screener-data/${encodeURIComponent(indexName)}/${encodeURIComponent(stock.symbol)}`);
+                const data = await readJson(response);
+                if (response.ok) {
+                  const matchesAll = criteria.every((criterion) => {
+                    const actual = numericMetric(data.metrics?.[criterion.metric]);
+                    return actual !== null && advancedOperators[criterion.operator].test(actual, criterion.value);
+                  });
+                  if (matchesAll) matches.push(data);
+                }
+              } finally {
+                completed += 1;
+                advancedScreenerStatus.textContent = `Scanning ${completed} of ${stocks.length} stocks · ${matches.length} matched`;
+                advancedProgressBar.style.width = `${(completed / stocks.length) * 100}%`;
+                renderAdvancedMatches(matches, criteria, false);
+              }
+            }
+          };
+          await Promise.all(Array.from({ length: Math.min(5, stocks.length) }, worker));
+          if (runId === advancedScreenerRunId) {
+            advancedScreenerStatus.textContent = `Complete · ${matches.length} of ${stocks.length} stocks match all criteria`;
+            renderAdvancedMatches(matches, criteria, true);
+          }
+        } catch (error) {
+          if (runId === advancedScreenerRunId) advancedScreenerStatus.textContent = error.message;
+        } finally {
+          if (runId === advancedScreenerRunId) runAdvancedScreenerButton.disabled = false;
+        }
+      }
       function returnToScreeningResults() {
         screeningOverlay.hidden = false;
         document.body.style.overflow = 'hidden';
@@ -1891,7 +2170,16 @@
           });
         }
       }
+      addAdvancedCriterion('pe_ratio', 'lte');
       fullIndexScreeningButton.addEventListener('click', runFullIndexScreening);
+      advancedScreenerOpen.addEventListener('click', () => {
+        advancedScreenerOverlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        advancedScreenerClose.focus();
+      });
+      advancedScreenerClose.addEventListener('click', closeAdvancedScreener);
+      addCriterionButton.addEventListener('click', () => addAdvancedCriterion());
+      runAdvancedScreenerButton.addEventListener('click', runAdvancedScreener);
       backToScreeningButton.addEventListener('click', returnToScreeningResults);
       screeningClose.addEventListener('click', closeFullScreening);
       screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {
@@ -1900,6 +2188,7 @@
       }));
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && !screeningOverlay.hidden) closeFullScreening();
+        if (event.key === 'Escape' && !advancedScreenerOverlay.hidden) closeAdvancedScreener();
       });
       indexScreeningButtons.forEach((button) => button.addEventListener('click', async () => {
         const endpoint = button.dataset.indexEndpoint;

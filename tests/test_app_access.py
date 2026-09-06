@@ -17,7 +17,12 @@ class FakeStockService:
 
     def fetch_stock_data(self, symbol):
         self.fetch_calls += 1
-        return {"symbol": symbol, "analysis": {"available": True}}
+        return {
+            "symbol": symbol,
+            "pe_ratio": 24.5,
+            "profit_margin": 18.2,
+            "analysis": {"available": True, "score": 82},
+        }
 
     def generate_interpretation(self, _symbol, _data):
         return [{"text": "Healthy"}]
@@ -106,6 +111,28 @@ def test_screening_result_does_not_consume_quota(client):
     response = browser.get("/screening/nifty-50/RELIANCE")
     assert response.status_code == 200
     assert stock.fetch_calls == 1
+    assert plan.recorded == []
+
+
+def test_advanced_screener_is_free_and_returns_filter_metrics(client):
+    browser, stock, plan = client
+    plan.allowed = False
+    response = browser.get("/screener-data/nifty-50/RELIANCE")
+    assert response.status_code == 200
+    assert response.get_json()["metrics"] == {
+        "earnings_quality_score": 82,
+        "pe_ratio": 24.5,
+        "profit_margin": 18.2,
+    }
+    assert stock.fetch_calls == 1
+    assert plan.recorded == []
+
+
+def test_advanced_screener_rejects_stock_outside_selected_index(client):
+    browser, stock, plan = client
+    response = browser.get("/screener-data/nifty-50/PIDILITIND")
+    assert response.status_code == 404
+    assert stock.fetch_calls == 0
     assert plan.recorded == []
 
 
