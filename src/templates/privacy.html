@@ -41,8 +41,10 @@
         footer { flex-wrap: wrap; }
       }
     </style>
+    {% include '_analytics_head.html' %}
   </head>
   <body>
+    {% include '_analytics_consent.html' %}
     <header><div class="header-inner"><a class="brand" href="/">ResultLens</a><a class="back" href="/">← Back to assistant</a></div></header>
     <main>
       <article class="hero">
@@ -72,7 +74,7 @@
           <li>Operate, secure, troubleshoot and improve the service.</li>
           <li>Comply with applicable accounting, payment, legal or regulatory obligations.</li>
         </ul>
-        <p>ResultLens does not sell personal information. The current service does not use third-party advertising trackers.</p>
+        <p>ResultLens does not sell personal information. The service does not use third-party advertising trackers. Optional Google Analytics measurement is used only when you allow analytics.</p>
       </section>
 
       <section>
@@ -80,7 +82,7 @@
         <p>Information is processed only as needed by providers supporting the service:</p>
         <ul>
           <li><strong>Amazon Web Services:</strong> hosting, content delivery, authentication, secrets management and DynamoDB storage.</li>
-          <li><strong>Google:</strong> identity information when you choose Google sign-in.</li>
+          <li><strong>Google:</strong> identity information when you choose Google sign-in, and consented website-usage analytics.</li>
           <li><strong>Razorpay:</strong> checkout, payment processing, verification and payment notifications.</li>
           <li><strong>Market-data providers:</strong> NSE and fallback financial-data services receive security or company queries, not your payment credentials.</li>
         </ul>
@@ -89,7 +91,7 @@
 
       <section>
         <h2>Cookies and sessions</h2>
-        <p>ResultLens uses essential session cookies to keep you signed in and preserve security-related state. These cookies are necessary for account functionality. The service currently does not set advertising cookies.</p>
+        <p>ResultLens uses essential session cookies to keep you signed in and preserve security-related state. These cookies are necessary for account functionality. With your permission, Google Analytics may store analytics identifiers to measure visits and product usage. ResultLens does not enable advertising storage through this consent choice.</p>
       </section>
 
       <section>

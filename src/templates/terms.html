@@ -35,8 +35,10 @@
       footer a { font-weight:700; text-decoration:none; }
       @media (max-width:600px) { .header-inner{width:calc(100% - 28px)} main{margin-top:18px}.hero,section{padding:21px 18px;border-radius:13px}.lead{font-size:14px} }
     </style>
+    {% include '_analytics_head.html' %}
   </head>
   <body>
+    {% include '_analytics_consent.html' %}
     <header><div class="header-inner"><a class="brand" href="/">ResultLens</a><a class="back" href="/">← Back to assistant</a></div></header>
     <main>
       <article class="hero"><p class="eyebrow">Service rules</p><h1>Terms of Use</h1><p class="lead">These terms govern access to and use of ResultLens. By using the service or purchasing a plan, you agree to these terms.</p><p class="updated">Effective date: 6 September 2026</p></article>

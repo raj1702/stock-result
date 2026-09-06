@@ -159,6 +159,8 @@ def test_privacy_page_is_public_and_identifies_contact(client):
     response = browser.get("/privacy")
     assert response.status_code == 200
     assert '<link rel="canonical" href="https://resultlens.in/privacy">' in response.text
+    assert "G-RY1QK5K7ZT" in response.text
+    assert "Optional Google Analytics" in response.text
     assert "resultlens.support@gmail.com" in response.text
     assert "Razorpay processes payment credentials" in response.text
 

@@ -708,8 +708,10 @@
         .site-footer { align-items: flex-start; flex-direction: column; width: calc(100% - 28px); gap: 5px; margin-top: 24px; }
       }
     </style>
+    {% include '_analytics_head.html' %}
   </head>
   <body>
+    {% include '_analytics_consent.html' %}
     <header class="page-header">
       <h1><span class="brand-title">NSE · BSE Earnings Decision Assistant</span><span class="beta-badge">BETA</span><span class="mobile-view-tip">Tip: Rotate your phone to landscape for a wider table view.</span></h1>
       <nav class="account-controls" aria-label="Account">

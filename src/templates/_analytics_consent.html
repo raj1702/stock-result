@@ -1,0 +1,33 @@
+<aside id="analytics-consent" class="analytics-consent" role="dialog" aria-modal="false" aria-label="Analytics preference">
+  <p><strong>Help improve ResultLens</strong>Allow anonymous analytics to help us understand how the product is used. <a href="/privacy">Privacy details</a></p>
+  <div class="analytics-consent-actions">
+    <button id="analytics-decline" class="analytics-decline" type="button">Decline</button>
+    <button id="analytics-allow" class="analytics-allow" type="button">Allow analytics</button>
+  </div>
+</aside>
+<script>
+  (() => {
+    const storageKey = 'resultlens_analytics_consent';
+    const banner = document.getElementById('analytics-consent');
+    const updateConsent = (choice) => {
+      gtag('consent', 'update', {
+        analytics_storage: choice === 'granted' ? 'granted' : 'denied'
+      });
+      if (choice === 'granted') gtag('event', 'page_view');
+    };
+    let savedChoice = null;
+    try { savedChoice = localStorage.getItem(storageKey); } catch (_error) {}
+    if (savedChoice === 'granted' || savedChoice === 'denied') {
+      updateConsent(savedChoice);
+    } else {
+      banner.classList.add('is-visible');
+    }
+    const saveChoice = (choice) => {
+      try { localStorage.setItem(storageKey, choice); } catch (_error) {}
+      updateConsent(choice);
+      banner.classList.remove('is-visible');
+    };
+    document.getElementById('analytics-allow').addEventListener('click', () => saveChoice('granted'));
+    document.getElementById('analytics-decline').addEventListener('click', () => saveChoice('denied'));
+  })();
+</script>
