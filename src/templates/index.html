@@ -646,21 +646,26 @@
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
         #message.stock-summary { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 8px; }
         .summary-item { display: flex; min-height: 48px; padding: 8px; }
-        #tables { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; margin-top: 14px; }
-        #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 12px; border-radius: 14px; }
-        #results-panel { overflow-x: auto; }
-        #results-panel table { width: 680px; min-width: 680px; table-layout: auto; }
-        #results-panel th, #results-panel td { padding: 9px 8px; font-size: 10px; line-height: 1.3; white-space: nowrap; }
+        #tables { display: grid; grid-template-columns: minmax(0,1fr) 58px; gap: 4px; margin-top: 14px; }
+        #results-panel, #comparison-panel { width: 100%; max-width: 100%; padding: 6px 4px; border-radius: 10px; }
+        #results-panel { min-width: 0; overflow: hidden; }
+        #results-panel table { width: 100%; min-width: 0; table-layout: fixed; }
+        #results-panel th, #results-panel td { overflow: hidden; padding: 7px 2px; font-size: 8px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
         #results-panel thead tr, #comparison-panel thead tr { height: 38px; }
         #results-panel tbody tr, #comparison-panel tbody tr,
         #results-panel tbody th, #results-panel tbody td, #comparison-panel tbody td { height: 44px; }
-        #results-panel th:first-child, #results-panel td:first-child { width: 105px; }
-        #comparison-column { display: block; width: 100%; max-width: 100%; padding: 0; }
-        #comparison-controls { position: static; display: flex; justify-content: flex-end; margin: 0 0 7px; }
+        #results-panel th:first-child, #results-panel td:first-child { width: 78px; }
+        #results-panel .unit { font-size: 7px; }
+        #results-panel .metric-info { width: 11px; height: 11px; margin-left: 2px; font-size: 7px; }
+        #comparison-column { display: flex; width: 58px; max-width: 58px; padding: 0; }
+        #comparison-controls { position: absolute; right: 0; bottom: calc(100% + 6px); display: flex; justify-content: flex-end; margin: 0; }
         #comparison-panel { overflow: hidden; }
         #comparison-panel table { width: 100%; table-layout: fixed; }
-        #comparison-panel th, #comparison-panel td { padding: 9px 6px; font-size: 10px; }
-        #comparison-panel .table-heading { visibility: visible; width: auto; overflow: visible; }
+        #comparison-panel th, #comparison-panel td { overflow: hidden; padding: 7px 2px; font-size: 8px; text-overflow: ellipsis; }
+        #comparison-panel .table-heading { visibility: hidden; width: 0; overflow: hidden; }
+        .comparison-toggle { gap: 1px; padding: 2px; }
+        .comparison-option { gap: 2px; padding: 3px 5px; font-size: 9px; }
+        .comparison-option button { width: 9px; height: 9px; }
         #interpretation-section { margin-top: 18px; }
         #analysis-box { padding: 14px; border-radius: 14px; }
         .analysis-metrics { grid-template-columns: minmax(0,1fr); }
