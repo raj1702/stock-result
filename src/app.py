@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 from services.plan_service import PlanService
 from services.payment_service import PaymentService
 from services.secret_loader import load_runtime_secrets
@@ -34,6 +34,7 @@ COGNITO_DOMAIN = os.getenv("COGNITO_DOMAIN", "").rstrip("/")
 COGNITO_REDIRECT_URI = os.getenv("COGNITO_REDIRECT_URI", "")
 COGNITO_LOGOUT_URI = os.getenv("COGNITO_LOGOUT_URI", "")
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+SEO_BASE_URL = os.getenv("SEO_BASE_URL", "https://resultlens.in").rstrip("/")
 
 oauth = OAuth(app)
 cognito = None
@@ -120,6 +121,38 @@ def _complete_stock_access(symbol, *, screening_preview=False):
 def health():
     """Cheap liveness check for the ECS task and load balancer."""
     return jsonify({"status": "ok"}), 200
+
+
+@app.route('/robots.txt', methods=['GET'])
+def robots_txt():
+    body = "\n".join((
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /api/",
+        "Disallow: /auth/",
+        "Disallow: /login",
+        "Disallow: /signup",
+        "Disallow: /logout",
+        "Disallow: /search",
+        "Disallow: /search-access",
+        "Disallow: /screening/",
+        "Disallow: /interpretation/",
+        "Disallow: /stock/",
+        f"Sitemap: {SEO_BASE_URL}/sitemap.xml",
+        "",
+    ))
+    return Response(body, mimetype="text/plain")
+
+
+@app.route('/sitemap.xml', methods=['GET'])
+def sitemap_xml():
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url><loc>{SEO_BASE_URL}/</loc></url>\n"
+        '</urlset>\n'
+    )
+    return Response(body, mimetype="application/xml")
 
 
 @app.route('/', methods=['GET'])

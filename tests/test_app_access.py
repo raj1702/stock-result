@@ -107,3 +107,21 @@ def test_screening_result_does_not_consume_quota(client):
     assert response.status_code == 200
     assert stock.fetch_calls == 1
     assert plan.recorded == []
+
+
+def test_robots_txt_allows_home_and_advertises_sitemap(client):
+    browser, _stock, _plan = client
+    response = browser.get("/robots.txt")
+    assert response.status_code == 200
+    assert response.mimetype == "text/plain"
+    assert "Allow: /" in response.text
+    assert "Disallow: /api/" in response.text
+    assert "Sitemap: https://resultlens.in/sitemap.xml" in response.text
+
+
+def test_sitemap_contains_canonical_homepage(client):
+    browser, _stock, _plan = client
+    response = browser.get("/sitemap.xml")
+    assert response.status_code == 200
+    assert response.mimetype == "application/xml"
+    assert "<loc>https://resultlens.in/</loc>" in response.text
