@@ -16,6 +16,7 @@ from xml.etree import ElementTree
 import requests
 
 from models import StockData
+from services.earnings_truth import build_earnings_truth
 
 
 logger = logging.getLogger(__name__)
@@ -607,6 +608,9 @@ class StockService:
                 "Component weights total 100. Consistency compares consecutive reported "
                 "values and skips blank periods; PAT may be discounted when margin-led "
                 "growth lacks revenue support."
+            ),
+            "truth_engine": build_earnings_truth(
+                quarterly_results, is_lender=is_lender, number=self._number
             ),
         }
 

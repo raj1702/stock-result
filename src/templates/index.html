@@ -436,6 +436,25 @@
       .quality-component-note { margin: 7px 0 0; color: #667085; font-size: 9px; line-height: 1.4; }
       .quality-insights { margin: 11px 0 0; padding-left: 18px; color: #344054; font-size: 11px; line-height: 1.5; }
       .quality-insights li + li { margin-top: 4px; }
+      .truth-panel { margin: 0 0 12px; padding: 14px; border: 1px solid #dbe3ef; border-radius: 12px; background: rgba(255,255,255,.78); }
+      .truth-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .truth-kicker { color: #667085; font-size: 8px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
+      .truth-pattern { display: block; margin-top: 2px; color: #101828; font-size: 17px; }
+      .truth-tone { padding: 5px 8px; border-radius: 999px; background: #f2f4f7; color: #475467; font-size: 9px; font-weight: 850; text-transform: uppercase; }
+      .truth-tone.positive { background: #dcfae6; color: #067647; }
+      .truth-tone.caution { background: #fef0c7; color: #b54708; }
+      .truth-tone.negative { background: #fee4e2; color: #b42318; }
+      .truth-summary { margin: 8px 0 10px; color: #475467; font-size: 11px; line-height: 1.5; }
+      .truth-evidence { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+      .truth-evidence span { padding: 7px; border-radius: 7px; background: #f8fafc; color: #344054; font-size: 9px; font-weight: 750; text-align: center; }
+      .truth-evidence strong { display: block; margin-top: 2px; font-size: 10px; }
+      .truth-assessments { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 9px; }
+      .truth-assessments span { padding: 5px 8px; border: 1px solid #e4e7ec; border-radius: 6px; color: #475467; font-size: 9px; }
+      .truth-rationale { margin: 7px 0 0; color: #667085; font-size: 9px; line-height: 1.45; }
+      .truth-details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+      .truth-detail { padding: 10px; border-radius: 8px; background: #f8fafc; }
+      .truth-detail strong { color: #344054; font-size: 10px; }
+      .truth-detail ul { margin: 5px 0 0; padding-left: 15px; color: #667085; font-size: 9px; line-height: 1.45; }
       .analysis-disclaimer { margin: 6px 0 0; color: #475467; font-size: 11px; font-style: italic; font-weight: 700; line-height: 1.45; text-align: right; }
       #charts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
       .chart-card { box-sizing: border-box; position: relative; flex: 0 1 calc((100% - 24px) / 3); min-width: 0; padding: 12px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fffcf5; }
@@ -860,6 +879,10 @@
         .comparison-option button { display: none; }
         #interpretation-section { margin-top: 18px; }
         #analysis-box { padding: 14px; border-radius: 14px; }
+        .truth-head { align-items: flex-start; }
+        .truth-pattern { font-size: 14px; }
+        .truth-evidence { grid-template-columns: repeat(2,minmax(0,1fr)); }
+        .truth-details { grid-template-columns: 1fr; }
         .analysis-metrics { grid-template-columns: minmax(0,1fr); }
         .chart-card.combined-chart { padding: 13px; border-radius: 14px; }
         #subscription-overlay { padding: 16px 14px; }
@@ -1653,6 +1676,52 @@
         const rounded = Math.round(value);
         return unit === '%' ? `${rounded}%` : `₹${rounded.toLocaleString('en-IN')}`;
       }
+      function renderTruthEngine(truth) {
+        if (!truth?.available) return null;
+        const panel = Object.assign(document.createElement('section'), { className: 'truth-panel' });
+        const head = Object.assign(document.createElement('div'), { className: 'truth-head' });
+        const title = document.createElement('div');
+        title.append(
+          Object.assign(document.createElement('span'), { className: 'truth-kicker', textContent: 'What drove this result' }),
+          Object.assign(document.createElement('strong'), { className: 'truth-pattern', textContent: truth.pattern }),
+        );
+        head.append(title, Object.assign(document.createElement('span'), {
+          className: `truth-tone ${truth.tone || 'neutral'}`, textContent: truth.tone || 'neutral',
+        }));
+        panel.append(head, Object.assign(document.createElement('p'), {
+          className: 'truth-summary', textContent: truth.summary,
+        }));
+        const evidence = Object.assign(document.createElement('div'), { className: 'truth-evidence' });
+        (truth.evidence || []).forEach((item) => {
+          const cell = document.createElement('span');
+          cell.append(document.createTextNode(item.label), Object.assign(document.createElement('strong'), {
+            className: item.tone || 'neutral', textContent: item.value,
+          }));
+          evidence.append(cell);
+        });
+        if (evidence.childElementCount) panel.append(evidence);
+        const assessments = Object.assign(document.createElement('div'), { className: 'truth-assessments' });
+        assessments.append(
+          Object.assign(document.createElement('span'), { textContent: `Sustainability: ${truth.sustainability.rating} (${truth.sustainability.score}/100)` }),
+          Object.assign(document.createElement('span'), { textContent: `Evidence confidence: ${truth.confidence.rating} (${truth.confidence.score}%)` }),
+        );
+        panel.append(assessments);
+        panel.append(Object.assign(document.createElement('p'), {
+          className: 'truth-rationale',
+          textContent: `${truth.sustainability.explanation} ${truth.confidence.explanation}`,
+        }));
+        const details = Object.assign(document.createElement('div'), { className: 'truth-details' });
+        [['Why', truth.drivers], ['Watch next', truth.watchpoints]].forEach(([label, items]) => {
+          if (!items?.length) return;
+          const detail = Object.assign(document.createElement('div'), { className: 'truth-detail' });
+          const list = document.createElement('ul');
+          items.forEach((item) => list.append(Object.assign(document.createElement('li'), { textContent: item })));
+          detail.append(Object.assign(document.createElement('strong'), { textContent: label }), list);
+          details.append(detail);
+        });
+        if (details.childElementCount) panel.append(details);
+        return panel;
+      }
       function renderAnalysis(analysis) {
         analysisBox.replaceChildren();
         analysisBox.className = '';
@@ -1685,6 +1754,8 @@
         }
         header.append(verdict, signals);
         analysisBox.append(header);
+        const truthPanel = renderTruthEngine(analysis.truth_engine);
+        if (truthPanel) analysisBox.append(truthPanel);
         if (analysis.components?.length) {
           const metrics = Object.assign(document.createElement('div'), { className: 'analysis-metrics' });
           analysis.components.forEach((component) => {
@@ -2664,6 +2735,21 @@
         }
         renderMetricCharts(data.quarterly_results);
       }
+      function clearDisplayedStock() {
+        currentQuarterlyTable = null;
+        tables.hidden = true;
+        resultsHead.replaceChildren();
+        resultsBody.replaceChildren();
+        comparisonHead.replaceChildren();
+        comparisonBody.replaceChildren();
+        mobileMetricCards.replaceChildren();
+        mobileResults.hidden = true;
+        dataNote.replaceChildren();
+        dataNote.hidden = true;
+        charts.replaceChildren();
+        interpretationSection.hidden = true;
+        renderAnalysis(null);
+      }
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         query.blur();
@@ -2676,13 +2762,10 @@
           clearTimeout(chartResumeTimer);
           chartResumeTimer = null;
         }
+        clearDisplayedStock();
         message.classList.remove('stock-summary');
         message.classList.add('loading');
         message.textContent = 'Finding NSE symbol and financial results…';
-        tables.hidden = true;
-        dataNote.hidden = true;
-        interpretationSection.hidden = true;
-        renderAnalysis(null);
         const analysisDisplayDelay = new Promise((resolve) => {
           window.setTimeout(resolve, minimumAnalysisDisplayMs);
         });
