@@ -785,7 +785,7 @@
       .analysis-label { color: #64748b; }
       .quality-progress { height: 7px; }
       .search-insights-grid { display: grid; grid-template-columns: minmax(0,1fr); align-items: stretch; gap: 16px; margin-top: 18px; }
-      .search-insights-grid.has-updates { grid-template-columns: minmax(0,1.45fr) minmax(300px,.85fr); }
+      .search-insights-grid.has-updates { grid-template-columns: minmax(0,1.15fr) minmax(340px,1fr); }
       #charts { min-width: 0; margin-top: 0; }
       .chart-card.combined-chart { padding: 20px; border: 1px solid #dbe3ef; border-top: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-card); }
       .search-insights-grid .chart-card.combined-chart { height: 100%; }
@@ -797,6 +797,7 @@
       .stock-update-section { position: relative; display: flex; min-height: 0; flex: 1 1 0; flex-direction: column; padding: 10px; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
       .stock-update-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 7px; border-bottom: 1px solid #edf1f6; }
       .stock-update-section-head strong { color: #334155; font-size: 10px; }
+      .stock-update-period { margin-left: 5px; color: #64748b; font-size: 8px; font-weight: 700; }
       .stock-update-list { display: grid; min-height: 0; flex: 1 1 auto; gap: 5px; margin: 7px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; }
       .stock-update-list::-webkit-scrollbar { width: 0; }
       .stock-event-item { display: block; flex: 0 0 48px; box-sizing: border-box; height: 48px; padding: 6px 8px; overflow: hidden; border-radius: 7px; background: #f8fafc; }
@@ -1141,7 +1142,7 @@
         <aside id="stock-updates-card" class="stock-updates-card" hidden aria-labelledby="stock-updates-title">
           <header class="stock-updates-header"><div><h3 id="stock-updates-title">Stock updates</h3><p id="stock-updates-symbol">Upcoming events and recent news</p></div></header>
           <section class="stock-update-section" aria-labelledby="stock-events-title">
-            <div class="stock-update-section-head"><strong id="stock-events-title">Upcoming events</strong><span id="stock-events-count" class="calendar-count" hidden>0</span></div>
+            <div class="stock-update-section-head"><span><strong id="stock-events-title">Upcoming events</strong><span class="stock-update-period">Next 30 days</span></span><span id="stock-events-count" class="calendar-count" hidden>0</span></div>
             <p id="stock-events-status" class="stock-update-empty">Loading events…</p>
             <div id="stock-events-list" class="stock-update-list" hidden></div>
           </section>
@@ -1989,7 +1990,7 @@
       }
       async function loadStockUpdates(symbol) {
         const requestId = ++stockUpdatesRequestId;
-        stockUpdatesSymbol.textContent = `${symbol} · next 30 days and latest 7 days`;
+        stockUpdatesSymbol.textContent = symbol;
         stockEventsStatus.textContent = 'Loading events…';
         stockNewsStatus.textContent = 'Loading news…';
         stockEventsStatus.hidden = false;

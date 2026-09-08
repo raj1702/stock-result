@@ -4,6 +4,7 @@ import logging
 import csv
 import math
 import os
+import re
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from difflib import SequenceMatcher
@@ -249,7 +250,11 @@ class StockService:
                     parsed_link = urlparse(article_link)
                     if not heading or parsed_link.scheme not in {"http", "https"} or not parsed_link.netloc:
                         continue
-                    article_key = article_link or heading.casefold()
+                    # Upstox can return the same story more than once with a
+                    # different tracking URL. Use the normalised headline as
+                    # the primary identity so both wishlist and stock news
+                    # render one copy of the story.
+                    article_key = re.sub(r"\W+", "", heading.casefold())
                     published_ms = self._number(item.get("published_time"))
                     existing = articles.get(article_key)
                     if existing:

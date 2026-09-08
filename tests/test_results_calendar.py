@@ -98,6 +98,36 @@ def test_wishlist_news_uses_exact_nse_instrument_keys(monkeypatch):
     assert calls[1][2]["Authorization"] == "Bearer test-token"
 
 
+def test_wishlist_news_deduplicates_matching_headlines(monkeypatch):
+    monkeypatch.setenv("UPSTOX_ACCESS_TOKEN", "test-token")
+
+    def fake_get(url, params=None, headers=None, timeout=None):
+        if url == StockService.EQUITY_MASTER_URL:
+            return FakeResponse("SYMBOL,NAME OF COMPANY,ISIN NUMBER\nINFY,Infosys Limited,INE009A01021\n")
+        return FakeResponse({
+            "status": "success",
+            "data": {
+                "NSE_EQ|INE009A01021": [
+                    {
+                        "heading": "Infosys announces a new contract",
+                        "article_link": "https://example.com/story?source=one",
+                        "published_time": 1788813000000,
+                    },
+                    {
+                        "heading": "Infosys announces a new contract!",
+                        "article_link": "https://example.com/story?source=two",
+                        "published_time": 1788813000000,
+                    },
+                ],
+            },
+        })
+
+    monkeypatch.setattr(stock_service_module.requests, "get", fake_get)
+    result = StockService().wishlist_news([{"symbol": "INFY", "company": "Infosys Limited"}])
+
+    assert result["count"] == 1
+
+
 def test_upcoming_stock_events_are_filtered_to_requested_symbol():
     service = StockService()
     service._nse_session = FakeSession([
