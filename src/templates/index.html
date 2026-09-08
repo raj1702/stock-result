@@ -3,6 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+      if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+      window.addEventListener('pageshow', (event) => {
+        const navigation = performance.getEntriesByType('navigation')[0];
+        if (!event.persisted && navigation?.type !== 'back_forward') {
+          window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.scrollTo(0, 0)));
+        }
+      });
+    </script>
     <title>ResultLens | NSE &amp; BSE Earnings Analysis</title>
     <meta name="description" content="Analyse NSE and BSE quarterly results with transparent earnings-quality scores, financial trends and stock screening tools.">
     <meta name="robots" content="index, follow, max-image-preview:large">
@@ -271,6 +280,9 @@
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
       #back-to-screening:hover, #back-to-screening:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
+      #result-footer-back { display: block; width: fit-content; margin: 14px 0 0 auto; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #475467; font-size: 10px; font-weight: 750; box-shadow: 0 2px 6px rgba(15,23,42,.06); }
+      #result-footer-back[hidden] { display: none; }
+      #result-footer-back:hover, #result-footer-back:focus-visible { border-color: #84adff; color: #175cd3; outline: none; }
       #mobile-results { display: block; margin-top: 28px; }
       #mobile-results[hidden] { display: none; }
       .mobile-results-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
@@ -1140,19 +1152,20 @@
       <div id="search-insights-grid" class="search-insights-grid">
         <div id="charts"></div>
         <aside id="stock-updates-card" class="stock-updates-card" hidden aria-labelledby="stock-updates-title">
-          <header class="stock-updates-header"><div><h3 id="stock-updates-title">Stock updates</h3><p id="stock-updates-symbol">Upcoming events and recent news</p></div></header>
-          <section class="stock-update-section" aria-labelledby="stock-events-title">
-            <div class="stock-update-section-head"><span><strong id="stock-events-title">Upcoming events</strong><span class="stock-update-period">Next 30 days</span></span><span id="stock-events-count" class="calendar-count" hidden>0</span></div>
-            <p id="stock-events-status" class="stock-update-empty">Loading events…</p>
-            <div id="stock-events-list" class="stock-update-list" hidden></div>
-          </section>
+          <header class="stock-updates-header"><div><h3 id="stock-updates-title">Stock updates</h3><p id="stock-updates-symbol">Recent news and upcoming events</p></div></header>
           <section class="stock-update-section" aria-labelledby="stock-news-title">
             <div class="stock-update-section-head"><strong id="stock-news-title">Recent news</strong><span id="stock-news-count" class="calendar-count" hidden>0</span></div>
             <p id="stock-news-status" class="stock-update-empty">Loading news…</p>
             <div id="stock-news-list" class="stock-update-list" hidden></div>
           </section>
+          <section class="stock-update-section" aria-labelledby="stock-events-title">
+            <div class="stock-update-section-head"><span><strong id="stock-events-title">Upcoming events</strong><span class="stock-update-period">Next 30 days</span></span><span id="stock-events-count" class="calendar-count" hidden>0</span></div>
+            <p id="stock-events-status" class="stock-update-empty">Loading events…</p>
+            <div id="stock-events-list" class="stock-update-list" hidden></div>
+          </section>
         </aside>
       </div>
+      <button id="result-footer-back" type="button" hidden>↑ Back to search</button>
     </section>
     </main>
     <footer class="site-footer"><span class="site-footer-links"><a href="/about">About</a><a href="/methodology">Methodology</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a></span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
@@ -1273,6 +1286,7 @@
       const wishlistClose = document.getElementById('wishlist-close');
       const wishlistList = document.getElementById('wishlist-list');
       const backToScreeningButton = document.getElementById('back-to-screening');
+      const resultFooterBack = document.getElementById('result-footer-back');
       const authGate = document.getElementById('auth-gate');
       const authGateClose = document.getElementById('auth-gate-close');
       const authGateTitle = document.getElementById('auth-gate-title');
@@ -2959,6 +2973,14 @@
           || resultReturnContext.overlay.querySelector("button");
         focusTarget?.focus({ preventScroll: true });
       }
+      function handleResultFooterBack() {
+        if (resultReturnContext) {
+          returnToScreeningResults();
+          return;
+        }
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.setTimeout(() => query.focus({ preventScroll: true }), 350);
+      }
       async function runFullIndexScreening() {
         if (!visibleIndexStocks.length) return;
         const runId = ++screeningRunId;
@@ -3152,6 +3174,7 @@
       runAdvancedScreenerButton.addEventListener('click', runAdvancedScreener);
       advancedAddAllWishlist.addEventListener('click', addAllAdvancedMatchesToWishlist);
       backToScreeningButton.addEventListener('click', returnToScreeningResults);
+      resultFooterBack.addEventListener('click', handleResultFooterBack);
       screeningClose.addEventListener('click', closeFullScreening);
       screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {
         activeScreeningFilter = button.dataset.screeningFilter;
@@ -3244,6 +3267,10 @@
         }
         renderMetricCharts(data.quarterly_results);
         loadStockUpdates(data.symbol);
+        resultFooterBack.textContent = resultReturnContext
+          ? `← Back to ${resultReturnContext.label}`
+          : '↑ Back to search';
+        resultFooterBack.hidden = false;
       }
       function clearDisplayedStock() {
         stockUpdatesRequestId += 1;
@@ -3264,6 +3291,7 @@
         dataNote.hidden = true;
         charts.replaceChildren();
         interpretationSection.hidden = true;
+        resultFooterBack.hidden = true;
         renderAnalysis(null);
       }
       form.addEventListener('submit', async (event) => {

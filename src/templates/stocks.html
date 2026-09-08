@@ -23,7 +23,7 @@
       main{width:min(980px,calc(100% - 32px));margin:32px auto 56px}.hero,.directory{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(15,36,71,.07)}.hero{padding:38px;background:radial-gradient(circle at 90% 0,rgba(37,99,235,.14),transparent 40%),#fff}
       .eyebrow{margin:0 0 8px;color:var(--brand);font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}h1{margin:0;font-size:clamp(30px,5vw,46px);line-height:1.1;letter-spacing:-.045em}.lead{max-width:740px;margin:14px 0 0;color:var(--muted);font-size:15px}.index-tag{display:inline-block;margin:18px 6px 0 0;padding:5px 9px;border-radius:999px;background:#eff4ff;color:#175cd3;font-size:11px;font-weight:800}
       .cta{display:inline-block;margin-top:22px;padding:12px 18px;border-radius:10px;background:#2563eb;color:#fff;font-size:13px;font-weight:850;text-decoration:none;box-shadow:0 8px 18px rgba(37,99,235,.2)}.note{margin:12px 0 0;color:#667085;font-size:11px}
-      .directory{margin-top:16px;padding:26px}.directory h2{margin:0 0 4px;font-size:22px;letter-spacing:-.025em}.directory-intro{margin:0 0 18px;color:var(--muted);font-size:13px}.stock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stock-card{display:flex;flex-direction:column;min-width:0;padding:14px;border:1px solid #e4e7ec;border-radius:11px;background:#f8fafc;color:var(--ink);text-decoration:none;transition:.18s ease}.stock-card:hover{border-color:#98b7f4;background:#f3f7ff;transform:translateY(-1px)}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.stock-card span{margin-top:3px;color:#667085;font-size:10px;font-weight:750}
+      .directory{margin-top:16px;padding:26px}.directory h2{margin:0 0 4px;font-size:22px;letter-spacing:-.025em}.directory-intro{margin:0 0 14px;color:var(--muted);font-size:13px}.index-tabs{display:flex;gap:7px;margin:0 0 18px;padding:4px;overflow-x:auto;border:1px solid #e4e7ec;border-radius:12px;background:#f8fafc;scrollbar-width:none}.index-tabs::-webkit-scrollbar{display:none}.index-tab{flex:1 0 auto;padding:8px 12px;border:0;border-radius:8px;background:transparent;color:#526075;font:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}.index-tab:hover,.index-tab:focus-visible{background:#eaf1ff;color:#175cd3;outline:none}.index-tab[aria-selected="true"]{background:#2563eb;color:#fff;box-shadow:0 4px 10px rgba(37,99,235,.22)}.stock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stock-card{display:flex;flex-direction:column;min-width:0;padding:14px;border:1px solid #e4e7ec;border-radius:11px;background:#f8fafc;color:var(--ink);text-decoration:none;transition:.18s ease}.stock-card[hidden]{display:none}.stock-card:hover{border-color:#98b7f4;background:#f3f7ff;transform:translateY(-1px)}.stock-card strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.stock-card span{margin-top:3px;color:#667085;font-size:10px;font-weight:750}
       footer{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:22px 16px;color:#667085;font-size:11px}footer a{color:#175cd3;font-weight:700;text-decoration:none}
       @media(max-width:760px){.header-inner{width:calc(100% - 28px)}main{margin-top:18px}.hero,.directory{padding:21px 18px;border-radius:14px}.stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.lead{font-size:14px}}
       @media(max-width:420px){.stock-grid{grid-template-columns:1fr}}
@@ -49,11 +49,26 @@
       <section class="directory">
         <h2>{% if selected_stock %}Explore more companies{% else %}Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 companies{% endif %}</h2>
         <p class="directory-intro">Constituent membership is sourced from the current NSE index lists.</p>
+        <div class="index-tabs" role="tablist" aria-label="Stock index">
+          {% for index_name in ['Nifty 50', 'Nifty Next 50', 'Midcap 150', 'Smallcap 250'] %}<button class="index-tab" type="button" role="tab" data-index="{{ index_name }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ index_name }}</button>{% endfor %}
+        </div>
         <div class="stock-grid">
-          {% for stock in stocks %}<a class="stock-card" href="/stocks/{{ stock.slug }}"><strong>{{ stock.company }}</strong><span>NSE: {{ stock.symbol }}</span></a>{% endfor %}
+          {% for stock in stocks %}<a class="stock-card" data-indices="{{ stock.indices|join('|') }}" href="/stocks/{{ stock.slug }}"><strong>{{ stock.company }}</strong><span>NSE: {{ stock.symbol }}</span></a>{% endfor %}
         </div>
       </section>
     </main>
     <footer><a href="/">Home</a><span>·</span><a href="/stocks">Browse stocks</a><span>·</span><a href="/about">About</a><span>·</span><a href="/methodology">Methodology</a><span>·</span><a href="/privacy">Privacy</a><span>·</span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
+    <script>
+      const indexTabs = [...document.querySelectorAll('.index-tab')];
+      const stockCards = [...document.querySelectorAll('.stock-card')];
+      function showIndex(indexName) {
+        indexTabs.forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.index === indexName)));
+        stockCards.forEach((card) => {
+          card.hidden = !card.dataset.indices.split('|').includes(indexName);
+        });
+      }
+      indexTabs.forEach((tab) => tab.addEventListener('click', () => showIndex(tab.dataset.index)));
+      showIndex(indexTabs[0]?.dataset.index || 'Nifty 50');
+    </script>
   </body>
 </html>
