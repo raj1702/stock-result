@@ -28,15 +28,29 @@ def build_earnings_truth(data: Mapping[str, Any], *, is_lender: bool,
     profit_values = [number(value) for value in rows.get("profit", {}).get("values", [])
                      if value is not None and math.isfinite(number(value))]
     latest_pat = profit_values[-1] if profit_values else None
+    profit_transitions = list(zip(profit_values, profit_values[1:]))
+    sustained_loss_recovery = (
+        latest_pat is not None and latest_pat < 0
+        and len(profit_transitions) >= 2
+        and all(current > previous for previous, current in profit_transitions)
+    )
     pattern, tone = "Mixed earnings signals", "neutral"
     summary = "Available metrics do not yet show one dominant earnings driver."
     drivers, watchpoints = [], []
     if latest_pat is not None and latest_pat < 0:
         narrowing = len(profit_values) > 1 and profit_values[-1] > profit_values[-2]
         if narrowing:
-            pattern, tone = "Loss recovery in progress", "caution"
-            summary = "The company remains loss-making, although its latest loss narrowed."
-            drivers.append("PAT improved sequentially, but positive earnings are not established.")
+            pattern, tone = "Consistent loss recovery" if sustained_loss_recovery else "Loss recovery in progress", "caution"
+            summary = (
+                "The company remains loss-making, but PAT has improved continuously across the reported periods."
+                if sustained_loss_recovery else
+                "The company remains loss-making, although its latest loss narrowed."
+            )
+            drivers.append(
+                "PAT is on a sustained recovery path, although positive earnings are not yet established."
+                if sustained_loss_recovery else
+                "PAT improved sequentially, but positive earnings are not established."
+            )
             watchpoints.append("Check whether PAT turns positive without sacrificing revenue momentum.")
         else:
             pattern, tone = "Loss pressure", "negative"
@@ -104,7 +118,9 @@ def build_earnings_truth(data: Mapping[str, Any], *, is_lender: bool,
     if pattern in ("Margin-led profit growth", "Profit growth lacks topline support"):
         sustainability -= 15
     if latest_pat is not None and latest_pat < 0:
-        sustainability = min(sustainability, 40)
+        # Sustained multi-period recovery is materially stronger than a single
+        # narrowing quarter, while still retaining a discount until PAT is positive.
+        sustainability = min(sustainability, 70 if sustained_loss_recovery else 40)
     sustainability = max(0, min(100, sustainability))
     missing = [label for label, value in named_values if value is None]
     sustainability_reason = (

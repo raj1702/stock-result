@@ -65,11 +65,12 @@ def _stock_slug(symbol):
 
 
 def _public_stock_universe():
-    """Return the current Nifty 50 and Next 50 universe without financial calls."""
+    """Return the current large- and mid-cap index universe without financial calls."""
     stocks = {}
     loaders = (
         ("Nifty 50", stock_service.nifty_50_constituents),
         ("Nifty Next 50", stock_service.nifty_next_50_constituents),
+        ("Midcap 150", stock_service.midcap_150_constituents),
     )
     for index_name, loader in loaders:
         for item in loader():
@@ -522,6 +523,16 @@ def get_nifty_next_50():
         return jsonify({"error": f"Unable to load the current NIFTY Next 50 list: {exc}"}), 502
 
 
+@app.route('/midcap-150', methods=['GET'])
+def get_midcap_150():
+    try:
+        stocks = stock_service.midcap_150_constituents()
+        return jsonify({"stocks": stocks, "count": len(stocks)}), 200
+    except Exception as exc:
+        app.logger.exception("Midcap 150 constituent lookup failed")
+        return jsonify({"error": f"Unable to load the current Midcap 150 list: {exc}"}), 502
+
+
 @app.route('/screening/<index_name>/<symbol>', methods=['GET'])
 def get_screening_result(index_name, symbol):
     """Return a quota-limited screener row without consuming stock allowance."""
@@ -529,6 +540,7 @@ def get_screening_result(index_name, symbol):
         constituent_loaders = {
             "nifty-50": stock_service.nifty_50_constituents,
             "nifty-next-50": stock_service.nifty_next_50_constituents,
+            "midcap-150": stock_service.midcap_150_constituents,
         }
         loader = constituent_loaders.get(index_name)
         if not loader:
@@ -572,6 +584,7 @@ def get_screener_data(index_name, symbol):
         constituent_loaders = {
             "nifty-50": stock_service.nifty_50_constituents,
             "nifty-next-50": stock_service.nifty_next_50_constituents,
+            "midcap-150": stock_service.midcap_150_constituents,
         }
         loader = constituent_loaders.get(index_name)
         if not loader:

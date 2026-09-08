@@ -42,6 +42,9 @@ class FakeStockService:
     def nifty_next_50_constituents(self):
         return [{"symbol": "PIDILITIND", "company": "Pidilite Industries"}]
 
+    def midcap_150_constituents(self):
+        return [{"symbol": "FEDERALBNK", "company": "Federal Bank"}]
+
 
 class FakePlanService:
     def __init__(self, allowed=True):
@@ -197,6 +200,20 @@ def test_advanced_screener_rejects_stock_outside_selected_index(client):
     response = browser.get("/screener-data/nifty-50/PIDILITIND")
     assert response.status_code == 404
     assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_midcap_150_list_and_screeners_are_available(client):
+    browser, stock, plan = client
+    listing = browser.get("/midcap-150")
+    screening = browser.get("/screening/midcap-150/FEDERALBNK")
+    advanced = browser.get("/screener-data/midcap-150/FEDERALBNK")
+
+    assert listing.status_code == 200
+    assert listing.get_json()["count"] == 1
+    assert screening.status_code == 200
+    assert advanced.status_code == 200
+    assert advanced.get_json()["symbol"] == "FEDERALBNK"
     assert plan.recorded == []
 
 

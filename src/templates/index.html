@@ -801,6 +801,7 @@
         input, select, textarea { font-size: 16px !important; }
         form button { min-width: 82px; min-height: 40px; padding: 9px 12px; font-size: 13px; }
         .screening-buttons { display: grid; grid-template-columns: 1fr 1fr; }
+        .index-screening-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
         .advanced-screener-open { width: 100%; justify-content: center; }
         #advanced-screener-overlay { padding: 14px; }
@@ -968,6 +969,9 @@
             <button class="index-screening-button" type="button" data-index-endpoint="/nifty-next-50" data-index-label="Nifty Next 50" aria-expanded="false" aria-controls="nifty-picker">
               <span class="screening-info">i</span><span>Select from Nifty Next 50</span>
             </button>
+            <button class="index-screening-button" type="button" data-index-endpoint="/midcap-150" data-index-label="Midcap 150" aria-expanded="false" aria-controls="nifty-picker">
+              <span class="screening-info">i</span><span>Select from Midcap 150</span>
+            </button>
           </div>
           <button id="advanced-screener-open" class="advanced-screener-open" type="button"><span aria-hidden="true">⌁</span><span>Advanced Stock Screener</span><span class="screener-free-badge">FREE</span></button>
           <div id="nifty-picker" hidden>
@@ -1064,7 +1068,7 @@
         </div>
         <div class="advanced-filter-card">
           <div class="advanced-filter-top">
-            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option></select></label>
+            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option><option value="midcap-150">Midcap 150</option></select></label>
             <span class="advanced-filter-note">Free to screen · Full stock analysis uses your plan quota</span>
           </div>
           <div id="advanced-criteria"></div>

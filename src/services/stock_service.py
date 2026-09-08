@@ -33,6 +33,7 @@ class StockService:
     EQUITY_MASTER_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
     NIFTY_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_nifty50list.csv"
     NIFTY_NEXT_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftynext50list.csv"
+    MIDCAP_150_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftymidcap150list.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
     STOCK_CACHE_TTL = timedelta(hours=12)
@@ -94,6 +95,12 @@ class StockService:
         """Return the current NIFTY Next 50 equity constituents from NSE."""
         return self._index_constituents(
             "nifty-next-50", self.NIFTY_NEXT_50_CONSTITUENTS_URL
+        )
+
+    def midcap_150_constituents(self) -> list[dict]:
+        """Return the current NIFTY Midcap 150 equity constituents from NSE."""
+        return self._index_constituents(
+            "midcap-150", self.MIDCAP_150_CONSTITUENTS_URL
         )
 
     def _index_constituents(self, cache_key: str, source_url: str) -> list[dict]:
@@ -438,7 +445,17 @@ class StockService:
             unchanged = sum(current == previous for previous, current in transitions)
             ratio = (improving + (0.5 * unchanged)) / len(transitions)
             trend_points = (weight / 2) * ratio
-            profitability_points = weight / 2 if latest > 0 else 0
+            sustained_loss_recovery = (
+                latest <= 0 and len(transitions) >= 2
+                and improving == len(transitions)
+            )
+            # A still-negative margin is a risk, but a multi-quarter, uninterrupted
+            # recovery should lose only a small amount of quality credit.
+            profitability_points = (
+                weight / 2 if latest > 0
+                else weight * 0.35 if sustained_loss_recovery
+                else 0
+            )
             earned = profitability_points + trend_points
             return {
                 "key": key, "label": label, "weight": weight,
@@ -449,7 +466,12 @@ class StockService:
                 "explanation": (
                     f"Latest margin is {latest:.2f}% and improved in {improving} of "
                     f"{len(transitions)} comparable reported-period moves. "
-                    "Half the points measure positive profitability and half measure consistency."
+                    + (
+                        "The margin remains negative, but continuous improvement across "
+                        "multiple reported periods earns substantial recovery credit."
+                        if sustained_loss_recovery else
+                        "Half the points measure positive profitability and half measure consistency."
+                    )
                 ),
             }
 
