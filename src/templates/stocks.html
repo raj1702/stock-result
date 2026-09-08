@@ -9,7 +9,7 @@
       <link rel="canonical" href="https://resultlens.in/stocks/{{ selected_stock.slug }}">
     {% else %}
       <title>Indian Stock Earnings Directory | ResultLens</title>
-      <meta name="description" content="Browse Nifty 50, Nifty Next 50 and Midcap 150 companies and open transparent quarterly earnings-quality analysis on ResultLens.">
+      <meta name="description" content="Browse Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 companies and open transparent quarterly earnings-quality analysis on ResultLens.">
       <link rel="canonical" href="https://resultlens.in/stocks">
     {% endif %}
     <meta name="robots" content="index, follow">
@@ -44,10 +44,10 @@
           <p class="note">Opening the full analysis is subject to your existing ResultLens stock quota. This page itself does not consume quota.</p>
         </article>
       {% else %}
-        <article class="hero"><p class="eyebrow">Company directory</p><h1>Explore Indian company earnings</h1><p class="lead">Browse the current Nifty 50, Nifty Next 50 and Midcap 150 universe, then open a company’s ResultLens earnings-quality analysis.</p></article>
+        <article class="hero"><p class="eyebrow">Company directory</p><h1>Explore Indian company earnings</h1><p class="lead">Browse the current Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 universe, then open a company’s ResultLens earnings-quality analysis.</p></article>
       {% endif %}
       <section class="directory">
-        <h2>{% if selected_stock %}Explore more companies{% else %}Nifty 50, Nifty Next 50 and Midcap 150 companies{% endif %}</h2>
+        <h2>{% if selected_stock %}Explore more companies{% else %}Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 companies{% endif %}</h2>
         <p class="directory-intro">Constituent membership is sourced from the current NSE index lists.</p>
         <div class="stock-grid">
           {% for stock in stocks %}<a class="stock-card" href="/stocks/{{ stock.slug }}"><strong>{{ stock.company }}</strong><span>NSE: {{ stock.symbol }}</span></a>{% endfor %}

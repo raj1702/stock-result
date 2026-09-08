@@ -45,6 +45,9 @@ class FakeStockService:
     def midcap_150_constituents(self):
         return [{"symbol": "FEDERALBNK", "company": "Federal Bank"}]
 
+    def smallcap_250_constituents(self):
+        return [{"symbol": "CESC", "company": "CESC Limited"}]
+
 
 class FakePlanService:
     def __init__(self, allowed=True):
@@ -214,6 +217,20 @@ def test_midcap_150_list_and_screeners_are_available(client):
     assert screening.status_code == 200
     assert advanced.status_code == 200
     assert advanced.get_json()["symbol"] == "FEDERALBNK"
+    assert plan.recorded == []
+
+
+def test_smallcap_250_list_and_screeners_are_available(client):
+    browser, stock, plan = client
+    listing = browser.get("/smallcap-250")
+    screening = browser.get("/screening/smallcap-250/CESC")
+    advanced = browser.get("/screener-data/smallcap-250/CESC")
+
+    assert listing.status_code == 200
+    assert listing.get_json()["count"] == 1
+    assert screening.status_code == 200
+    assert advanced.status_code == 200
+    assert advanced.get_json()["symbol"] == "CESC"
     assert plan.recorded == []
 
 

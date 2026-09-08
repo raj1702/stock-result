@@ -34,6 +34,7 @@ class StockService:
     NIFTY_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_nifty50list.csv"
     NIFTY_NEXT_50_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftynext50list.csv"
     MIDCAP_150_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftymidcap150list.csv"
+    SMALLCAP_250_CONSTITUENTS_URL = "https://nsearchives.nseindia.com/content/indices/ind_niftysmallcap250list.csv"
     UPSTOX_BASE_URL = "https://api.upstox.com/v2/fundamentals"
     FUNDAMENTALS_CACHE_TTL = timedelta(hours=24)
     STOCK_CACHE_TTL = timedelta(hours=12)
@@ -101,6 +102,12 @@ class StockService:
         """Return the current NIFTY Midcap 150 equity constituents from NSE."""
         return self._index_constituents(
             "midcap-150", self.MIDCAP_150_CONSTITUENTS_URL
+        )
+
+    def smallcap_250_constituents(self) -> list[dict]:
+        """Return the current NIFTY Smallcap 250 equity constituents from NSE."""
+        return self._index_constituents(
+            "smallcap-250", self.SMALLCAP_250_CONSTITUENTS_URL
         )
 
     def _index_constituents(self, cache_key: str, source_url: str) -> list[dict]:

@@ -972,6 +972,9 @@
             <button class="index-screening-button" type="button" data-index-endpoint="/midcap-150" data-index-label="Midcap 150" aria-expanded="false" aria-controls="nifty-picker">
               <span class="screening-info">i</span><span>Select from Midcap 150</span>
             </button>
+            <button class="index-screening-button" type="button" data-index-endpoint="/smallcap-250" data-index-label="Smallcap 250" aria-expanded="false" aria-controls="nifty-picker">
+              <span class="screening-info">i</span><span>Select from Smallcap 250</span>
+            </button>
           </div>
           <button id="advanced-screener-open" class="advanced-screener-open" type="button"><span aria-hidden="true">⌁</span><span>Advanced Stock Screener</span><span class="screener-free-badge">FREE</span></button>
           <div id="nifty-picker" hidden>
@@ -979,7 +982,7 @@
               <label id="index-picker-label" for="nifty-select">Current constituents</label>
               <button id="full-index-screening-button" type="button">Run full index screening</button>
             </div>
-            <select id="nifty-select" aria-label="Select a current Nifty 50 stock">
+            <select id="nifty-select" aria-label="Select a current index stock">
               <option value="">Choose a stock…</option>
             </select>
           </div>
@@ -1068,7 +1071,7 @@
         </div>
         <div class="advanced-filter-card">
           <div class="advanced-filter-top">
-            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option><option value="midcap-150">Midcap 150</option></select></label>
+            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option><option value="midcap-150">Midcap 150</option><option value="smallcap-250">Smallcap 250</option></select></label>
             <span class="advanced-filter-note">Free to screen · Full stock analysis uses your plan quota</span>
           </div>
           <div id="advanced-criteria"></div>
