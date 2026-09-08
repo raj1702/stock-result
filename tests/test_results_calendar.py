@@ -96,3 +96,24 @@ def test_wishlist_news_uses_exact_nse_instrument_keys(monkeypatch):
     assert result["items"][0]["symbols"] == ["INFY"]
     assert calls[1][1]["instrument_keys"] == "NSE_EQ|INE009A01021"
     assert calls[1][2]["Authorization"] == "Bearer test-token"
+
+
+def test_upcoming_stock_events_are_filtered_to_requested_symbol():
+    service = StockService()
+    service._nse_session = FakeSession([
+        {
+            "bm_symbol": "INFY", "bm_date": "18-Sep-2026",
+            "bm_purpose": "Financial Results", "bm_desc": "Quarterly results",
+        },
+        {
+            "bm_symbol": "OTHER", "bm_date": "18-Sep-2026",
+            "bm_purpose": "Fund Raising", "bm_desc": "Other company",
+        },
+    ])
+
+    result = service.upcoming_stock_events("INFY", now=datetime(2026, 9, 9, 10, 0))
+
+    assert result["count"] == 1
+    assert result["items"][0]["purpose"] == "Financial Results"
+    assert service._nse_session.calls[0][1]["symbol"] == "INFY"
+    assert service._nse_session.calls[0][1]["to_date"] == "09-10-2026"

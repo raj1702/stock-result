@@ -424,6 +424,26 @@ def wishlist_news():
         return jsonify({"error": "Wishlist news is temporarily unavailable."}), 503
 
 
+@app.route('/api/stock-updates/<symbol>', methods=['GET'])
+def stock_updates(symbol):
+    """Return quota-free upcoming events and recent news for one NSE stock."""
+    symbol = str(symbol or "").strip().upper()
+    if not re.fullmatch(r"[A-Z0-9&.-]{1,30}", symbol):
+        return jsonify({"error": "Invalid stock symbol."}), 400
+    result = {"symbol": symbol, "events": {"items": [], "count": 0}, "news": {"items": [], "count": 0}}
+    try:
+        result["events"] = stock_service.upcoming_stock_events(symbol)
+    except Exception:
+        app.logger.exception("Upcoming stock-event lookup failed for %s", symbol)
+        result["events"]["error"] = "Upcoming events are temporarily unavailable."
+    try:
+        result["news"] = stock_service.wishlist_news([{"symbol": symbol, "company": symbol}])
+    except Exception:
+        app.logger.exception("Current stock-news lookup failed for %s", symbol)
+        result["news"]["error"] = "Recent news is temporarily unavailable."
+    return jsonify(result), 200
+
+
 @app.route('/api/wishlist/<symbol>', methods=['DELETE'])
 def remove_wishlist_item(symbol):
     user = session.get("user")

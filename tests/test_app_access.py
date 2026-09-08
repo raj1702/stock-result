@@ -45,6 +45,9 @@ class FakeStockService:
     def wishlist_news(self, stocks):
         return {"items": [], "count": 0, "wishlist_empty": not stocks, "lookback_days": 7}
 
+    def upcoming_stock_events(self, symbol):
+        return {"items": [], "count": 0, "lookahead_days": 30, "symbol": symbol}
+
     def generate_interpretation(self, _symbol, _data):
         return [{"text": "Healthy"}]
 
@@ -145,6 +148,15 @@ def test_wishlist_news_uses_saved_stocks_without_consuming_quota(client):
     response = browser.get("/api/wishlist/news")
     assert response.status_code == 200
     assert response.get_json()["count"] == 0
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_single_stock_updates_do_not_consume_quota(client):
+    browser, stock, plan = client
+    response = browser.get("/api/stock-updates/INFY")
+    assert response.status_code == 200
+    assert response.get_json()["symbol"] == "INFY"
     assert stock.fetch_calls == 0
     assert plan.recorded == []
 

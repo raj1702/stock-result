@@ -784,8 +784,29 @@
       .analysis-metric { min-height: 78px; padding: 13px; border: 1px solid #edf1f6; border-radius: 11px; background: #f8fafc; }
       .analysis-label { color: #64748b; }
       .quality-progress { height: 7px; }
-      #charts { margin-top: 18px; }
+      .search-insights-grid { display: grid; grid-template-columns: minmax(0,1fr); align-items: stretch; gap: 16px; margin-top: 18px; }
+      .search-insights-grid.has-updates { grid-template-columns: minmax(0,1.45fr) minmax(300px,.85fr); }
+      #charts { min-width: 0; margin-top: 0; }
       .chart-card.combined-chart { padding: 20px; border: 1px solid #dbe3ef; border-top: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow-card); }
+      .search-insights-grid .chart-card.combined-chart { height: 100%; }
+      .stock-updates-card { display: flex; min-width: 0; min-height: 440px; flex-direction: column; box-sizing: border-box; gap: 9px; padding: 14px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: var(--radius-lg); background: linear-gradient(145deg,#fff,#f8faff); box-shadow: var(--shadow-card); }
+      .stock-updates-card[hidden] { display: none; }
+      .stock-updates-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+      .stock-updates-header h3 { margin: 0; color: #0f2447; font-size: 16px; letter-spacing: -.02em; }
+      .stock-updates-header p { margin: 3px 0 0; color: #64748b; font-size: 9px; }
+      .stock-update-section { position: relative; display: flex; min-height: 0; flex: 1 1 0; flex-direction: column; padding: 10px; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; }
+      .stock-update-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 7px; border-bottom: 1px solid #edf1f6; }
+      .stock-update-section-head strong { color: #334155; font-size: 10px; }
+      .stock-update-list { display: grid; min-height: 0; flex: 1 1 auto; gap: 5px; margin: 7px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; }
+      .stock-update-list::-webkit-scrollbar { width: 0; }
+      .stock-event-item { display: block; flex: 0 0 48px; box-sizing: border-box; height: 48px; padding: 6px 8px; overflow: hidden; border-radius: 7px; background: #f8fafc; }
+      .stock-event-item strong { display: block; overflow: hidden; color: #334155; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+      .stock-event-item span { display: block; margin-top: 3px; color: #175cd3; font-size: 8px; font-weight: 750; }
+      .stock-update-news-item { display: block; flex: 0 0 58px; box-sizing: border-box; height: 58px; padding: 7px 8px; overflow: hidden; border-radius: 7px; background: #f8fafc; color: inherit; text-decoration: none; }
+      .stock-update-news-item:hover, .stock-update-news-item:focus-visible { background: #eef4ff; outline: none; }
+      .stock-update-news-item strong { display: -webkit-box; overflow: hidden; color: #334155; font-size: 9px; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .stock-update-news-item span { display: block; margin-top: 4px; color: #6941c6; font-size: 8px; font-weight: 750; }
+      .stock-update-empty { margin: auto 0; color: #64748b; font-size: 9px; line-height: 1.45; }
       .chart-summary { border-color: #e2e8f0; border-radius: 12px; background: #f8fafc; }
       .chart-svg { border-color: #edf1f6; border-radius: 12px; background: #fff; }
       #subscription-overlay, #screening-overlay { background: #f4f7fb; }
@@ -945,6 +966,8 @@
         .truth-details { grid-template-columns: 1fr; }
         .analysis-metrics { grid-template-columns: minmax(0,1fr); }
         .chart-card.combined-chart { padding: 13px; border-radius: 14px; }
+        .search-insights-grid, .search-insights-grid.has-updates { grid-template-columns: minmax(0,1fr); gap: 10px; }
+        .stock-updates-card { min-height: 400px; padding: 12px; border-radius: 14px; }
         #subscription-overlay { padding: 16px 14px; }
         .plan-options { grid-template-columns: minmax(0,1fr); }
         .plan-option { min-height: 0; grid-template-columns: 74px minmax(0,1fr); padding: 14px; }
@@ -1113,7 +1136,22 @@
     <section id="interpretation-section" hidden>
       <h2>Earnings quality analysis</h2>
       <article id="analysis-box" hidden aria-live="polite"></article>
-      <div id="charts"></div>
+      <div id="search-insights-grid" class="search-insights-grid">
+        <div id="charts"></div>
+        <aside id="stock-updates-card" class="stock-updates-card" hidden aria-labelledby="stock-updates-title">
+          <header class="stock-updates-header"><div><h3 id="stock-updates-title">Stock updates</h3><p id="stock-updates-symbol">Upcoming events and recent news</p></div></header>
+          <section class="stock-update-section" aria-labelledby="stock-events-title">
+            <div class="stock-update-section-head"><strong id="stock-events-title">Upcoming events</strong><span id="stock-events-count" class="calendar-count" hidden>0</span></div>
+            <p id="stock-events-status" class="stock-update-empty">Loading events…</p>
+            <div id="stock-events-list" class="stock-update-list" hidden></div>
+          </section>
+          <section class="stock-update-section" aria-labelledby="stock-news-title">
+            <div class="stock-update-section-head"><strong id="stock-news-title">Recent news</strong><span id="stock-news-count" class="calendar-count" hidden>0</span></div>
+            <p id="stock-news-status" class="stock-update-empty">Loading news…</p>
+            <div id="stock-news-list" class="stock-update-list" hidden></div>
+          </section>
+        </aside>
+      </div>
     </section>
     </main>
     <footer class="site-footer"><span class="site-footer-links"><a href="/about">About</a><a href="/methodology">Methodology</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a></span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
@@ -1259,7 +1297,16 @@
       const dataNote = document.getElementById('data-note');
       const interpretationSection = document.getElementById('interpretation-section');
       const analysisBox = document.getElementById('analysis-box');
+      const searchInsightsGrid = document.getElementById('search-insights-grid');
       const charts = document.getElementById('charts');
+      const stockUpdatesCard = document.getElementById('stock-updates-card');
+      const stockUpdatesSymbol = document.getElementById('stock-updates-symbol');
+      const stockEventsStatus = document.getElementById('stock-events-status');
+      const stockEventsList = document.getElementById('stock-events-list');
+      const stockEventsCount = document.getElementById('stock-events-count');
+      const stockNewsStatus = document.getElementById('stock-news-status');
+      const stockNewsList = document.getElementById('stock-news-list');
+      const stockNewsCount = document.getElementById('stock-news-count');
       let currentQuarterlyTable = null;
       let comparisonMode = 'qoq';
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
@@ -1273,6 +1320,7 @@
       const currentUserAuthenticated = {{ (current_user is not none)|tojson }};
       const wishlistItems = new Map();
       let wishlistLoaded = false;
+      let stockUpdatesRequestId = 0;
       function updateWishlistHearts() {
         document.querySelectorAll('.wishlist-heart').forEach((button) => {
           const saved = wishlistItems.has(button.dataset.symbol);
@@ -1707,18 +1755,20 @@
         calendarReopen.hidden = false;
       }
       function stopCalendarMarquees(container = document) {
-        container.querySelectorAll('.calendar-list, .wishlist-news-list').forEach((list) => {
+        container.querySelectorAll('.calendar-list, .wishlist-news-list, .stock-update-list').forEach((list) => {
           const frame = marqueeAnimationFrames.get(list);
           if (frame) cancelAnimationFrame(frame);
           marqueeAnimationFrames.delete(list);
         });
+        container.querySelectorAll('.calendar-scroll-rail').forEach((rail) => rail.remove());
+        container.querySelectorAll('.has-overflow').forEach((item) => item.classList.remove('has-overflow'));
       }
       function startCalendarMarquee(list) {
         const existingFrame = marqueeAnimationFrames.get(list);
         if (existingFrame) cancelAnimationFrame(existingFrame);
         const originalItems = [...list.children];
         if (originalItems.length <= 3) return;
-        const dayCard = list.closest('.calendar-day, .wishlist-news-card');
+        const dayCard = list.closest('.calendar-day, .wishlist-news-card, .stock-update-section');
         dayCard?.classList.add('has-overflow');
         const scrollRail = Object.assign(document.createElement('span'), { className: 'calendar-scroll-rail' });
         const scrollThumb = Object.assign(document.createElement('span'), { className: 'calendar-scroll-thumb' });
@@ -1880,6 +1930,87 @@
           wishlistNewsStatus.hidden = false;
           wishlistNewsList.hidden = true;
           wishlistNewsCount.hidden = true;
+        }
+      }
+      function renderStockUpdateEvents(events) {
+        stopCalendarMarquees(stockEventsList.closest('.stock-update-section'));
+        stockEventsList.replaceChildren();
+        if (!events?.items?.length) {
+          stockEventsStatus.textContent = events?.error || 'No upcoming event listed for this stock.';
+          stockEventsStatus.hidden = false;
+          stockEventsList.hidden = true;
+          stockEventsCount.hidden = true;
+          return;
+        }
+        const items = events.items.map((event) => {
+          const item = Object.assign(document.createElement('div'), {
+            className: 'stock-event-item', title: event.description || event.purpose,
+          });
+          item.append(
+            Object.assign(document.createElement('strong'), { textContent: event.purpose || 'Board meeting' }),
+            Object.assign(document.createElement('span'), { textContent: event.display_date }),
+          );
+          return item;
+        });
+        stockEventsList.replaceChildren(...items);
+        stockEventsList.hidden = false;
+        stockEventsStatus.hidden = true;
+        stockEventsCount.textContent = events.count;
+        stockEventsCount.hidden = false;
+        startCalendarMarquee(stockEventsList);
+      }
+      function renderStockUpdateNews(news) {
+        stopCalendarMarquees(stockNewsList.closest('.stock-update-section'));
+        stockNewsList.replaceChildren();
+        if (!news?.items?.length) {
+          stockNewsStatus.textContent = news?.error || 'No recent news listed for this stock.';
+          stockNewsStatus.hidden = false;
+          stockNewsList.hidden = true;
+          stockNewsCount.hidden = true;
+          return;
+        }
+        const items = news.items.map((article) => {
+          const link = Object.assign(document.createElement('a'), {
+            className: 'stock-update-news-item', href: article.article_link,
+            target: '_blank', rel: 'noopener noreferrer',
+          });
+          link.append(
+            Object.assign(document.createElement('strong'), { textContent: article.heading }),
+            Object.assign(document.createElement('span'), { textContent: newsTimeLabel(article.published_at) }),
+          );
+          return link;
+        });
+        stockNewsList.replaceChildren(...items);
+        stockNewsList.hidden = false;
+        stockNewsStatus.hidden = true;
+        stockNewsCount.textContent = news.count;
+        stockNewsCount.hidden = false;
+        startCalendarMarquee(stockNewsList);
+      }
+      async function loadStockUpdates(symbol) {
+        const requestId = ++stockUpdatesRequestId;
+        stockUpdatesSymbol.textContent = `${symbol} · next 30 days and latest 7 days`;
+        stockEventsStatus.textContent = 'Loading events…';
+        stockNewsStatus.textContent = 'Loading news…';
+        stockEventsStatus.hidden = false;
+        stockNewsStatus.hidden = false;
+        stockEventsList.hidden = true;
+        stockNewsList.hidden = true;
+        stockEventsCount.hidden = true;
+        stockNewsCount.hidden = true;
+        stockUpdatesCard.hidden = false;
+        searchInsightsGrid.classList.add('has-updates');
+        try {
+          const response = await fetch(`/api/stock-updates/${encodeURIComponent(symbol)}`);
+          const data = await readJson(response);
+          if (requestId !== stockUpdatesRequestId) return;
+          if (!response.ok) throw new Error(data.error || 'Stock updates are temporarily unavailable.');
+          renderStockUpdateEvents(data.events);
+          renderStockUpdateNews(data.news);
+        } catch (error) {
+          if (requestId !== stockUpdatesRequestId) return;
+          stockEventsStatus.textContent = error.message;
+          stockNewsStatus.textContent = error.message;
         }
       }
       function openResultsCalendar() {
@@ -3111,8 +3242,15 @@
           dataNote.hidden = false;
         }
         renderMetricCharts(data.quarterly_results);
+        loadStockUpdates(data.symbol);
       }
       function clearDisplayedStock() {
+        stockUpdatesRequestId += 1;
+        stopCalendarMarquees(stockUpdatesCard);
+        stockUpdatesCard.hidden = true;
+        searchInsightsGrid.classList.remove('has-updates');
+        stockEventsList.replaceChildren();
+        stockNewsList.replaceChildren();
         currentQuarterlyTable = null;
         tables.hidden = true;
         resultsHead.replaceChildren();

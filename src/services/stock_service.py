@@ -95,6 +95,8 @@ class StockService:
         self._results_calendar_cache_lock = Lock()
         self._wishlist_news_cache = {}
         self._wishlist_news_cache_lock = Lock()
+        self._stock_events_cache = {}
+        self._stock_events_cache_lock = Lock()
 
     def results_calendar(self, now: Optional[datetime] = None) -> dict:
         """Return all announced NSE board-meeting events for today and tomorrow."""
@@ -281,6 +283,79 @@ class StockService:
         }
         with self._wishlist_news_cache_lock:
             self._wishlist_news_cache[cache_key] = (datetime.utcnow(), result)
+        return deepcopy(result)
+
+    def upcoming_stock_events(
+        self, symbol: str, days: int = 30, now: Optional[datetime] = None
+    ) -> dict:
+        """Return a stock's announced NSE board meetings over the next month."""
+        symbol = self._normalise_symbol(symbol)
+        india_tz = ZoneInfo("Asia/Kolkata")
+        if now is None:
+            current = datetime.now(india_tz)
+        elif now.tzinfo:
+            current = now.astimezone(india_tz)
+        else:
+            current = now.replace(tzinfo=india_tz)
+        start_date = current.date()
+        end_date = start_date + timedelta(days=max(1, min(days, 30)))
+        cache_key = (symbol, start_date.isoformat(), end_date.isoformat())
+        with self._stock_events_cache_lock:
+            cached = self._stock_events_cache.get(cache_key)
+            if cached and datetime.utcnow() - cached[0] < self.RESULTS_CALENDAR_CACHE_TTL:
+                return deepcopy(cached[1])
+
+        url = f"{self.NSE_BASE_URL}/api/corporate-board-meetings"
+        params = {
+            "index": "equities",
+            "symbol": symbol,
+            "from_date": start_date.strftime("%d-%m-%Y"),
+            "to_date": end_date.strftime("%d-%m-%Y"),
+        }
+        response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        if response.status_code in {401, 403}:
+            warmup = self._nse_session.get(
+                f"{self.NSE_BASE_URL}/companies-listing/corporate-filings-application?id=eqResultCalendar",
+                timeout=self.NSE_REQUEST_TIMEOUT,
+            )
+            warmup.raise_for_status()
+            response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        meetings = response.json()
+        if not isinstance(meetings, list):
+            raise ValueError("NSE returned an unexpected stock-events response")
+
+        items = []
+        seen = set()
+        for meeting in meetings:
+            if not isinstance(meeting, Mapping):
+                continue
+            meeting_symbol = str(meeting.get("bm_symbol") or "").strip().upper()
+            if meeting_symbol != symbol:
+                continue
+            try:
+                meeting_date = datetime.strptime(str(meeting.get("bm_date") or ""), "%d-%b-%Y").date()
+            except ValueError:
+                continue
+            if not start_date <= meeting_date <= end_date:
+                continue
+            purpose = str(meeting.get("bm_purpose") or "Board meeting").strip()
+            description = str(meeting.get("bm_desc") or "").strip()
+            unique_key = (meeting_date, purpose.casefold(), description.casefold())
+            if unique_key in seen:
+                continue
+            seen.add(unique_key)
+            items.append({
+                "symbol": symbol,
+                "date": meeting_date.isoformat(),
+                "display_date": meeting_date.strftime("%d %b %Y"),
+                "purpose": purpose,
+                "description": description,
+            })
+        items.sort(key=lambda item: (item["date"], item["purpose"].casefold()))
+        result = {"items": items, "count": len(items), "lookahead_days": (end_date - start_date).days}
+        with self._stock_events_cache_lock:
+            self._stock_events_cache[cache_key] = (datetime.utcnow(), result)
         return deepcopy(result)
 
     def nifty_50_constituents(self) -> list[dict]:
