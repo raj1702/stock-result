@@ -33,6 +33,18 @@ class FakeStockService:
             ]}
         return {"exact": True, "options": [{"symbol": query.upper(), "company": query.upper()}]}
 
+    def results_calendar(self):
+        return {
+            "days": [
+                {"label": "Today", "date": "2026-09-08", "display_date": "08 Sep 2026", "count": 0, "results": []},
+                {"label": "Tomorrow", "date": "2026-09-09", "display_date": "09 Sep 2026", "count": 0, "results": []},
+            ],
+            "source": "NSE corporate board-meeting filings",
+        }
+
+    def wishlist_news(self, stocks):
+        return {"items": [], "count": 0, "wishlist_empty": not stocks, "lookback_days": 7}
+
     def generate_interpretation(self, _symbol, _data):
         return [{"text": "Healthy"}]
 
@@ -117,6 +129,24 @@ def test_direct_stock_endpoint_cannot_bypass_limit(client):
     assert response.status_code == 403
     assert response.get_json()["plan_limit_reached"] is True
     assert stock.fetch_calls == 0
+
+
+def test_results_calendar_is_public_and_does_not_consume_quota(client):
+    browser, stock, plan = client
+    response = browser.get("/api/results-calendar")
+    assert response.status_code == 200
+    assert [day["label"] for day in response.get_json()["days"]] == ["Today", "Tomorrow"]
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_wishlist_news_uses_saved_stocks_without_consuming_quota(client):
+    browser, stock, plan = client
+    response = browser.get("/api/wishlist/news")
+    assert response.status_code == 200
+    assert response.get_json()["count"] == 0
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
 
 
 def test_interpretation_endpoint_records_usage(client):
@@ -266,6 +296,16 @@ def test_wishlist_can_be_screened_and_results_bulk_saved_without_quota(client):
     assert saved.get_json()["count"] == 2
     assert {item["symbol"] for item in plan.bulk_saved} == {"INFY", "TCS"}
     assert plan.recorded == []
+
+
+def test_paid_plan_prices_match_checkout_amounts():
+    from services.payment_service import PAID_PLANS
+
+    assert PAID_PLANS == {
+        "bronze": {"amount": 1000, "price_rupees": 10, "valid_days": 30},
+        "silver": {"amount": 2500, "price_rupees": 25, "valid_days": 30},
+        "gold": {"amount": 5000, "price_rupees": 50, "valid_days": 30},
+    }
 
 
 def test_robots_txt_allows_home_and_advertises_sitemap(client):

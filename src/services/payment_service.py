@@ -9,9 +9,9 @@ from zoneinfo import ZoneInfo
 
 IST = ZoneInfo("Asia/Kolkata")
 PAID_PLANS = {
-    "bronze": {"amount": 2500, "price_rupees": 25, "valid_days": 30},
-    "silver": {"amount": 5000, "price_rupees": 50, "valid_days": 30},
-    "gold": {"amount": 25000, "price_rupees": 250, "valid_days": 30},
+    "bronze": {"amount": 1000, "price_rupees": 10, "valid_days": 30},
+    "silver": {"amount": 2500, "price_rupees": 25, "valid_days": 30},
+    "gold": {"amount": 5000, "price_rupees": 50, "valid_days": 30},
 }
 
 

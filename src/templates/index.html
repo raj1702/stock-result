@@ -97,7 +97,6 @@
       .plan-option p { margin: 0; color: #655b7c; font-size: 11px; line-height: 1.5; }
       .plan-option strong { color: #4f4268; font-size: 11px; }
       .current-plan-mark { display: inline-block; padding: 3px 6px; border-radius: 3px; background: #6941c6; color: #fff; font-size: 9px; font-weight: 850; text-transform: uppercase; white-space: nowrap; }
-      .plan-price s { margin-right: 5px; color: #98a2b3; font-weight: 600; }
       .plan-pay-button { min-width: 92px; padding: 8px 10px; border-radius: 5px; background: #6941c6; font-size: 11px; font-weight: 800; white-space: nowrap; }
       .plan-pay-button:disabled { cursor: not-allowed; background: #e4e7ec; color: #98a2b3; }
       .payment-status { min-height: 18px; margin: 10px 0 0; color: #475467; font-size: 11px; font-weight: 700; text-align: right; }
@@ -715,6 +714,45 @@
       .screening-buttons { gap: 8px; }
       .index-screening-button { min-height: 36px; padding: 8px 12px; border-color: #dbe3ef; border-radius: 9px; background: #f8fafc; color: #334155; font-size: 11px; box-shadow: none; }
       .screening-info { width: 17px; height: 17px; background: #e0eaff; color: #2455b7; font-family: inherit; font-size: 10px; font-style: normal; font-weight: 800; }
+      .home-intelligence-grid { display: grid; grid-template-columns: repeat(2,minmax(0,440px)); align-items: stretch; gap: 14px; margin-top: 18px; }
+      .home-intelligence-grid[hidden] { display: none; }
+      .results-calendar { box-sizing: border-box; width: 100%; margin: 0; padding: 15px; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#f8faff); box-shadow: var(--shadow-card); }
+      .results-calendar[hidden], .calendar-reopen[hidden] { display: none; }
+      .calendar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+      .calendar-kicker { display: block; margin-bottom: 3px; color: #2563eb; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+      .calendar-header h2 { margin: 0; color: #0f2447; font-size: 18px; letter-spacing: -.025em; }
+      .calendar-source { margin: 3px 0 0; color: #64748b; font-size: 10px; }
+      .calendar-days { display: grid; grid-template-columns: 1fr; grid-template-rows: repeat(2,160px); gap: 8px; min-height: 0; }
+      .calendar-days.single-day { grid-template-rows: 160px; }
+      .calendar-day { position: relative; display: flex; min-width: 0; min-height: 0; flex-direction: column; padding: 11px; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 11px; background: #fff; }
+      .calendar-day-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 9px; border-bottom: 1px solid #edf1f6; }
+      .calendar-day-title { color: #1e293b; font-size: 12px; font-weight: 800; }
+      .calendar-day-date { color: #64748b; font-size: 9px; font-weight: 700; }
+      .calendar-count { display: inline-grid; flex: 0 0 auto; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; background: #eaf1ff; color: #175cd3; font-size: 9px; font-weight: 850; }
+      .calendar-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 5px; margin: 7px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; list-style: none; }
+      .calendar-list::-webkit-scrollbar { width: 0; height: 0; }
+      .calendar-scroll-rail { position: absolute; z-index: 2; top: 48px; right: 4px; bottom: 9px; width: 4px; overflow: hidden; border-radius: 999px; background: #e0eaff; pointer-events: none; }
+      .calendar-scroll-thumb { position: absolute; top: 0; left: 0; width: 100%; height: 34%; border-radius: inherit; background: #528bff; box-shadow: 0 0 0 1px rgba(255,255,255,.55); will-change: transform; }
+      .calendar-stock { display: flex; flex: 0 0 30px; align-items: center; justify-content: space-between; box-sizing: border-box; gap: 10px; min-width: 0; height: 30px; padding: 3px 8px; border-radius: 8px; background: #f8fafc; }
+      .calendar-company { min-width: 0; overflow: hidden; color: #334155; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+      .calendar-event-copy { min-width: 0; }
+      .calendar-purpose { display: block; margin-top: 2px; overflow: hidden; color: #64748b; font-size: 8px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+      .calendar-symbol { flex: 0 0 auto; color: #175cd3; font-size: 9px; font-weight: 850; }
+      .calendar-empty { margin: auto 0; color: #64748b; font-size: 10px; line-height: 1.45; }
+      .calendar-status { margin: 5px 0 0; color: #64748b; font-size: 11px; }
+      .calendar-reopen { display: inline-flex; align-items: center; gap: 7px; margin: 16px 0 0; padding: 8px 11px; border: 1px solid #b2ccff; background: #eff4ff; color: #175cd3; font-size: 11px; box-shadow: 0 3px 9px rgba(21,94,239,.1); }
+      .calendar-reopen:hover, .calendar-reopen:focus-visible { border-color: #528bff; background: #dbe8ff; outline: none; }
+      .wishlist-news-card { position: relative; display: flex; min-width: 0; flex-direction: column; box-sizing: border-box; padding: 15px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#fbf9ff); box-shadow: var(--shadow-card); }
+      .wishlist-news-card .calendar-header { flex: 0 0 auto; }
+      .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; list-style: none; }
+      .wishlist-news-list::-webkit-scrollbar { width: 0; }
+      .wishlist-news-item { display: block; flex: 0 0 92px; box-sizing: border-box; height: 92px; padding: 10px; overflow: hidden; border: 1px solid #edf1f6; border-radius: 9px; background: #f8fafc; color: inherit; text-decoration: none; }
+      .wishlist-news-item:hover, .wishlist-news-item:focus-visible { border-color: #b2ccff; background: #f2f6ff; outline: none; }
+      .wishlist-news-heading { display: -webkit-box; overflow: hidden; color: #1e293b; font-size: 10px; font-weight: 800; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+      .wishlist-news-summary { display: block; margin-top: 4px; overflow: hidden; color: #64748b; font-size: 8px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+      .wishlist-news-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; color: #667085; font-size: 8px; font-weight: 700; }
+      .wishlist-news-symbols { overflow: hidden; color: #6941c6; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+      .wishlist-news-empty { margin: auto 0; color: #64748b; font-size: 11px; line-height: 1.5; }
       #nifty-picker { margin-top: 10px; padding: 12px; border-color: #dbe3ef; border-radius: 12px; background: #f8fafc; }
       #message { margin: 22px 0 10px; }
       #message.stock-summary { width: 100%; margin: 20px 0 0; padding: 10px; border-color: #dbe3ef; border-radius: 14px; background: #fff; box-shadow: var(--shadow-card); }
@@ -807,6 +845,16 @@
         .screening-buttons { display: grid; grid-template-columns: 1fr 1fr; }
         .index-screening-button:last-child:nth-child(odd) { grid-column: 1 / -1; }
         .index-screening-button { justify-content: center; padding: 7px; font-size: 9px; }
+        .home-intelligence-grid { grid-template-columns: 1fr; margin-top: 14px; }
+        .results-calendar { width: 100%; margin: 0; padding: 12px; }
+        .wishlist-news-card { min-height: 360px; padding: 12px; }
+        .calendar-header { margin-bottom: 10px; }
+        .calendar-header h2 { font-size: 17px; }
+        .calendar-days { grid-template-columns: 1fr; grid-template-rows: repeat(2,160px); height: auto; gap: 7px; }
+        .calendar-days.single-day { grid-template-rows: 160px; }
+        .calendar-day { padding: 11px; }
+        .calendar-company { font-size: 10px; }
+        .calendar-reopen { width: 100%; justify-content: center; box-sizing: border-box; }
         .advanced-screener-open { width: 100%; justify-content: center; }
         #advanced-screener-overlay { padding: 14px; }
         .advanced-screener-header h2 { font-size: 20px; }
@@ -947,9 +995,9 @@
           </section>
           <div class="plan-options" aria-label="Available plans">
             <article class="plan-option" data-plan="free"><h3>Free</h3><p>Explore up to 10 stocks each month.</p><strong id="free-plan-status">Free tier</strong></article>
-            <article class="plan-option" data-plan="bronze"><h3>Bronze</h3><p>Explore up to 25 stocks each month.</p><strong class="plan-price"><s>₹500</s>₹25 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="bronze">Pay ₹25</button></article>
-            <article class="plan-option" data-plan="silver"><h3>Silver</h3><p>Explore up to 40 stocks each month.</p><strong class="plan-price"><s>₹1,000</s>₹50 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="silver">Pay ₹50</button></article>
-            <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong class="plan-price"><s>₹2,500</s>₹250 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="gold">Pay ₹250</button></article>
+            <article class="plan-option" data-plan="bronze"><h3>Bronze</h3><p>Explore up to 25 stocks each month.</p><strong class="plan-price">₹10 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="bronze">Pay ₹10</button></article>
+            <article class="plan-option" data-plan="silver"><h3>Silver</h3><p>Explore up to 40 stocks each month.</p><strong class="plan-price">₹25 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="silver">Pay ₹25</button></article>
+            <article class="plan-option" data-plan="gold"><h3>Gold</h3><p>Explore unlimited stocks.</p><strong class="plan-price">₹50 · 30 days</strong><button class="plan-pay-button" type="button" data-purchase-tier="gold">Pay ₹50</button></article>
           </div>
           <p id="payment-status" class="payment-status" aria-live="polite"></p>
           <div class="upgrade-support"><span>Payment or plan issue? <a href="mailto:resultlens.support@gmail.com">resultlens.support@gmail.com</a></span><span class="upgrade-policy-links"><span>By purchasing, you agree to our</span><a href="/terms">Terms</a><span>and</span><a href="/refund-policy">Refund Policy</a><span>·</span><a href="/privacy">Privacy</a></span></div>
@@ -995,7 +1043,27 @@
         </div>
         <a class="browse-stocks-link" href="/stocks">Browse stocks</a>
         </section>
-        <button id="back-to-screening" type="button" hidden>← Back to screening results</button>
+        <div id="home-intelligence-grid" class="home-intelligence-grid">
+        <section id="results-calendar" class="results-calendar" aria-labelledby="results-calendar-title">
+          <header class="calendar-header">
+            <div><span class="calendar-kicker">Announced dates</span><h2 id="results-calendar-title">Market events calendar</h2><p class="calendar-source">Today and tomorrow · NSE board-meeting filings</p></div>
+          </header>
+          <p id="calendar-status" class="calendar-status">Loading announced events…</p>
+          <div id="calendar-days" class="calendar-days" hidden></div>
+        </section>
+        {% if current_user %}
+        <section id="wishlist-news-card" class="wishlist-news-card" aria-labelledby="wishlist-news-title">
+          <header class="calendar-header">
+            <div><span class="calendar-kicker">Your saved stocks</span><h2 id="wishlist-news-title">Wishlist news</h2><p class="calendar-source">Latest seven days · Upstox News</p></div>
+            <span id="wishlist-news-count" class="calendar-count" hidden>0</span>
+          </header>
+          <p id="wishlist-news-status" class="wishlist-news-empty">Loading recent wishlist news…</p>
+          <div id="wishlist-news-list" class="wishlist-news-list" hidden></div>
+        </section>
+        {% endif %}
+        </div>
+        <button id="calendar-reopen" class="calendar-reopen" type="button" hidden><span aria-hidden="true">▦</span> View today &amp; tomorrow events</button>
+        <button id="back-to-screening" type="button" hidden>← Back to results</button>
         <p id="message"></p>
         <div id="tables" hidden>
       <section id="results-panel">
@@ -1123,6 +1191,15 @@
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
+      const resultsCalendar = document.getElementById('results-calendar');
+      const homeIntelligenceGrid = document.getElementById('home-intelligence-grid');
+      const calendarStatus = document.getElementById('calendar-status');
+      const calendarDays = document.getElementById('calendar-days');
+      const calendarReopen = document.getElementById('calendar-reopen');
+      const wishlistNewsCard = document.getElementById('wishlist-news-card');
+      const wishlistNewsStatus = document.getElementById('wishlist-news-status');
+      const wishlistNewsList = document.getElementById('wishlist-news-list');
+      const wishlistNewsCount = document.getElementById('wishlist-news-count');
       const indexScreeningButtons = document.querySelectorAll('.index-screening-button');
       const niftyPicker = document.getElementById('nifty-picker');
       const niftySelect = document.getElementById('nifty-select');
@@ -1183,6 +1260,7 @@
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
       let chartRotationTimer = null;
       let chartResumeTimer = null;
+      const marqueeAnimationFrames = new Map();
       const indexStocksCache = new Map();
       const stockResultCache = new Map();
       const stockResultCacheTtlMs = 12 * 60 * 60 * 1000;
@@ -1232,6 +1310,7 @@
           else wishlistItems.set(symbol, data.item);
           updateWishlistHearts();
           if (wishlistOverlay && !wishlistOverlay.hidden) renderWishlist();
+          loadWishlistNews();
         } catch (error) {
           window.alert(error.message);
         } finally {
@@ -1272,11 +1351,7 @@
           company.append(Object.assign(document.createElement('span'), { textContent: item.symbol }));
           const details = Object.assign(document.createElement('button'), { className: 'screening-details-button', type: 'button', textContent: 'More details →' });
           details.addEventListener('click', () => {
-            closeWishlist();
-            query.value = item.symbol;
-            query.dataset.confirmedSymbol = item.symbol;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            form.requestSubmit();
+            openFeatureStockDetails(item.symbol, "wishlist");
           });
           row.append(company, makeWishlistHeart(item.symbol, item.company), details);
           wishlistList.append(row);
@@ -1376,6 +1451,8 @@
       let activeScreeningFilter = 'all';
       let advancedScreenerRunId = 0;
       let latestAdvancedMatches = [];
+      let resultReturnContext = null;
+      let preserveResultReturnOnSubmit = false;
       let currentPlanData = null;
       function formatPlanExpiry(value) {
         if (!value) return '';
@@ -1619,6 +1696,202 @@
           throw new Error('The server returned an unexpected response. Check the Flask terminal for details.');
         }
       }
+      function collapseResultsCalendar() {
+        resultsCalendar.hidden = true;
+        homeIntelligenceGrid.hidden = true;
+        calendarReopen.hidden = false;
+      }
+      function stopCalendarMarquees(container = document) {
+        container.querySelectorAll('.calendar-list, .wishlist-news-list').forEach((list) => {
+          const frame = marqueeAnimationFrames.get(list);
+          if (frame) cancelAnimationFrame(frame);
+          marqueeAnimationFrames.delete(list);
+        });
+      }
+      function startCalendarMarquee(list) {
+        const existingFrame = marqueeAnimationFrames.get(list);
+        if (existingFrame) cancelAnimationFrame(existingFrame);
+        const originalItems = [...list.children];
+        if (originalItems.length <= 3) return;
+        const dayCard = list.closest('.calendar-day, .wishlist-news-card');
+        dayCard?.classList.add('has-overflow');
+        const scrollRail = Object.assign(document.createElement('span'), { className: 'calendar-scroll-rail' });
+        const scrollThumb = Object.assign(document.createElement('span'), { className: 'calendar-scroll-thumb' });
+        scrollRail.append(scrollThumb);
+        dayCard?.append(scrollRail);
+        const setupFrame = requestAnimationFrame(() => {
+          const loopHeight = list.scrollHeight + 5;
+          originalItems.forEach((item) => {
+            const clone = item.cloneNode(true);
+            clone.setAttribute('aria-hidden', 'true');
+            list.append(clone);
+          });
+          let pausedUntil = 0;
+          let lastTime = performance.now();
+          let scrollPosition = list.scrollTop;
+          const updateScrollThumb = () => {
+            const travel = Math.max(0, scrollRail.clientHeight - scrollThumb.offsetHeight);
+            const progress = loopHeight ? (list.scrollTop % loopHeight) / loopHeight : 0;
+            scrollThumb.style.transform = `translateY(${progress * travel}px)`;
+          };
+          const pause = (milliseconds = 5000) => {
+            scrollPosition = list.scrollTop;
+            pausedUntil = performance.now() + milliseconds;
+          };
+          list.addEventListener('pointerenter', () => pause(60000));
+          list.addEventListener('pointerleave', () => { pausedUntil = 0; });
+          list.addEventListener('touchstart', () => pause(), { passive: true });
+          list.addEventListener('wheel', () => pause(), { passive: true });
+          list.addEventListener('scroll', updateScrollThumb, { passive: true });
+          list.addEventListener('focusin', () => pause(60000));
+          list.addEventListener('focusout', () => { pausedUntil = 0; });
+          const animate = (time) => {
+            const elapsed = Math.min(time - lastTime, 50);
+            lastTime = time;
+            if (time >= pausedUntil) {
+              scrollPosition += elapsed * 0.012;
+              if (scrollPosition >= loopHeight) scrollPosition -= loopHeight;
+              list.scrollTop = scrollPosition;
+              updateScrollThumb();
+            }
+            marqueeAnimationFrames.set(list, requestAnimationFrame(animate));
+          };
+          updateScrollThumb();
+          marqueeAnimationFrames.set(list, requestAnimationFrame(animate));
+        });
+        marqueeAnimationFrames.set(list, setupFrame);
+      }
+      function renderResultsCalendar(data) {
+        stopCalendarMarquees(calendarDays);
+        const days = data.days || [];
+        const listsToAnimate = [];
+        const cards = days.map((day) => {
+          const card = Object.assign(document.createElement('article'), { className: 'calendar-day' });
+          const head = Object.assign(document.createElement('div'), { className: 'calendar-day-head' });
+          const heading = document.createElement('div');
+          heading.append(
+            Object.assign(document.createElement('span'), { className: 'calendar-day-title', textContent: day.label }),
+            document.createTextNode(' '),
+            Object.assign(document.createElement('span'), { className: 'calendar-day-date', textContent: day.display_date }),
+          );
+          head.append(heading, Object.assign(document.createElement('span'), { className: 'calendar-count', textContent: day.count }));
+          card.append(head);
+          if (!day.results?.length) {
+            card.append(Object.assign(document.createElement('p'), {
+              className: 'calendar-empty',
+              textContent: `No event listed for ${day.label.toLowerCase()}.`,
+            }));
+            return card;
+          }
+          const list = Object.assign(document.createElement('ul'), { className: 'calendar-list' });
+          day.results.forEach((result) => {
+            const item = Object.assign(document.createElement('li'), { className: 'calendar-stock' });
+            const eventCopy = Object.assign(document.createElement('span'), { className: 'calendar-event-copy' });
+            eventCopy.append(
+              Object.assign(document.createElement('span'), { className: 'calendar-company', textContent: result.company, title: result.company }),
+              Object.assign(document.createElement('span'), { className: 'calendar-purpose', textContent: result.purpose || 'Board meeting', title: result.description || result.purpose || 'Board meeting' }),
+            );
+            item.append(
+              eventCopy,
+              Object.assign(document.createElement('span'), { className: 'calendar-symbol', textContent: result.symbol }),
+            );
+            list.append(item);
+          });
+          card.append(list);
+          listsToAnimate.push(list);
+          return card;
+        });
+        calendarDays.replaceChildren(...cards);
+        calendarDays.classList.toggle('single-day', cards.length === 1);
+        calendarDays.hidden = false;
+        calendarStatus.hidden = true;
+        listsToAnimate.forEach(startCalendarMarquee);
+      }
+      async function loadResultsCalendar() {
+        try {
+          const response = await fetch('/api/results-calendar');
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || 'Results calendar is temporarily unavailable.');
+          renderResultsCalendar(data);
+        } catch (error) {
+          calendarStatus.textContent = error.message;
+          calendarStatus.hidden = false;
+          calendarDays.hidden = true;
+        }
+      }
+      function newsTimeLabel(publishedAt) {
+        if (!publishedAt) return 'Recent';
+        const published = new Date(publishedAt);
+        if (Number.isNaN(published.getTime())) return 'Recent';
+        const minutes = Math.max(1, Math.round((Date.now() - published.getTime()) / 60000));
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        return `${Math.round(hours / 24)}d ago`;
+      }
+      function renderWishlistNews(data) {
+        if (!wishlistNewsCard) return;
+        stopCalendarMarquees(wishlistNewsCard);
+        wishlistNewsList.replaceChildren();
+        if (!data.items?.length) {
+          wishlistNewsStatus.textContent = data.wishlist_empty
+            ? 'Add stocks to your wishlist to see related news.'
+            : 'No recent news for your wishlist stocks.';
+          wishlistNewsStatus.hidden = false;
+          wishlistNewsList.hidden = true;
+          wishlistNewsCount.hidden = true;
+          return;
+        }
+        const items = data.items.map((article) => {
+          const link = Object.assign(document.createElement('a'), {
+            className: 'wishlist-news-item', href: article.article_link,
+            target: '_blank', rel: 'noopener noreferrer',
+          });
+          link.append(
+            Object.assign(document.createElement('span'), { className: 'wishlist-news-heading', textContent: article.heading }),
+            Object.assign(document.createElement('span'), { className: 'wishlist-news-summary', textContent: article.summary || 'Open article for details.' }),
+          );
+          const meta = Object.assign(document.createElement('span'), { className: 'wishlist-news-meta' });
+          meta.append(
+            Object.assign(document.createElement('span'), { className: 'wishlist-news-symbols', textContent: article.symbols.join(' · ') }),
+            Object.assign(document.createElement('span'), { textContent: newsTimeLabel(article.published_at) }),
+          );
+          link.append(meta);
+          return link;
+        });
+        wishlistNewsList.replaceChildren(...items);
+        wishlistNewsList.hidden = false;
+        wishlistNewsStatus.hidden = true;
+        wishlistNewsCount.textContent = data.count;
+        wishlistNewsCount.hidden = false;
+        startCalendarMarquee(wishlistNewsList);
+      }
+      async function loadWishlistNews() {
+        if (!wishlistNewsCard) return;
+        try {
+          const response = await fetch('/api/wishlist/news');
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || 'Wishlist news is temporarily unavailable.');
+          renderWishlistNews(data);
+        } catch (error) {
+          wishlistNewsStatus.textContent = error.message;
+          wishlistNewsStatus.hidden = false;
+          wishlistNewsList.hidden = true;
+          wishlistNewsCount.hidden = true;
+        }
+      }
+      function openResultsCalendar() {
+        clearDisplayedStock();
+        message.classList.remove('stock-summary', 'loading');
+        message.replaceChildren();
+        resultReturnContext = null;
+        backToScreeningButton.hidden = true;
+        homeIntelligenceGrid.hidden = false;
+        resultsCalendar.hidden = false;
+        calendarReopen.hidden = true;
+        resultsCalendar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      calendarReopen.addEventListener('click', openResultsCalendar);
       function formatValue(value, unit) {
         if (value === null || value === undefined) return '—';
         const number = Number(value);
@@ -2271,13 +2544,40 @@
         document.body.style.removeProperty('overflow');
         fullIndexScreeningButton.focus();
       }
-      function openStockDetails(symbol) {
-        closeFullScreening();
+      function openFeatureStockDetails(symbol, origin) {
+        const origins = {
+          screening: {
+            label: "screening results", overlay: screeningOverlay, close: closeFullScreening,
+            scrollElements: [screeningOverlay, document.querySelector(".screening-results-wrap")],
+          },
+          advanced: {
+            label: "advanced screener results", overlay: advancedScreenerOverlay, close: closeAdvancedScreener,
+            scrollElements: [advancedScreenerOverlay, document.querySelector(".advanced-results-wrap")],
+          },
+          wishlist: {
+            label: "wishlist", overlay: wishlistOverlay, close: closeWishlist,
+            scrollElements: [wishlistOverlay],
+          },
+        };
+        const selectedOrigin = origins[origin];
+        if (!selectedOrigin || !selectedOrigin.overlay) return;
+        resultReturnContext = {
+          ...selectedOrigin,
+          positions: selectedOrigin.scrollElements.filter(Boolean).map((element) => ({
+            element, top: element.scrollTop, left: element.scrollLeft,
+          })),
+        };
+        preserveResultReturnOnSubmit = true;
+        backToScreeningButton.textContent = "← Back to " + selectedOrigin.label;
         backToScreeningButton.hidden = false;
+        selectedOrigin.close();
         query.value = symbol;
         query.dataset.confirmedSymbol = symbol;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: "smooth" });
         form.requestSubmit();
+      }
+      function openStockDetails(symbol) {
+        openFeatureStockDetails(symbol, "screening");
       }
       const advancedMetricDefinitions = {
         pe_ratio: { label: 'P/E ratio', suffix: '', hint: 'e.g. 25 · usual range 0–100' },
@@ -2367,11 +2667,7 @@
         document.body.style.removeProperty('overflow');
       }
       function openAdvancedStockDetails(symbol) {
-        closeAdvancedScreener();
-        query.value = symbol;
-        query.dataset.confirmedSymbol = symbol;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        form.requestSubmit();
+        openFeatureStockDetails(symbol, "advanced");
       }
       function renderAdvancedMatches(matches, criteria, complete) {
         latestAdvancedMatches = complete ? matches.slice() : [];
@@ -2431,6 +2727,7 @@
           (data.items || []).forEach((item) => wishlistItems.set(item.symbol, item));
           wishlistLoaded = true;
           updateWishlistHearts();
+          loadWishlistNews();
           advancedScreenerStatus.textContent = "Added " + data.count + (data.count === 1 ? " stock" : " stocks") + " to your wishlist.";
           advancedAddAllWishlist.textContent = "✓ All results saved";
         } catch (error) {
@@ -2515,9 +2812,18 @@
         }
       }
       function returnToScreeningResults() {
-        screeningOverlay.hidden = false;
-        document.body.style.overflow = 'hidden';
-        screeningClose.focus();
+        if (!resultReturnContext) return;
+        resultReturnContext.overlay.hidden = false;
+        document.body.style.overflow = "hidden";
+        requestAnimationFrame(() => {
+          resultReturnContext.positions.forEach(({ element, top, left }) => {
+            element.scrollTop = top;
+            element.scrollLeft = left;
+          });
+        });
+        const focusTarget = resultReturnContext.overlay.querySelector(".screening-details-button:not([disabled])")
+          || resultReturnContext.overlay.querySelector("button");
+        focusTarget?.focus({ preventScroll: true });
       }
       async function runFullIndexScreening() {
         if (!visibleIndexStocks.length) return;
@@ -2697,8 +3003,12 @@
         }
       }
       addAdvancedCriterion('pe_ratio', 'lte');
-      fullIndexScreeningButton.addEventListener('click', runFullIndexScreening);
+      fullIndexScreeningButton.addEventListener('click', () => {
+        collapseResultsCalendar();
+        runFullIndexScreening();
+      });
       advancedScreenerOpen.addEventListener('click', () => {
+        collapseResultsCalendar();
         advancedScreenerOverlay.hidden = false;
         document.body.style.overflow = 'hidden';
         advancedScreenerClose.focus();
@@ -2718,6 +3028,7 @@
         if (event.key === 'Escape' && !advancedScreenerOverlay.hidden) closeAdvancedScreener();
       });
       indexScreeningButtons.forEach((button) => button.addEventListener('click', async () => {
+        collapseResultsCalendar();
         const endpoint = button.dataset.indexEndpoint;
         const label = button.dataset.indexLabel;
         if (visibleIndexEndpoint === endpoint && !niftyPicker.hidden) {
@@ -2816,8 +3127,15 @@
       }
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        if (!preserveResultReturnOnSubmit) {
+          resultReturnContext = null;
+          backToScreeningButton.hidden = true;
+          backToScreeningButton.textContent = "← Back to results";
+        }
+        preserveResultReturnOnSubmit = false;
         query.blur();
         if (!await confirmSearchSelection()) return;
+        collapseResultsCalendar();
         if (chartRotationTimer) {
           clearInterval(chartRotationTimer);
           chartRotationTimer = null;
@@ -2902,6 +3220,7 @@
       });
       loadWishlist().catch(() => {});
       loadPlanCard();
+      loadResultsCalendar().finally(loadWishlistNews);
     </script>
   </body>
 </html>

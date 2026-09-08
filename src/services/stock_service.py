@@ -8,10 +8,12 @@ from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from difflib import SequenceMatcher
 from io import StringIO
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Lock
 from typing import Any, Mapping, Optional
 from xml.etree import ElementTree
+from zoneinfo import ZoneInfo
+from urllib.parse import urlparse
 
 import requests
 
@@ -41,6 +43,8 @@ class StockService:
     XBRL_CACHE_TTL = timedelta(hours=12)
     YAHOO_VALUATION_CACHE_TTL = timedelta(hours=6)
     NIFTY_50_CACHE_TTL = timedelta(hours=1)
+    RESULTS_CALENDAR_CACHE_TTL = timedelta(minutes=30)
+    WISHLIST_NEWS_CACHE_TTL = timedelta(minutes=20)
     XBRL_REQUEST_TIMEOUT = 10
     # `jugaad_data.NSELive()` opens the NSE quote page during construction
     # without specifying a timeout.  When NSE does not respond, that blocks a
@@ -87,6 +91,197 @@ class StockService:
         self._yahoo_valuation_cache_lock = Lock()
         self._index_constituents_cache = {}
         self._index_constituents_cache_lock = Lock()
+        self._results_calendar_cache = None
+        self._results_calendar_cache_lock = Lock()
+        self._wishlist_news_cache = {}
+        self._wishlist_news_cache_lock = Lock()
+
+    def results_calendar(self, now: Optional[datetime] = None) -> dict:
+        """Return all announced NSE board-meeting events for today and tomorrow."""
+        india_tz = ZoneInfo("Asia/Kolkata")
+        if now is None:
+            current = datetime.now(india_tz)
+        elif now.tzinfo:
+            current = now.astimezone(india_tz)
+        else:
+            current = now.replace(tzinfo=india_tz)
+        today = current.date()
+        tomorrow = today + timedelta(days=1)
+        cache_key = today.isoformat()
+        with self._results_calendar_cache_lock:
+            cached = self._results_calendar_cache
+            if (
+                cached
+                and cached[0] == cache_key
+                and datetime.utcnow() - cached[1] < self.RESULTS_CALENDAR_CACHE_TTL
+            ):
+                return deepcopy(cached[2])
+
+        params = {
+            "index": "equities",
+            "from_date": today.strftime("%d-%m-%Y"),
+            "to_date": tomorrow.strftime("%d-%m-%Y"),
+        }
+        url = f"{self.NSE_BASE_URL}/api/corporate-board-meetings"
+        response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        if response.status_code in {401, 403}:
+            warmup = self._nse_session.get(
+                f"{self.NSE_BASE_URL}/companies-listing/corporate-filings-application?id=eqResultCalendar",
+                timeout=self.NSE_REQUEST_TIMEOUT,
+            )
+            warmup.raise_for_status()
+            response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        meetings = response.json()
+        if not isinstance(meetings, list):
+            raise ValueError("NSE returned an unexpected results-calendar response")
+
+        grouped = {today: [], tomorrow: []}
+        seen = set()
+        for meeting in meetings:
+            if not isinstance(meeting, Mapping):
+                continue
+            try:
+                meeting_date = datetime.strptime(str(meeting.get("bm_date") or ""), "%d-%b-%Y").date()
+            except ValueError:
+                continue
+            if meeting_date not in grouped:
+                continue
+            symbol = str(meeting.get("bm_symbol") or "").strip().upper()
+            company = str(meeting.get("sm_name") or symbol).strip()
+            purpose = str(meeting.get("bm_purpose") or "Board meeting").strip()
+            description = str(meeting.get("bm_desc") or "").strip()
+            unique_key = (meeting_date, symbol, purpose.casefold(), description.casefold())
+            if not symbol or unique_key in seen:
+                continue
+            seen.add(unique_key)
+            grouped[meeting_date].append({
+                "symbol": symbol,
+                "company": company,
+                "date": meeting_date.isoformat(),
+                "purpose": purpose,
+                "description": description,
+            })
+
+        days = []
+        for label, day in (("Today", today), ("Tomorrow", tomorrow)):
+            results = sorted(grouped[day], key=lambda item: item["company"].casefold())
+            days.append({
+                "label": label,
+                "date": day.isoformat(),
+                "display_date": day.strftime("%d %b %Y"),
+                "results": results,
+                "count": len(results),
+            })
+        payload = {
+            "days": days,
+            "source": "NSE corporate board-meeting filings",
+            "generated_at": current.isoformat(),
+        }
+        with self._results_calendar_cache_lock:
+            self._results_calendar_cache = (cache_key, datetime.utcnow(), payload)
+        return deepcopy(payload)
+
+    def wishlist_news(self, stocks: list[Mapping[str, Any]]) -> dict:
+        """Return recent Upstox news for exact NSE instruments in a wishlist."""
+        wishlist = {}
+        for stock in stocks:
+            symbol = str(stock.get("symbol") or "").strip().upper()
+            if symbol:
+                wishlist[symbol] = str(stock.get("company") or symbol).strip()
+        if not wishlist:
+            return {"items": [], "count": 0, "wishlist_empty": True, "lookback_days": 7}
+
+        token = os.getenv("UPSTOX_ACCESS_TOKEN", "").strip()
+        if not token:
+            raise ValueError("Upstox access token is not configured")
+        cache_key = tuple(sorted(wishlist))
+        with self._wishlist_news_cache_lock:
+            cached = self._wishlist_news_cache.get(cache_key)
+            if cached and datetime.utcnow() - cached[0] < self.WISHLIST_NEWS_CACHE_TTL:
+                return deepcopy(cached[1])
+
+        response = requests.get(self.EQUITY_MASTER_URL, headers=self.XBRL_HEADERS, timeout=20)
+        response.raise_for_status()
+        instrument_to_stock = {}
+        for row in csv.DictReader(StringIO(response.text)):
+            normalised = {str(key).strip().upper(): value for key, value in row.items()}
+            symbol = str(normalised.get("SYMBOL") or "").strip().upper()
+            isin = str(normalised.get("ISIN NUMBER") or "").strip().upper()
+            if symbol in wishlist and isin:
+                instrument_to_stock[f"NSE_EQ|{isin}"] = {
+                    "symbol": symbol,
+                    "company": wishlist[symbol],
+                }
+
+        instrument_keys = sorted(instrument_to_stock)
+        articles = {}
+        news_url = "https://api.upstox.com/v2/news"
+        headers = {"Accept": "application/json", "Authorization": f"Bearer {token}"}
+        for offset in range(0, len(instrument_keys), 30):
+            batch = instrument_keys[offset:offset + 30]
+            news_response = requests.get(
+                news_url,
+                params={
+                    "category": "instrument_keys",
+                    "instrument_keys": ",".join(batch),
+                    "page_number": 1,
+                    "page_size": 100,
+                },
+                headers=headers,
+                timeout=20,
+            )
+            news_response.raise_for_status()
+            payload = news_response.json()
+            if payload.get("status") != "success" or not isinstance(payload.get("data"), Mapping):
+                raise ValueError("Upstox returned an unexpected news response")
+            for instrument_key, items in payload["data"].items():
+                stock = instrument_to_stock.get(instrument_key)
+                if not stock or not isinstance(items, list):
+                    continue
+                for item in items:
+                    if not isinstance(item, Mapping):
+                        continue
+                    heading = str(item.get("heading") or "").strip()
+                    article_link = str(item.get("article_link") or "").strip()
+                    parsed_link = urlparse(article_link)
+                    if not heading or parsed_link.scheme not in {"http", "https"} or not parsed_link.netloc:
+                        continue
+                    article_key = article_link or heading.casefold()
+                    published_ms = self._number(item.get("published_time"))
+                    existing = articles.get(article_key)
+                    if existing:
+                        if stock["symbol"] not in existing["symbols"]:
+                            existing["symbols"].append(stock["symbol"])
+                        continue
+                    published_at = (
+                        datetime.fromtimestamp(published_ms / 1000, timezone.utc).isoformat()
+                        if published_ms and published_ms > 0 else None
+                    )
+                    articles[article_key] = {
+                        "heading": heading,
+                        "summary": str(item.get("summary") or "").strip(),
+                        "article_link": article_link,
+                        "published_time": int(published_ms) if published_ms else 0,
+                        "published_at": published_at,
+                        "symbols": [stock["symbol"]],
+                    }
+
+        items = sorted(
+            articles.values(),
+            key=lambda article: article["published_time"],
+            reverse=True,
+        )
+        result = {
+            "items": items,
+            "count": len(items),
+            "wishlist_empty": False,
+            "lookback_days": 7,
+            "source": "Upstox News",
+        }
+        with self._wishlist_news_cache_lock:
+            self._wishlist_news_cache[cache_key] = (datetime.utcnow(), result)
+        return deepcopy(result)
 
     def nifty_50_constituents(self) -> list[dict]:
         """Return the current NIFTY 50 equity constituents from NSE."""

@@ -154,6 +154,16 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
+@app.route('/api/results-calendar', methods=['GET'])
+def results_calendar():
+    """Return all announced NSE board-meeting events for today and tomorrow."""
+    try:
+        return jsonify(stock_service.results_calendar()), 200
+    except Exception:
+        app.logger.exception("Results calendar lookup failed")
+        return jsonify({"error": "Results calendar is temporarily unavailable."}), 502
+
+
 @app.route('/robots.txt', methods=['GET'])
 def robots_txt():
     body = "\n".join((
@@ -398,6 +408,20 @@ def bulk_save_wishlist():
     except Exception:
         app.logger.exception("Unable to bulk-save wishlist items")
         return jsonify({"error": "Your wishlist is temporarily unavailable."}), 503
+
+
+@app.route('/api/wishlist/news', methods=['GET'])
+def wishlist_news():
+    """Return recent news for the signed-in user's saved NSE instruments."""
+    user = session.get("user")
+    if not user:
+        return jsonify({"auth_required": True, "error": "Sign in to view wishlist news."}), 401
+    try:
+        stocks = plan_service.list_wishlist(user["sub"])
+        return jsonify(stock_service.wishlist_news(stocks)), 200
+    except Exception:
+        app.logger.exception("Wishlist news lookup failed")
+        return jsonify({"error": "Wishlist news is temporarily unavailable."}), 503
 
 
 @app.route('/api/wishlist/<symbol>', methods=['DELETE'])
