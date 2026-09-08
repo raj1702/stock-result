@@ -73,6 +73,24 @@ class PlanService:
         self.table.put_item(Item=item)
         return {key: item[key] for key in ("symbol", "company", "created_at")}
 
+    def save_many_to_wishlist(self, user_id, stocks):
+        """Save several stocks efficiently without affecting plan usage."""
+        now = self._format_datetime(self._now())
+        saved = []
+        with self.table.batch_writer(overwrite_by_pkeys=["PK", "SK"]) as batch:
+            for stock in stocks:
+                symbol = stock["symbol"]
+                item = {
+                    "PK": f"USER#{user_id}",
+                    "SK": f"WISHLIST#{symbol}",
+                    "symbol": symbol,
+                    "company": stock.get("company") or symbol,
+                    "created_at": now,
+                }
+                batch.put_item(Item=item)
+                saved.append({key: item[key] for key in ("symbol", "company", "created_at")})
+        return saved
+
     def remove_from_wishlist(self, user_id, symbol):
         self.table.delete_item(Key={
             "PK": f"USER#{user_id}",

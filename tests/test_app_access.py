@@ -53,6 +53,7 @@ class FakePlanService:
     def __init__(self, allowed=True):
         self.allowed = allowed
         self.recorded = []
+        self.bulk_saved = []
 
     def can_access_stock(self, _user_id, _symbol):
         return {
@@ -90,6 +91,10 @@ class FakePlanService:
 
     def remove_from_wishlist(self, _user_id, _symbol):
         return None
+
+    def save_many_to_wishlist(self, _user_id, stocks):
+        self.bulk_saved.extend(stocks)
+        return [{**stock, "created_at": "2026-09-08T10:00:00+05:30"} for stock in stocks]
 
 
 @pytest.fixture
@@ -244,6 +249,22 @@ def test_wishlist_actions_do_not_consume_stock_quota(client):
     assert listed.get_json()["items"][0]["symbol"] == "INFY"
     assert removed.status_code == 200
     assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_wishlist_can_be_screened_and_results_bulk_saved_without_quota(client):
+    browser, stock, plan = client
+    screened = browser.get("/screener-data/wishlist/INFY")
+    saved = browser.post("/api/wishlist/bulk", json={"items": [
+        {"symbol": "INFY", "company": "Infosys"},
+        {"symbol": "TCS", "company": "Tata Consultancy Services"},
+        {"symbol": "INFY", "company": "Infosys"},
+    ]})
+
+    assert screened.status_code == 200
+    assert saved.status_code == 201
+    assert saved.get_json()["count"] == 2
+    assert {item["symbol"] for item in plan.bulk_saved} == {"INFY", "TCS"}
     assert plan.recorded == []
 
 

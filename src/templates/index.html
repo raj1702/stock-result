@@ -162,7 +162,11 @@
       .advanced-filter-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
       #add-criterion { border: 1px solid #b2ccff; background: #eff4ff; color: #175cd3; font-size: 11px; }
       #run-advanced-screener { margin-left: auto; background: linear-gradient(135deg,#7f56d9,#155eef); font-size: 12px; font-weight: 800; }
-      #advanced-screener-status { margin: 14px 0 7px; color: #475467; font-size: 12px; font-weight: 700; }
+      .advanced-results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 7px; }
+      #advanced-screener-status { margin: 0; color: #475467; font-size: 12px; font-weight: 700; }
+      #advanced-add-all-wishlist { flex: 0 0 auto; border: 1px solid #fda29b; background: #fff5f4; color: #b42318; font-size: 11px; font-weight: 800; }
+      #advanced-add-all-wishlist:hover, #advanced-add-all-wishlist:focus-visible { border-color: #f04438; background: #fee4e2; outline: none; }
+      #advanced-add-all-wishlist[hidden] { display: none; }
       #advanced-progress-bar { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#7f56d9,#155eef); transition: width .25s ease; }
       .advanced-results-wrap { overflow: auto; border: 1px solid #d6e0ef; border-radius: 12px; background: #fff; box-shadow: 0 8px 22px rgba(16,24,40,.07); }
       #advanced-results-table { width: 100%; min-width: 620px; font-size: 12px; }
@@ -815,6 +819,8 @@
         .advanced-criterion .criterion-value { grid-column: 1; }
         .criterion-remove { grid-column: 2; grid-row: 2 / span 2; }
         .advanced-filter-actions { flex-wrap: wrap; }
+        .advanced-results-toolbar { align-items: stretch; flex-direction: column; }
+        #advanced-add-all-wishlist { width: 100%; }
         #run-advanced-screener { width: 100%; margin-left: 0; }
         .advanced-results-wrap { overflow: visible; border: 0; background: transparent; box-shadow: none; }
         #advanced-results-table { display: block; min-width: 0; }
@@ -1071,14 +1077,14 @@
         </div>
         <div class="advanced-filter-card">
           <div class="advanced-filter-top">
-            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option><option value="midcap-150">Midcap 150</option><option value="smallcap-250">Smallcap 250</option></select></label>
+            <label>Stock universe<select id="advanced-index-select"><option value="nifty-50">Nifty 50</option><option value="nifty-next-50">Nifty Next 50</option><option value="midcap-150">Midcap 150</option><option value="smallcap-250">Smallcap 250</option>{% if current_user %}<option value="wishlist">Wishlist</option>{% endif %}</select></label>
             <span class="advanced-filter-note">Free to screen · Full stock analysis uses your plan quota</span>
           </div>
           <div id="advanced-criteria"></div>
           <p id="advanced-filter-error" hidden role="alert"></p>
           <div class="advanced-filter-actions"><button id="add-criterion" type="button">+ Add criterion</button><button id="run-advanced-screener" type="button">Run screener</button></div>
         </div>
-        <p id="advanced-screener-status" aria-live="polite">Choose your filters and run the screener.</p>
+        <div class="advanced-results-toolbar"><p id="advanced-screener-status" aria-live="polite">Choose your filters and run the screener.</p><button id="advanced-add-all-wishlist" type="button" hidden>♥ Add all to wishlist</button></div>
         <div class="screening-progress-track"><div id="advanced-progress-bar"></div></div>
         <div class="advanced-results-wrap">
           <table id="advanced-results-table" aria-label="Advanced stock screener results"><thead><tr><th>Stock</th><th>Matching metrics</th><th>Details</th></tr></thead><tbody id="advanced-results-body"><tr><td colspan="3" class="advanced-empty">Your matching stocks will appear here.</td></tr></tbody></table>
@@ -1140,6 +1146,7 @@
       const advancedScreenerStatus = document.getElementById('advanced-screener-status');
       const advancedProgressBar = document.getElementById('advanced-progress-bar');
       const advancedResultsBody = document.getElementById('advanced-results-body');
+      const advancedAddAllWishlist = document.getElementById('advanced-add-all-wishlist');
       const wishlistOpen = document.getElementById('wishlist-open');
       const wishlistOverlay = document.getElementById('wishlist-overlay');
       const wishlistClose = document.getElementById('wishlist-close');
@@ -1368,6 +1375,7 @@
       let screeningRunId = 0;
       let activeScreeningFilter = 'all';
       let advancedScreenerRunId = 0;
+      let latestAdvancedMatches = [];
       let currentPlanData = null;
       function formatPlanExpiry(value) {
         if (!value) return '';
@@ -2366,6 +2374,9 @@
         form.requestSubmit();
       }
       function renderAdvancedMatches(matches, criteria, complete) {
+        latestAdvancedMatches = complete ? matches.slice() : [];
+        advancedAddAllWishlist.hidden = !complete || !matches.length;
+        if (complete && matches.length) advancedAddAllWishlist.textContent = "♥ Add all " + matches.length + " to wishlist";
         advancedResultsBody.replaceChildren();
         if (!matches.length) {
           const row = document.createElement('tr');
@@ -2393,6 +2404,43 @@
           advancedResultsBody.append(row);
         });
       }
+      async function addAllAdvancedMatchesToWishlist() {
+        if (!currentUserAuthenticated) {
+          showAuthGate({
+            title: "Save screening results",
+            message: "Sign in or create a free account to add these stocks to your wishlist.",
+          });
+          return;
+        }
+        await loadWishlist();
+        const unsaved = latestAdvancedMatches.filter((stock) => !wishlistItems.has(stock.symbol));
+        if (!unsaved.length) {
+          advancedScreenerStatus.textContent = "All matching stocks are already in your wishlist.";
+          return;
+        }
+        advancedAddAllWishlist.disabled = true;
+        advancedAddAllWishlist.textContent = "Adding to wishlist…";
+        try {
+          const response = await fetch("/api/wishlist/bulk", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: unsaved.map(({ symbol, company }) => ({ symbol, company })) }),
+          });
+          const data = await readJson(response);
+          if (!response.ok) throw new Error(data.error || "Unable to update wishlist.");
+          (data.items || []).forEach((item) => wishlistItems.set(item.symbol, item));
+          wishlistLoaded = true;
+          updateWishlistHearts();
+          advancedScreenerStatus.textContent = "Added " + data.count + (data.count === 1 ? " stock" : " stocks") + " to your wishlist.";
+          advancedAddAllWishlist.textContent = "✓ All results saved";
+        } catch (error) {
+          advancedScreenerStatus.textContent = error.message;
+          advancedAddAllWishlist.textContent = "♥ Try adding all again";
+        } finally {
+          advancedAddAllWishlist.disabled = false;
+        }
+      }
+
       async function runAdvancedScreener() {
         const criteria = readAdvancedCriteria();
         const valueInputs = [...advancedCriteria.querySelectorAll('.criterion-value')];
@@ -2407,19 +2455,27 @@
         }
         advancedFilterError.hidden = true;
         const runId = ++advancedScreenerRunId;
+        latestAdvancedMatches = [];
+        advancedAddAllWishlist.hidden = true;
         const indexName = advancedIndexSelect.value;
         const endpoint = `/${indexName}`;
         runAdvancedScreenerButton.disabled = true;
         advancedProgressBar.style.width = '0%';
         advancedResultsBody.innerHTML = '<tr><td colspan="3" class="advanced-empty">Loading current index constituents…</td></tr>';
         try {
-          let stocks = indexStocksCache.get(endpoint);
-          if (!stocks) {
-            const response = await fetch(endpoint);
-            const data = await readJson(response);
-            if (!response.ok) throw new Error(data.error || 'Unable to load index stocks.');
-            stocks = data.stocks;
-            indexStocksCache.set(endpoint, stocks);
+          let stocks;
+          if (indexName === 'wishlist') {
+            await loadWishlist(true);
+            stocks = [...wishlistItems.values()];
+          } else {
+            stocks = indexStocksCache.get(endpoint);
+            if (!stocks) {
+              const response = await fetch(endpoint);
+              const data = await readJson(response);
+              if (!response.ok) throw new Error(data.error || 'Unable to load index stocks.');
+              stocks = data.stocks;
+              indexStocksCache.set(endpoint, stocks);
+            }
           }
           let cursor = 0;
           let completed = 0;
@@ -2650,6 +2706,7 @@
       advancedScreenerClose.addEventListener('click', closeAdvancedScreener);
       addCriterionButton.addEventListener('click', () => addAdvancedCriterion());
       runAdvancedScreenerButton.addEventListener('click', runAdvancedScreener);
+      advancedAddAllWishlist.addEventListener('click', addAllAdvancedMatchesToWishlist);
       backToScreeningButton.addEventListener('click', returnToScreeningResults);
       screeningClose.addEventListener('click', closeFullScreening);
       screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {

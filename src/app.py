@@ -373,6 +373,33 @@ def wishlist():
         return jsonify({"error": "Your wishlist is temporarily unavailable."}), 503
 
 
+@app.route('/api/wishlist/bulk', methods=['POST'])
+def bulk_save_wishlist():
+    user = session.get("user")
+    if not user:
+        return jsonify({"auth_required": True, "error": "Sign in to use your wishlist."}), 401
+    payload = request.get_json(silent=True) or {}
+    raw_items = payload.get("items")
+    if not isinstance(raw_items, list) or not raw_items:
+        return jsonify({"error": "No stocks were provided."}), 400
+    unique = {}
+    for raw in raw_items[:500]:
+        if not isinstance(raw, dict):
+            continue
+        symbol = str(raw.get("symbol") or "").strip().upper()
+        company = str(raw.get("company") or symbol).strip()[:120]
+        if re.fullmatch(r"[A-Z0-9&.-]{1,30}", symbol):
+            unique[symbol] = {"symbol": symbol, "company": company}
+    if not unique:
+        return jsonify({"error": "No valid stock symbols were provided."}), 400
+    try:
+        items = plan_service.save_many_to_wishlist(user["sub"], list(unique.values()))
+        return jsonify({"saved": True, "items": items, "count": len(items)}), 201
+    except Exception:
+        app.logger.exception("Unable to bulk-save wishlist items")
+        return jsonify({"error": "Your wishlist is temporarily unavailable."}), 503
+
+
 @app.route('/api/wishlist/<symbol>', methods=['DELETE'])
 def remove_wishlist_item(symbol):
     user = session.get("user")
@@ -599,12 +626,17 @@ def get_screener_data(index_name, symbol):
             "midcap-150": stock_service.midcap_150_constituents,
             "smallcap-250": stock_service.smallcap_250_constituents,
         }
-        loader = constituent_loaders.get(index_name)
-        if not loader:
-            return jsonify({"error": "Unknown stock index."}), 404
-
         symbol = symbol.upper()
-        constituents = loader()
+        if index_name == "wishlist":
+            user = session.get("user")
+            if not user:
+                return jsonify({"auth_required": True, "error": "Sign in to screen your wishlist."}), 401
+            constituents = plan_service.list_wishlist(user["sub"])
+        else:
+            loader = constituent_loaders.get(index_name)
+            if not loader:
+                return jsonify({"error": "Unknown stock index."}), 404
+            constituents = loader()
         constituent = next(
             (stock for stock in constituents if stock["symbol"].upper() == symbol),
             None,

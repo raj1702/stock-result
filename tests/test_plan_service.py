@@ -59,8 +59,16 @@ def test_wishlist_items_are_stored_separately_from_usage(plan_service):
     assert plan_service.list_wishlist("owner")[0]["company"] == "Infosys"
     assert plan_service.get_usage("owner")["used_symbols"] == []
 
+    bulk = plan_service.save_many_to_wishlist("owner", [
+        {"symbol": "TCS", "company": "Tata Consultancy Services"},
+        {"symbol": "HDFCBANK", "company": "HDFC Bank"},
+    ])
+    assert len(bulk) == 2
+    assert {item["symbol"] for item in plan_service.list_wishlist("owner")} == {"INFY", "TCS", "HDFCBANK"}
+    assert plan_service.get_usage("owner")["used_symbols"] == []
+
     plan_service.remove_from_wishlist("owner", "INFY")
-    assert plan_service.list_wishlist("owner") == []
+    assert {item["symbol"] for item in plan_service.list_wishlist("owner")} == {"TCS", "HDFCBANK"}
 
 
 def test_paid_upgrade_starts_with_fresh_quota(plan_service):
