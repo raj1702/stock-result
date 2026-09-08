@@ -774,6 +774,28 @@ class StockService:
                 margin_component("operating_margin", "Operating margin", 15),
             ]
 
+        # Treat a fully aligned recovery as earnings quality even when the
+        # business has not crossed into profit yet. This exception is deliberately
+        # strict: every model component must be available and must improve in
+        # every comparable reported period (with at least two transitions).
+        all_metrics_continuously_improving = (
+            all(component["available"] for component in components)
+            and all(
+                component.get("comparable_periods", 0) >= 2
+                and component.get("consistency_ratio") == 1
+                for component in components
+            )
+        )
+        if all_metrics_continuously_improving:
+            for component in components:
+                if component["earned"] < component["weight"]:
+                    component["earned"] = float(component["weight"])
+                    component["recovery_credit"] = True
+                    component["explanation"] += (
+                        " No points were deducted for the negative absolute value "
+                        "because every scored metric improved continuously."
+                    )
+
         def latest_yoy(key: str) -> Optional[float]:
             row = next((
                 item for item in quarterly_results.get("comparisons", {}).get("yoy", [])
@@ -798,7 +820,8 @@ class StockService:
             ) if value is not None and value > 0
         ]
         if (
-            pat_component["available"] and revenue_component["available"]
+            not all_metrics_continuously_improving
+            and pat_component["available"] and revenue_component["available"]
             and pat_yoy is not None and pat_yoy > 0 and expanding_margins
         ):
             original_pat_points = pat_component["earned"]
@@ -855,6 +878,11 @@ class StockService:
         operating_label = "Loan book" if is_lender else "Operating profit"
         operating_yoy = latest_yoy(operating_key)
         insights = []
+        if all_metrics_continuously_improving:
+            insights.append(
+                "Every scored metric improved in each comparable reported period. "
+                "The company remains in recovery where values are still negative, but the improvement is broad and uninterrupted."
+            )
         if pat_yoy is not None and primary_yoy is not None:
             gap = pat_yoy - primary_yoy
             if pat_yoy > 0 and primary_yoy <= 0:

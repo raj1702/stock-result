@@ -65,7 +65,8 @@ def test_negative_but_continuously_improving_margins_receive_recovery_credit():
     components = {item["key"]: item for item in analysis["components"]}
 
     assert analysis["rating"] == "Strong"
+    assert analysis["score"] == 100
     assert components["profit"]["earned"] == 25
-    assert components["profit_margin"]["earned"] == 17
-    assert components["operating_margin"]["earned"] == 12.8
-    assert "continuous improvement" in components["profit_margin"]["explanation"]
+    assert components["profit_margin"]["earned"] == 20
+    assert components["operating_margin"]["earned"] == 15
+    assert "No points were deducted" in components["profit_margin"]["explanation"]
