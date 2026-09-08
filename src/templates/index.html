@@ -1726,7 +1726,6 @@
             clone.setAttribute('aria-hidden', 'true');
             list.append(clone);
           });
-          let pausedUntil = 0;
           let lastTime = performance.now();
           let scrollPosition = list.scrollTop;
           const updateScrollThumb = () => {
@@ -1734,26 +1733,24 @@
             const progress = loopHeight ? (list.scrollTop % loopHeight) / loopHeight : 0;
             scrollThumb.style.transform = `translateY(${progress * travel}px)`;
           };
-          const pause = (milliseconds = 5000) => {
+          const stopForReading = () => {
             scrollPosition = list.scrollTop;
-            pausedUntil = performance.now() + milliseconds;
+            const frame = marqueeAnimationFrames.get(list);
+            if (frame) cancelAnimationFrame(frame);
+            marqueeAnimationFrames.delete(list);
           };
-          list.addEventListener('pointerenter', () => pause(60000));
-          list.addEventListener('pointerleave', () => { pausedUntil = 0; });
-          list.addEventListener('touchstart', () => pause(), { passive: true });
-          list.addEventListener('wheel', () => pause(), { passive: true });
+          list.addEventListener('pointerenter', stopForReading, { once: true });
+          list.addEventListener('touchstart', stopForReading, { passive: true, once: true });
+          list.addEventListener('wheel', stopForReading, { passive: true, once: true });
           list.addEventListener('scroll', updateScrollThumb, { passive: true });
-          list.addEventListener('focusin', () => pause(60000));
-          list.addEventListener('focusout', () => { pausedUntil = 0; });
+          list.addEventListener('focusin', stopForReading, { once: true });
           const animate = (time) => {
             const elapsed = Math.min(time - lastTime, 50);
             lastTime = time;
-            if (time >= pausedUntil) {
-              scrollPosition += elapsed * 0.012;
-              if (scrollPosition >= loopHeight) scrollPosition -= loopHeight;
-              list.scrollTop = scrollPosition;
-              updateScrollThumb();
-            }
+            scrollPosition += elapsed * 0.012;
+            if (scrollPosition >= loopHeight) scrollPosition -= loopHeight;
+            list.scrollTop = scrollPosition;
+            updateScrollThumb();
             marqueeAnimationFrames.set(list, requestAnimationFrame(animate));
           };
           updateScrollThumb();
