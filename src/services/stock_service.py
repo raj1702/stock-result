@@ -731,11 +731,12 @@ class StockService:
                 latest <= 0 and len(transitions) >= 2
                 and improving == len(transitions)
             )
-            # A still-negative margin is a risk, but a multi-quarter, uninterrupted
-            # recovery should lose only a small amount of quality credit.
+            # Consistency is scored per component. A margin that improves in
+            # every comparable quarter earns full credit even if it has not yet
+            # crossed above zero; weaker metrics lose points independently.
             profitability_points = (
                 weight / 2 if latest > 0
-                else weight * 0.35 if sustained_loss_recovery
+                else weight / 2 if sustained_loss_recovery
                 else 0
             )
             earned = profitability_points + trend_points
@@ -750,7 +751,7 @@ class StockService:
                     f"{len(transitions)} comparable reported-period moves. "
                     + (
                         "The margin remains negative, but continuous improvement across "
-                        "multiple reported periods earns substantial recovery credit."
+                        "every comparable reported period earns full component credit."
                         if sustained_loss_recovery else
                         "Half the points measure positive profitability and half measure consistency."
                     )
@@ -786,16 +787,6 @@ class StockService:
                 for component in components
             )
         )
-        if all_metrics_continuously_improving:
-            for component in components:
-                if component["earned"] < component["weight"]:
-                    component["earned"] = float(component["weight"])
-                    component["recovery_credit"] = True
-                    component["explanation"] += (
-                        " No points were deducted for the negative absolute value "
-                        "because every scored metric improved continuously."
-                    )
-
         def latest_yoy(key: str) -> Optional[float]:
             row = next((
                 item for item in quarterly_results.get("comparisons", {}).get("yoy", [])
@@ -821,6 +812,7 @@ class StockService:
         ]
         if (
             not all_metrics_continuously_improving
+            and pat_component.get("consistency_ratio") != 1
             and pat_component["available"] and revenue_component["available"]
             and pat_yoy is not None and pat_yoy > 0 and expanding_margins
         ):

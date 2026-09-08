@@ -69,4 +69,4 @@ def test_negative_but_continuously_improving_margins_receive_recovery_credit():
     assert components["profit"]["earned"] == 25
     assert components["profit_margin"]["earned"] == 20
     assert components["operating_margin"]["earned"] == 15
-    assert "No points were deducted" in components["profit_margin"]["explanation"]
+    assert "full component credit" in components["profit_margin"]["explanation"]

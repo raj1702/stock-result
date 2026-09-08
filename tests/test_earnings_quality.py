@@ -25,7 +25,7 @@ def test_aligned_continuous_recovery_is_not_penalized_for_negative_values():
     assert any("broad and uninterrupted" in insight for insight in analysis["insights"])
 
 
-def test_negative_margin_keeps_penalty_when_every_metric_is_not_continuously_improving():
+def test_each_continuously_improving_component_gets_full_credit_independently():
     data = quarterly_results({
         "revenue": [100, 110, 105, 130],
         "profit": [-100, -80, -55, -25],
@@ -37,4 +37,7 @@ def test_negative_margin_keeps_penalty_when_every_metric_is_not_continuously_imp
     analysis = StockService()._earnings_quality_analysis(data)
 
     assert analysis["score"] < 100
-    assert not any(component.get("recovery_credit") for component in analysis["components"])
+    components = {component["key"]: component for component in analysis["components"]}
+    assert components["profit_margin"]["earned"] == 20
+    assert components["operating_margin"]["earned"] == 15
+    assert components["revenue"]["earned"] < components["revenue"]["weight"]
