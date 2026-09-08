@@ -590,6 +590,10 @@ class StockService:
                 "The score reflects the available quarterly trends; review the detailed metrics and filings for one-off items."
             )
 
+        truth = build_earnings_truth(
+            quarterly_results, is_lender=is_lender, number=self._number
+        )
+
         return {
             "available": True,
             "score": score,
@@ -609,9 +613,7 @@ class StockService:
                 "values and skips blank periods; PAT may be discounted when margin-led "
                 "growth lacks revenue support."
             ),
-            "truth_engine": build_earnings_truth(
-                quarterly_results, is_lender=is_lender, number=self._number
-            ),
+            "truth_engine": truth,
         }
 
     def _quarterly_results(self, symbol: str, include_financial_rows: bool) -> dict:
