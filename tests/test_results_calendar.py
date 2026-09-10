@@ -103,6 +103,20 @@ def test_specific_fund_raising_agenda_is_not_grouped_as_a_generic_board_meeting(
     assert calendar["days"][0]["results"][0]["category"] == "other"
 
 
+def test_dividend_event_has_its_own_calendar_category():
+    service = StockService()
+    service._nse_session = FakeSession([{
+        "bm_symbol": "DIVCO", "bm_date": "08-Sep-2026",
+        "bm_purpose": "Board Meeting Intimation",
+        "bm_desc": "To consider declaration of an interim dividend",
+        "sm_name": "Dividend Company Limited",
+    }])
+
+    calendar = service.results_calendar(datetime(2026, 9, 8, 10, 0))
+
+    assert calendar["days"][0]["results"][0]["category"] == "dividends"
+
+
 def test_wishlist_news_uses_exact_nse_instrument_keys(monkeypatch):
     monkeypatch.setenv("UPSTOX_ACCESS_TOKEN", "test-token")
     calls = []

@@ -162,11 +162,13 @@ class StockService:
             description_text = description.casefold()
             other_agenda_terms = (
                 "fund raising", "fundraising", "raise funds", "raising of funds",
-                "dividend", "buyback", "bonus issue", "stock split", "sub-division",
+                "buyback", "bonus issue", "stock split", "sub-division",
                 "rights issue", "preferential issue", "merger", "amalgamation",
                 "acquisition", "disinvestment",
             )
-            if any(term in f"{purpose_text} {description_text}" for term in other_agenda_terms):
+            if "dividend" in f"{purpose_text} {description_text}":
+                category = "dividends"
+            elif any(term in f"{purpose_text} {description_text}" for term in other_agenda_terms):
                 category = "other"
             elif "result" in purpose_text or "earning" in purpose_text:
                 category = "results"

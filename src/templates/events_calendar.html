@@ -25,7 +25,7 @@
   {% if calendar_error %}<p class="empty">{{ calendar_error }}</p>{% else %}
   {% set today=calendar.days[0] %}{% set tomorrow=calendar.days[1] %}{% set coming_days=calendar.days[2:] %}
   {% set periods=[('today','Today',today.display_date,[today]),('tomorrow','Tomorrow',tomorrow.display_date,[tomorrow]),('week','Next 7 days','Upcoming',coming_days)] %}
-  {% set categories=[('results','Results'),('board_meetings','Meetings'),('other','Other')] %}
+  {% set categories=[('results','Results'),('dividends','Dividends'),('board_meetings','Meetings'),('other','Other')] %}
   <section class="calendar-shell">
     <div class="period-tabs" role="tablist" aria-label="Calendar period">
       {% for period_key,period_label,period_date,period_days in periods %}<button class="period-tab" type="button" role="tab" data-period="{{ period_key }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ period_label }}<small>{{ period_date }} · {{ period_days|sum(attribute='count') }} events</small></button>{% endfor %}

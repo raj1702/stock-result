@@ -749,6 +749,7 @@
       .calendar-category-summary i, .calendar-category-dot { display: inline-block; flex: 0 0 auto; width: 5px; height: 5px; border-radius: 50%; background: #98a2b3; }
       .calendar-category-summary .results i, .calendar-category-dot.results { background: #12b76a; }
       .calendar-category-summary .board-meetings i, .calendar-category-dot.board-meetings { background: #2e90fa; }
+      .calendar-category-summary .dividends i, .calendar-category-dot.dividends { background: #7f56d9; }
       .calendar-category-summary .other i, .calendar-category-dot.other { background: #f79009; }
       .calendar-count { display: inline-grid; flex: 0 0 auto; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; background: #eaf1ff; color: #175cd3; font-size: 9px; font-weight: 850; }
       .calendar-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 5px; margin: 7px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; list-style: none; }
@@ -776,6 +777,19 @@
       .wishlist-news-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; color: #667085; font-size: 8px; font-weight: 700; }
       .wishlist-news-symbols { overflow: hidden; color: #6941c6; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
       .wishlist-news-empty { margin: auto 0; color: #64748b; font-size: 11px; line-height: 1.5; }
+      .home-intelligence-grid { grid-template-columns:minmax(0,1fr); gap:0; overflow:hidden; border:1px solid #dbe3ef; border-radius:14px; background:#fff; box-shadow:var(--shadow-card); }
+      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; gap:5px; padding:6px; border-bottom:1px solid #e2e8f0; background:#f8fafc; }
+      .home-intelligence-tab { flex:1; min-height:36px; padding:7px 10px; border:0; border-radius:8px; background:transparent; color:#526075; font-size:10px; font-weight:800; }
+      .home-intelligence-tab[aria-selected="true"] { background:#175cd3; color:#fff; box-shadow:0 4px 10px rgba(21,94,239,.2); }
+      .results-calendar, .wishlist-news-card { grid-column:1; grid-row:2; height:390px; min-height:390px; max-height:390px; border:0; border-radius:0; box-shadow:none; }
+      .results-calendar[hidden], .wishlist-news-card[hidden] { display:none; }
+      .compact-calendar-controls { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:7px; margin-bottom:8px; }
+      .compact-calendar-tabs { display:flex; gap:4px; min-width:0; }
+      .compact-calendar-tab { flex:1 1 0; min-width:0; min-height:28px; padding:4px 6px; border:1px solid #dbe3ef; border-radius:7px; background:#fff; color:#526075; font-size:8px; font-weight:800; white-space:nowrap; }
+      .compact-calendar-tab[aria-selected="true"] { border-color:#84adff; background:#eff4ff; color:#175cd3; }
+      .compact-calendar-category b { margin-left:2px; font-size:7px; }
+      .wishlist-signin { margin:auto; color:#64748b; font-size:11px; text-align:center; }
+      .wishlist-signin a { color:#175cd3; font-weight:800; }
       #nifty-picker { margin-top: 10px; padding: 12px; border-color: #dbe3ef; border-radius: 12px; background: #f8fafc; }
       #message { margin: 22px 0 10px; }
       #message.stock-summary { width: 100%; margin: 20px 0 0; padding: 10px; border-color: #dbe3ef; border-radius: 14px; background: #fff; box-shadow: var(--shadow-card); }
@@ -996,6 +1010,14 @@
         .upgrade-support { align-items: flex-start; flex-direction: column; gap: 5px; }
         .site-footer { align-items: flex-start; flex-direction: column; width: calc(100% - 28px); gap: 5px; margin-top: 24px; }
       }
+      .home-intelligence-grid.calendar-only { grid-template-columns:minmax(0,1fr); }
+      .home-intelligence-tabs { grid-column:1; grid-row:1; }
+      .home-intelligence-grid .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
+      @media (max-width:760px) {
+        .home-intelligence-grid .results-calendar, .home-intelligence-grid.calendar-only .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
+        .compact-calendar-controls { grid-template-columns:1fr; gap:5px; }
+        .compact-calendar-tab { padding:4px 3px; font-size:7.5px; }
+      }
     </style>
     {% include '_analytics_head.html' %}
   </head>
@@ -1094,24 +1116,37 @@
         <a class="browse-stocks-link" href="/stocks">Browse stocks</a>
         </section>
         <div id="home-intelligence-grid" class="home-intelligence-grid{% if not current_user %} calendar-only{% endif %}">
+        <div class="home-intelligence-tabs" role="tablist" aria-label="Market intelligence">
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="events" aria-selected="true">Market Events</button>
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="news" aria-selected="false">Wishlist News</button>
+        </div>
         <section id="results-calendar" class="results-calendar" aria-labelledby="results-calendar-title">
           <header class="calendar-header">
             <div><span class="calendar-kicker">Announced dates</span><h2 id="results-calendar-title">Market events calendar</h2><p class="calendar-source">Today and tomorrow · NSE board-meeting filings</p></div>
             <a class="calendar-full-link" href="/events-calendar">Full calendar →</a>
           </header>
+          <div class="compact-calendar-controls">
+            <div class="compact-calendar-tabs" role="tablist" aria-label="Event day">
+              <button class="compact-calendar-tab compact-calendar-day" type="button" data-calendar-day="0" aria-selected="true">Today</button>
+              <button class="compact-calendar-tab compact-calendar-day" type="button" data-calendar-day="1" aria-selected="false">Tomorrow</button>
+            </div>
+            <div class="compact-calendar-tabs" role="tablist" aria-label="Event type">
+              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="results" aria-selected="true">Results <b>0</b></button>
+              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="board_meetings" aria-selected="false">Meetings <b>0</b></button>
+              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="dividends" aria-selected="false">Dividends <b>0</b></button>
+            </div>
+          </div>
           <p id="calendar-status" class="calendar-status">Loading announced events…</p>
           <div id="calendar-days" class="calendar-days" hidden></div>
         </section>
-        {% if current_user %}
-        <section id="wishlist-news-card" class="wishlist-news-card" aria-labelledby="wishlist-news-title">
+        <section id="wishlist-news-card" class="wishlist-news-card" hidden aria-labelledby="wishlist-news-title">
           <header class="calendar-header">
             <div><span class="calendar-kicker">Your saved stocks</span><h2 id="wishlist-news-title">Wishlist news</h2><p class="calendar-source">Latest seven days · Upstox News</p></div>
             <span id="wishlist-news-count" class="calendar-count" hidden>0</span>
           </header>
-          <p id="wishlist-news-status" class="wishlist-news-empty">Loading recent wishlist news…</p>
+          <p id="wishlist-news-status" class="wishlist-news-empty">{% if current_user %}Loading recent wishlist news…{% else %}Sign in to see news related to your wishlist stocks.{% endif %}</p>
           <div id="wishlist-news-list" class="wishlist-news-list" hidden></div>
         </section>
-        {% endif %}
         </div>
         <button id="calendar-reopen" class="calendar-reopen" type="button" hidden><span aria-hidden="true">▦</span> View today &amp; tomorrow events</button>
         <button id="back-to-screening" type="button" hidden>← Back to results</button>
@@ -1267,6 +1302,9 @@
       const wishlistNewsStatus = document.getElementById('wishlist-news-status');
       const wishlistNewsList = document.getElementById('wishlist-news-list');
       const wishlistNewsCount = document.getElementById('wishlist-news-count');
+      const intelligenceTabs = document.querySelectorAll('.home-intelligence-tab');
+      const calendarDayTabs = document.querySelectorAll('.compact-calendar-day');
+      const calendarCategoryTabs = document.querySelectorAll('.compact-calendar-category');
       const indexScreeningButtons = document.querySelectorAll('.index-screening-button');
       const niftyPicker = document.getElementById('nifty-picker');
       const niftySelect = document.getElementById('nifty-select');
@@ -1838,9 +1876,29 @@
         });
         marqueeAnimationFrames.set(list, setupFrame);
       }
-      function renderResultsCalendar(data) {
+      let homeCalendarData = null;
+      let selectedCalendarDay = 0;
+      let selectedCalendarCategory = 'results';
+      function renderResultsCalendar(data = homeCalendarData) {
+        if (data) homeCalendarData = data;
         stopCalendarMarquees(calendarDays);
-        const days = data.days || [];
+        const sourceDays = homeCalendarData?.days || [];
+        const selectedDay = sourceDays[selectedCalendarDay] || sourceDays[0];
+        calendarDayTabs.forEach((tab) => tab.setAttribute(
+          'aria-selected', String(Number(tab.dataset.calendarDay) === selectedCalendarDay),
+        ));
+        const categoryCounts = { results: 0, board_meetings: 0, dividends: 0 };
+        (selectedDay?.results || []).forEach((result) => {
+          if (Object.hasOwn(categoryCounts, result.category)) categoryCounts[result.category] += 1;
+        });
+        calendarCategoryTabs.forEach((tab) => {
+          tab.setAttribute('aria-selected', String(tab.dataset.calendarCategory === selectedCalendarCategory));
+          tab.querySelector('b').textContent = categoryCounts[tab.dataset.calendarCategory] || 0;
+        });
+        const filteredResults = (selectedDay?.results || []).filter(
+          (result) => result.category === selectedCalendarCategory,
+        );
+        const days = selectedDay ? [{ ...selectedDay, results: filteredResults, count: filteredResults.length }] : [];
         const listsToAnimate = [];
         const cards = days.map((day) => {
           const card = Object.assign(document.createElement('article'), { className: 'calendar-day' });
@@ -1851,29 +1909,12 @@
             document.createTextNode(' '),
             Object.assign(document.createElement('span'), { className: 'calendar-day-date', textContent: day.display_date }),
           );
-          const categoryCounts = { results: 0, board_meetings: 0, other: 0 };
-          (day.results || []).forEach((result) => {
-            const category = Object.hasOwn(categoryCounts, result.category) ? result.category : 'other';
-            categoryCounts[category] += 1;
-          });
-          const categorySummary = Object.assign(document.createElement('div'), { className: 'calendar-category-summary' });
-          [
-            ['results', 'Results'], ['board_meetings', 'Meetings'], ['other', 'Other'],
-          ].forEach(([category, label]) => {
-            const chip = Object.assign(document.createElement('span'), {
-              className: category.replace('_', '-'),
-              textContent: `${label} ${categoryCounts[category]}`,
-            });
-            chip.prepend(document.createElement('i'));
-            categorySummary.append(chip);
-          });
-          heading.append(categorySummary);
           head.append(heading, Object.assign(document.createElement('span'), { className: 'calendar-count', textContent: day.count }));
           card.append(head);
           if (!day.results?.length) {
             card.append(Object.assign(document.createElement('p'), {
               className: 'calendar-empty',
-              textContent: `No event listed for ${day.label.toLowerCase()}.`,
+              textContent: `No ${selectedCalendarCategory === 'results' ? 'results' : selectedCalendarCategory === 'dividends' ? 'dividends' : 'meetings'} listed for ${day.label.toLowerCase()}.`,
             }));
             return card;
           }
@@ -1881,12 +1922,12 @@
           day.results.forEach((result) => {
             const item = Object.assign(document.createElement('li'), { className: 'calendar-stock' });
             const eventCopy = Object.assign(document.createElement('span'), { className: 'calendar-event-copy' });
-            const category = ['results', 'board_meetings', 'other'].includes(result.category)
+            const category = ['results', 'board_meetings', 'dividends', 'other'].includes(result.category)
               ? result.category : 'other';
             eventCopy.append(
               Object.assign(document.createElement('span'), {
                 className: `calendar-category-dot ${category.replace('_', '-')}`,
-                title: category === 'results' ? 'Financial results' : category === 'board_meetings' ? 'Board meeting' : 'Other event',
+                title: category === 'results' ? 'Financial results' : category === 'board_meetings' ? 'Board meeting' : category === 'dividends' ? 'Dividend' : 'Other event',
               }),
               Object.assign(document.createElement('span'), { className: 'calendar-company', textContent: result.company, title: result.company }),
               Object.assign(document.createElement('span'), { className: 'calendar-purpose', textContent: result.purpose || 'Board meeting', title: result.description || result.purpose || 'Board meeting' }),
@@ -1919,6 +1960,25 @@
           calendarDays.hidden = true;
         }
       }
+      function activateIntelligenceTab(tabName) {
+        const showEvents = tabName === 'events';
+        resultsCalendar.hidden = !showEvents;
+        wishlistNewsCard.hidden = showEvents;
+        intelligenceTabs.forEach((tab) => tab.setAttribute(
+          'aria-selected', String(tab.dataset.intelligenceTab === tabName),
+        ));
+      }
+      intelligenceTabs.forEach((tab) => tab.addEventListener('click', () => {
+        activateIntelligenceTab(tab.dataset.intelligenceTab);
+      }));
+      calendarDayTabs.forEach((tab) => tab.addEventListener('click', () => {
+        selectedCalendarDay = Number(tab.dataset.calendarDay);
+        renderResultsCalendar();
+      }));
+      calendarCategoryTabs.forEach((tab) => tab.addEventListener('click', () => {
+        selectedCalendarCategory = tab.dataset.calendarCategory;
+        renderResultsCalendar();
+      }));
       function newsTimeLabel(publishedAt) {
         if (!publishedAt) return 'Recent';
         const published = new Date(publishedAt);
@@ -1968,6 +2028,7 @@
       }
       async function loadWishlistNews() {
         if (!wishlistNewsCard) return;
+        if (!currentUserAuthenticated) return;
         try {
           const response = await fetch('/api/wishlist/news');
           const data = await readJson(response);
@@ -2068,7 +2129,7 @@
         resultReturnContext = null;
         backToScreeningButton.hidden = true;
         homeIntelligenceGrid.hidden = false;
-        resultsCalendar.hidden = false;
+        activateIntelligenceTab('events');
         calendarReopen.hidden = true;
         resultsCalendar.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
