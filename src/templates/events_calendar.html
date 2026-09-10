@@ -17,7 +17,7 @@
   <section class="intro"><p class="eyebrow">NSE corporate filings</p><h1>Market events calendar</h1><p class="lead">Track announced board meetings and corporate events for today, tomorrow and the coming seven days.</p></section>
   {% if calendar_error %}<p class="empty">{{ calendar_error }}</p>{% else %}
   {% set today=calendar.days[0] %}{% set tomorrow=calendar.days[1] %}{% set coming_days=calendar.days[2:] %}
-  {% set periods=[('today','Today',today.display_date,[today]),('tomorrow','Tomorrow',tomorrow.display_date,[tomorrow]),('week','Next 7 days','After tomorrow',coming_days)] %}
+  {% set periods=[('today','Today',today.display_date,[today]),('tomorrow','Tomorrow',tomorrow.display_date,[tomorrow]),('week','Next 7 days','Upcoming',coming_days)] %}
   {% set categories=[('results','Financial results'),('board_meetings','Board meetings'),('other','Other events')] %}
   <section class="calendar-shell">
     <div class="period-tabs" role="tablist" aria-label="Calendar period">
