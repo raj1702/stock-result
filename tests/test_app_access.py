@@ -33,12 +33,17 @@ class FakeStockService:
             ]}
         return {"exact": True, "options": [{"symbol": query.upper(), "company": query.upper()}]}
 
-    def results_calendar(self):
+    def results_calendar(self, days=2):
+        calendar_days = [
+            {"label": "Today", "date": "2026-09-08", "display_date": "08 Sep 2026", "count": 0, "results": []},
+            {"label": "Tomorrow", "date": "2026-09-09", "display_date": "09 Sep 2026", "count": 0, "results": []},
+        ]
+        calendar_days.extend({
+            "label": "Wednesday", "date": "2026-09-10", "display_date": "10 Sep 2026",
+            "count": 0, "results": [],
+        } for _ in range(max(0, days - 2)))
         return {
-            "days": [
-                {"label": "Today", "date": "2026-09-08", "display_date": "08 Sep 2026", "count": 0, "results": []},
-                {"label": "Tomorrow", "date": "2026-09-09", "display_date": "09 Sep 2026", "count": 0, "results": []},
-            ],
+            "days": calendar_days,
             "source": "NSE corporate board-meeting filings",
         }
 
@@ -139,6 +144,18 @@ def test_results_calendar_is_public_and_does_not_consume_quota(client):
     response = browser.get("/api/results-calendar")
     assert response.status_code == 200
     assert [day["label"] for day in response.get_json()["days"]] == ["Today", "Tomorrow"]
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_full_events_calendar_is_public_and_does_not_consume_quota(client):
+    browser, stock, plan = client
+    response = browser.get("/events-calendar")
+
+    assert response.status_code == 200
+    assert b"Today" in response.data
+    assert b"Tomorrow" in response.data
+    assert b"Next 7 days" in response.data
     assert stock.fetch_calls == 0
     assert plan.recorded == []
 

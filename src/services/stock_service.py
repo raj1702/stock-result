@@ -92,15 +92,15 @@ class StockService:
         self._yahoo_valuation_cache_lock = Lock()
         self._index_constituents_cache = {}
         self._index_constituents_cache_lock = Lock()
-        self._results_calendar_cache = None
+        self._results_calendar_cache = {}
         self._results_calendar_cache_lock = Lock()
         self._wishlist_news_cache = {}
         self._wishlist_news_cache_lock = Lock()
         self._stock_events_cache = {}
         self._stock_events_cache_lock = Lock()
 
-    def results_calendar(self, now: Optional[datetime] = None) -> dict:
-        """Return all announced NSE board-meeting events for today and tomorrow."""
+    def results_calendar(self, now: Optional[datetime] = None, days: int = 2) -> dict:
+        """Return announced NSE board-meeting events over a short date range."""
         india_tz = ZoneInfo("Asia/Kolkata")
         if now is None:
             current = datetime.now(india_tz)
@@ -110,20 +110,21 @@ class StockService:
             current = now.replace(tzinfo=india_tz)
         today = current.date()
         tomorrow = today + timedelta(days=1)
-        cache_key = today.isoformat()
+        days = max(2, min(int(days), 31))
+        end_date = today + timedelta(days=days - 1)
+        cache_key = (today.isoformat(), days)
         with self._results_calendar_cache_lock:
-            cached = self._results_calendar_cache
+            cached = self._results_calendar_cache.get(cache_key)
             if (
                 cached
-                and cached[0] == cache_key
-                and datetime.utcnow() - cached[1] < self.RESULTS_CALENDAR_CACHE_TTL
+                and datetime.utcnow() - cached[0] < self.RESULTS_CALENDAR_CACHE_TTL
             ):
-                return deepcopy(cached[2])
+                return deepcopy(cached[1])
 
         params = {
             "index": "equities",
             "from_date": today.strftime("%d-%m-%Y"),
-            "to_date": tomorrow.strftime("%d-%m-%Y"),
+            "to_date": end_date.strftime("%d-%m-%Y"),
         }
         url = f"{self.NSE_BASE_URL}/api/corporate-board-meetings"
         response = self._nse_session.get(url, params=params, timeout=self.NSE_REQUEST_TIMEOUT)
@@ -139,7 +140,10 @@ class StockService:
         if not isinstance(meetings, list):
             raise ValueError("NSE returned an unexpected results-calendar response")
 
-        grouped = {today: [], tomorrow: []}
+        grouped = {
+            today + timedelta(days=offset): []
+            for offset in range(days)
+        }
         seen = set()
         for meeting in meetings:
             if not isinstance(meeting, Mapping):
@@ -154,6 +158,15 @@ class StockService:
             company = str(meeting.get("sm_name") or symbol).strip()
             purpose = str(meeting.get("bm_purpose") or "Board meeting").strip()
             description = str(meeting.get("bm_desc") or "").strip()
+            event_text = f"{purpose} {description}".casefold()
+            if "result" in event_text or "earning" in event_text:
+                category = "results"
+            elif any(term in event_text for term in (
+                "board meeting", "meeting of the board", "board of directors",
+            )):
+                category = "board_meetings"
+            else:
+                category = "other"
             unique_key = (meeting_date, symbol, purpose.casefold(), description.casefold())
             if not symbol or unique_key in seen:
                 continue
@@ -164,10 +177,16 @@ class StockService:
                 "date": meeting_date.isoformat(),
                 "purpose": purpose,
                 "description": description,
+                "category": category,
             })
 
         days = []
-        for label, day in (("Today", today), ("Tomorrow", tomorrow)):
+        for day in grouped:
+            label = (
+                "Today" if day == today
+                else "Tomorrow" if day == tomorrow
+                else day.strftime("%A")
+            )
             results = sorted(grouped[day], key=lambda item: item["company"].casefold())
             days.append({
                 "label": label,
@@ -182,7 +201,7 @@ class StockService:
             "generated_at": current.isoformat(),
         }
         with self._results_calendar_cache_lock:
-            self._results_calendar_cache = (cache_key, datetime.utcnow(), payload)
+            self._results_calendar_cache[cache_key] = (datetime.utcnow(), payload)
         return deepcopy(payload)
 
     def wishlist_news(self, stocks: list[Mapping[str, Any]]) -> dict:

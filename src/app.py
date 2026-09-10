@@ -164,6 +164,21 @@ def results_calendar():
         return jsonify({"error": "Results calendar is temporarily unavailable."}), 502
 
 
+@app.route('/events-calendar', methods=['GET'])
+def events_calendar():
+    """Display NSE board-meeting events for today and the coming week."""
+    try:
+        # Today + tomorrow + seven additional calendar days.
+        calendar = stock_service.results_calendar(days=9)
+        return render_template('events_calendar.html', calendar=calendar, calendar_error=None)
+    except Exception:
+        app.logger.exception("Full events calendar lookup failed")
+        return render_template(
+            'events_calendar.html', calendar={"days": []},
+            calendar_error="The events calendar is temporarily unavailable.",
+        ), 502
+
+
 @app.route('/robots.txt', methods=['GET'])
 def robots_txt():
     body = "\n".join((
@@ -187,7 +202,7 @@ def robots_txt():
 
 @app.route('/sitemap.xml', methods=['GET'])
 def sitemap_xml():
-    paths = ("/", "/methodology", "/privacy", "/terms", "/refund-policy", "/about", "/stocks")
+    paths = ("/", "/events-calendar", "/methodology", "/privacy", "/terms", "/refund-policy", "/about", "/stocks")
     urls = [f"  <url><loc>{SEO_BASE_URL}{path}</loc></url>" for path in paths]
     try:
         urls.extend(
