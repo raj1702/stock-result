@@ -148,7 +148,9 @@
       .advanced-screener-open { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; padding: 9px 12px; border: 1px solid #7f56d9; border-radius: 8px; background: linear-gradient(120deg,#53389e,#155eef); color: #fff; font-size: 12px; font-weight: 800; box-shadow: 0 5px 14px rgba(83,56,158,.2); }
       .advanced-screener-open:hover, .advanced-screener-open:focus-visible { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(83,56,158,.28); outline: none; }
       .screener-free-badge { padding: 2px 6px; border-radius: 999px; background: #dcfae6; color: #067647; font-size: 8px; letter-spacing: .08em; }
-      #advanced-screener-overlay { position: fixed; z-index: 60; inset: 0; box-sizing: border-box; overflow: auto; padding: 20px; background: #f5f7fb; }
+      @keyframes workspace-drawer-in { from { transform:translateX(clamp(38px,6vw,76px)); } to { transform:translateX(0); } }
+      #advanced-screener-overlay { position: fixed; z-index: 60; inset: 0 0 0 clamp(28px,5vw,72px); box-sizing: border-box; overflow: auto; padding: 20px; background: #f5f7fb; box-shadow:-18px 0 45px rgba(15,23,42,.2); animation:workspace-drawer-in .58s cubic-bezier(.16,1,.3,1); will-change:transform; }
+      #advanced-screener-overlay::before, #screening-overlay::before, #stock-result-drawer::before { content:""; position:fixed; z-index:-1; top:0; bottom:0; left:0; width:clamp(28px,5vw,72px); background:rgba(255,255,255,.12); backdrop-filter:blur(7px) saturate(.85); -webkit-backdrop-filter:blur(7px) saturate(.85); }
       #advanced-screener-overlay[hidden] { display: none; }
       .advanced-screener-shell { width: min(1100px,100%); margin: 0 auto; }
       .advanced-screener-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
@@ -188,7 +190,6 @@
       .wishlist-heart:hover, .wishlist-heart:focus-visible { background: transparent; outline: 2px solid #fda29b; outline-offset: 1px; transform: scale(1.1); }
       .wishlist-heart.saved { background: transparent; color: #d92d20; }
       .wishlist-heart:disabled { cursor: wait; opacity: .55; }
-      .wishlist-open { gap: 5px; }
       #wishlist-overlay { position: fixed; z-index: 65; inset: 0; box-sizing: border-box; overflow-y: auto; padding: 24px; background: #f5f7fb; }
       #wishlist-overlay[hidden] { display: none; }
       .wishlist-shell { width: min(760px,100%); margin: 0 auto; }
@@ -219,8 +220,67 @@
       #full-index-screening-button { padding: 7px 10px; border: 1px solid #7f56d9; border-radius: 6px; background: linear-gradient(135deg, #7f56d9, #6941c6); color: #fff; font-size: 11px; font-weight: 750; box-shadow: 0 3px 8px rgba(105, 65, 198, .22); }
       #full-index-screening-button:hover, #full-index-screening-button:focus-visible { background: #53389e; outline: none; }
       #nifty-select { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #98a2b3; border-radius: 6px; background: #fff; color: #101828; font: inherit; font-size: 12px; }
-      #screening-overlay { position: fixed; z-index: 50; inset: 0; display: flex; flex-direction: column; box-sizing: border-box; padding: 20px; overflow: hidden; background: #f8fafc; }
+      #screening-overlay { position: fixed; z-index: 50; inset: 0 0 0 clamp(28px,5vw,72px); display: flex; flex-direction: column; box-sizing: border-box; padding: 20px; overflow: hidden; background: #f8fafc; box-shadow:-18px 0 45px rgba(15,23,42,.2); animation:workspace-drawer-in .58s cubic-bezier(.16,1,.3,1); will-change:transform; }
       #screening-overlay[hidden] { display: none; }
+      #stock-result-drawer { position:fixed; z-index:80; inset:0 0 0 clamp(38px,7vw,104px); box-sizing:border-box; overflow-y:auto; background:#f4f7fb; box-shadow:-20px 0 54px rgba(15,23,42,.28); animation:workspace-drawer-in .62s cubic-bezier(.16,1,.3,1); will-change:transform; }
+      #stock-result-drawer[hidden] { display:none; }
+      #info-page-drawer { position:fixed; z-index:90; inset:0 0 0 clamp(38px,7vw,104px); box-sizing:border-box; overflow:hidden; background:#fff; box-shadow:-20px 0 54px rgba(15,23,42,.28); animation:workspace-drawer-in .62s cubic-bezier(.16,1,.3,1); will-change:transform; }
+      #info-page-drawer[hidden] { display:none; }
+      #info-page-drawer::before { content:""; position:fixed; z-index:-1; top:0; bottom:0; left:0; width:clamp(38px,7vw,104px); background:rgba(255,255,255,.12); backdrop-filter:blur(7px) saturate(.85); -webkit-backdrop-filter:blur(7px) saturate(.85); }
+      .info-page-header { position:relative; z-index:2; display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; min-height:58px; padding:0 24px; gap:14px; border-bottom:1px solid #dbe3ef; background:rgba(255,255,255,.96); }
+      .info-page-header h2 { margin:0; overflow:hidden; color:#344054; font-size:14px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+      #info-page-frame { display:block; width:100%; height:calc(100% - 59px); border:0; background:#f4f7fb; }
+      #stock-result-drawer::before { width:clamp(38px,7vw,104px); }
+      body > .page-header, body > .app-main, body > .site-footer,
+      #screening-overlay, #advanced-screener-overlay { transition:filter .35s ease,opacity .35s ease; }
+      body:has(#screening-overlay:not([hidden])) > .page-header,
+      body:has(#screening-overlay:not([hidden])) > .app-main,
+      body:has(#screening-overlay:not([hidden])) > .site-footer,
+      body:has(#advanced-screener-overlay:not([hidden])) > .page-header,
+      body:has(#advanced-screener-overlay:not([hidden])) > .app-main,
+      body:has(#advanced-screener-overlay:not([hidden])) > .site-footer { filter:blur(6px); }
+      body:has(#stock-result-drawer:not([hidden])) > .page-header,
+      body:has(#stock-result-drawer:not([hidden])) > .app-main,
+      body:has(#stock-result-drawer:not([hidden])) > .site-footer,
+      body:has(#stock-result-drawer:not([hidden])) > #screening-overlay:not([hidden]),
+      body:has(#stock-result-drawer:not([hidden])) > #advanced-screener-overlay:not([hidden]) { filter:blur(6px); }
+      body:has(#info-page-drawer:not([hidden])) > .page-header,
+      body:has(#info-page-drawer:not([hidden])) > .app-main,
+      body:has(#info-page-drawer:not([hidden])) > .site-footer,
+      body:has(#info-page-drawer:not([hidden])) > #stock-result-drawer:not([hidden]),
+      body:has(#info-page-drawer:not([hidden])) > #screening-overlay:not([hidden]),
+      body:has(#info-page-drawer:not([hidden])) > #advanced-screener-overlay:not([hidden]) { filter:blur(6px); }
+      .stock-result-sticky { position:sticky; z-index:20; top:0; background:rgba(255,255,255,.97); box-shadow:0 8px 18px rgba(15,23,42,.045); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+      .stock-result-header { position:relative; display:flex; align-items:center; min-height:58px; padding:0 24px; border-bottom:0; background:transparent; }
+      #back-to-screening { margin:0; }
+      .stock-result-tabs { position:relative; display:flex; gap:28px; padding:0 24px; overflow-x:auto; border-bottom:1px solid #dbe3ef; background:transparent; scrollbar-width:none; }
+      .stock-result-tabs::-webkit-scrollbar { display:none; }
+      .stock-result-tab { position:relative; flex:0 0 auto; min-width:0; min-height:48px; padding:13px 2px 11px; border:0; border-radius:0; background:transparent; color:#667085; font-size:12px; font-weight:850; white-space:nowrap; }
+      .stock-result-tab::after { content:""; position:absolute; right:0; bottom:-1px; left:0; height:3px; border-radius:3px 3px 0 0; background:linear-gradient(90deg,#2563eb,#7c3aed); opacity:0; transform:scaleX(.5); transition:opacity .2s ease,transform .2s ease; }
+      .stock-result-tab:hover, .stock-result-tab:focus-visible, .stock-result-tab[aria-selected="true"] { color:#175cd3; outline:none; }
+      .stock-result-tab[aria-selected="true"]::after { opacity:1; transform:scaleX(1); }
+      .stock-result-tab[data-result-tab="quality"] { background:linear-gradient(100deg,#6941c6 8%,#155eef 34%,#a855f7 52%,#155eef 70%,#6941c6 92%); background-size:220% 100%; color:transparent; background-clip:text; -webkit-background-clip:text; animation:quality-tab-shine 3.6s linear infinite; }
+      .stock-result-tab[data-result-tab="quality"]::before { content:"✦"; display:inline-block; margin-right:5px; color:#7f56d9; -webkit-text-fill-color:#7f56d9; animation:quality-tab-sparkle 2.2s ease-in-out infinite; }
+      @keyframes quality-tab-shine { to { background-position:-220% 0; } }
+      @keyframes quality-tab-sparkle { 0%,100% { opacity:.55; transform:scale(.82) rotate(0); } 50% { opacity:1; transform:scale(1.18) rotate(18deg); } }
+      @media (prefers-reduced-motion:reduce) { .stock-result-tab[data-result-tab="quality"], .stock-result-tab[data-result-tab="quality"]::before { animation:none; } }
+      .stock-result-identity { box-sizing:border-box; width:100%; margin:0; padding:0 24px 10px; background:#fff; }
+      .stock-result-identity #message { width:min(1120px,100%); margin:0 auto; padding:8px 0 2px; }
+      .stock-result-identity #message.stock-summary { box-sizing:border-box; width:min(1120px,100%); margin:0 auto; padding:7px 0 2px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+      .stock-result-identity .summary-item { min-height:38px; border-color:#e4e7ec; border-radius:8px; background:#f8fafc; }
+      .stock-result-identity .summary-item.symbol { border-color:#b2ccff; background:#eff4ff; }
+      .stock-result-content { box-sizing:border-box; width:min(1120px,calc(100% - 48px)); margin:0 auto; padding:20px 0 42px; }
+      .stock-result-pane[hidden] { display:none; }
+      .stock-result-pane:not([hidden]) { animation:result-pane-in .28s ease both; }
+      .stock-result-pane, #result-pane-quality #interpretation-section, #result-pane-trends #charts, #result-pane-updates .stock-updates-card { width:100%; max-width:none; box-sizing:border-box; }
+      @keyframes result-pane-in { from { opacity:0; transform:translateY(7px); } to { opacity:1; transform:translateY(0); } }
+      .result-pane-empty { margin:34px 0; padding:24px; border:1px dashed #cbd5e1; border-radius:12px; background:#fff; color:#667085; text-align:center; font-size:12px; }
+      @media (min-width:761px) and (min-height:700px) {
+        #result-pane-overview, #result-pane-quality, #result-pane-trends, #result-pane-updates { min-height:clamp(470px,calc(100dvh - 235px),720px); }
+        #result-pane-quality #analysis-box, #result-pane-updates .stock-updates-card { min-height:clamp(440px,calc(100dvh - 265px),680px); }
+        #result-pane-trends .chart-card.combined-chart { display:flex; height:clamp(440px,calc(100dvh - 250px),650px); min-height:0; flex-direction:column; overflow:hidden; }
+        #result-pane-trends .chart-svg { flex:1 1 0; width:100%; height:100%; min-height:0; }
+      }
       #auth-gate { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; box-sizing: border-box; padding: 20px; background: rgba(16,24,40,.58); backdrop-filter: blur(5px); }
       #auth-gate[hidden] { display: none; }
       .auth-gate-card { position: relative; box-sizing: border-box; width: min(430px, 100%); padding: 26px; border: 1px solid rgba(255,255,255,.7); border-radius: 16px; background: radial-gradient(circle at 90% 0, rgba(132,173,255,.2), transparent 32%), #fff; box-shadow: 0 24px 60px rgba(16,24,40,.28); text-align: center; }
@@ -280,9 +340,11 @@
       #back-to-screening { display: flex; width: fit-content; align-items: center; gap: 6px; margin: 14px 0 0 auto; padding: 8px 11px; border: 1px solid #84adff; background: #eff4ff; color: #175cd3; font-size: 12px; font-weight: 750; box-shadow: 0 2px 7px rgba(21, 94, 239, .12); }
       #back-to-screening[hidden] { display: none; }
       #back-to-screening:hover, #back-to-screening:focus-visible { border-color: #155eef; background: #dbe8ff; outline: none; }
-      #result-footer-back { display: block; width: fit-content; margin: 14px 0 0 auto; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #475467; font-size: 10px; font-weight: 750; box-shadow: 0 2px 6px rgba(15,23,42,.06); }
-      #result-footer-back[hidden] { display: none; }
-      #result-footer-back:hover, #result-footer-back:focus-visible { border-color: #84adff; color: #175cd3; outline: none; }
+      .layer-navigation { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:14px; }
+      .layer-nav-button, .stock-result-header #back-to-screening { position:static; display:inline-flex; align-items:center; justify-content:center; width:auto; min-height:36px; margin:0; padding:8px 12px; border:1px solid #d0d5dd; border-radius:8px; background:#fff; color:#475467; font-size:11px; font-weight:800; box-shadow:0 2px 7px rgba(15,23,42,.06); }
+      .layer-nav-button:hover, .layer-nav-button:focus-visible, .stock-result-header #back-to-screening:hover, .stock-result-header #back-to-screening:focus-visible { border-color:#98a2b3; background:#f2f4f7; color:#1d2939; outline:none; }
+      .layer-home-button::before { content:"⌂"; margin-right:5px; font-size:14px; line-height:1; }
+      .stock-result-header { justify-content:space-between; }
       #mobile-results { display: block; margin-top: 28px; }
       #mobile-results[hidden] { display: none; }
       .mobile-results-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
@@ -731,7 +793,7 @@
       .home-intelligence-grid[hidden] { display: none; }
       .results-calendar { display: flex; grid-column: 2; grid-row: 1; flex-direction: column; box-sizing: border-box; width: 100%; height: 390px; min-height: 390px; max-height: 390px; margin: 0; padding: 15px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#f8faff); box-shadow: var(--shadow-card); }
       .home-intelligence-grid.calendar-only .results-calendar { grid-column: 1; }
-      .results-calendar[hidden], .calendar-reopen[hidden] { display: none; }
+      .results-calendar[hidden] { display: none; }
       .calendar-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 10px; }
       .calendar-kicker { display: block; margin-bottom: 3px; color: #2563eb; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
       .calendar-header h2 { margin: 0; color: #0f2447; font-size: 18px; letter-spacing: -.025em; }
@@ -764,9 +826,12 @@
       .calendar-symbol { flex: 0 0 auto; color: #175cd3; font-size: 9px; font-weight: 850; }
       .calendar-empty { margin: auto 0; color: #64748b; font-size: 10px; line-height: 1.45; }
       .calendar-status { margin: 5px 0 0; color: #64748b; font-size: 11px; }
-      .calendar-reopen { display: inline-flex; align-items: center; gap: 7px; margin: 16px 0 0; padding: 8px 11px; border: 1px solid #b2ccff; background: #eff4ff; color: #175cd3; font-size: 11px; box-shadow: 0 3px 9px rgba(21,94,239,.1); }
-      .calendar-reopen:hover, .calendar-reopen:focus-visible { border-color: #528bff; background: #dbe8ff; outline: none; }
       .wishlist-news-card { position: relative; display: flex; grid-column: 1; grid-row: 1; min-width: 0; height: 390px; min-height: 390px; max-height: 390px; flex-direction: column; box-sizing: border-box; padding: 15px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#fbf9ff); box-shadow: var(--shadow-card); }
+      .wishlist-card { position:relative; display:flex; min-width:0; height:390px; flex-direction:column; box-sizing:border-box; padding:15px; overflow:hidden; background:linear-gradient(145deg,#fff,#f8faff); }
+      .wishlist-card[hidden] { display:none; }
+      .wishlist-card .wishlist-list { min-height:0; margin-top:8px; padding-right:8px; overflow-y:scroll; scrollbar-width:none; }
+      .wishlist-card .wishlist-list::-webkit-scrollbar { width:0; }
+      .wishlist-card .calendar-scroll-rail { top:68px; right:5px; bottom:12px; }
       .wishlist-news-card .calendar-header { flex: 0 0 auto; }
       .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width:none; list-style: none; }
       .wishlist-news-list::-webkit-scrollbar { width:0; }
@@ -779,14 +844,20 @@
       .wishlist-news-symbols { overflow: hidden; color: #6941c6; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
       .wishlist-news-empty { margin: auto 0; color: #64748b; font-size: 11px; line-height: 1.5; }
       .home-intelligence-grid { grid-template-columns:minmax(0,1fr); gap:0; overflow:hidden; border:1px solid #dbe3ef; border-radius:14px; background:#fff; box-shadow:var(--shadow-card); }
-      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; justify-content:flex-start; gap:24px; padding:0 16px; border-bottom:1px solid #e2e8f0; background:#fff; }
-      .home-intelligence-tab { position:relative; flex:0 0 auto; min-width:0; min-height:42px; padding:12px 2px 10px; border:0; border-radius:0; background:transparent; color:#64748b; font-size:11px; font-weight:800; }
-      .home-intelligence-tab::after, .compact-calendar-tab::after { content:""; position:absolute; right:0; bottom:-1px; left:0; height:2px; border-radius:2px 2px 0 0; background:#2563eb; opacity:0; transform:scaleX(.45); transition:opacity .18s ease,transform .18s ease; }
-      .home-intelligence-tab:hover, .home-intelligence-tab:focus-visible { color:#175cd3; outline:none; }
-      .home-intelligence-tab[aria-selected="true"] { color:#175cd3; }
+      .home-workspace { overflow:hidden; border:1px solid #dbe3ef; border-radius:var(--radius-lg); background:#fff; box-shadow:var(--shadow-card); }
+      .home-workspace > .home-intelligence-tabs { border-bottom:1px solid #dbe3ef; background:linear-gradient(180deg,#fff,#f8faff); }
+      .home-workspace > .search-surface { border:0; border-radius:0; box-shadow:none; }
+      .home-workspace > .home-intelligence-grid { margin-top:0; border:0; border-radius:0; box-shadow:none; }
+      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; justify-content:flex-start; gap:30px; padding:0 22px; overflow-x:auto; border-bottom:1px solid #e2e8f0; background:#fff; scrollbar-width:none; }
+      .home-intelligence-tabs::-webkit-scrollbar { display:none; }
+      .home-intelligence-tab { position:relative; flex:0 0 auto; min-width:0; min-height:54px; padding:16px 4px 14px; border:0; border-radius:0; background:transparent; color:#52637a; font-size:13px; font-weight:850; letter-spacing:.01em; white-space:nowrap; transition:color .18s ease,background .18s ease; }
+      .home-intelligence-tab::after, .compact-calendar-tab::after { content:""; position:absolute; right:0; bottom:-1px; left:0; height:3px; border-radius:3px 3px 0 0; background:linear-gradient(90deg,#2563eb,#7c3aed); opacity:0; transform:scaleX(.45); transition:opacity .18s ease,transform .18s ease; }
+      .compact-calendar-tab::after { height:2px; background:#2563eb; }
+      .home-intelligence-tab:hover, .home-intelligence-tab:focus-visible { color:#175cd3; background:rgba(37,99,235,.035); outline:none; }
+      .home-intelligence-tab[aria-selected="true"] { color:#175cd3; text-shadow:0 0 18px rgba(37,99,235,.16); }
       .home-intelligence-tab[aria-selected="true"]::after, .compact-calendar-tab[aria-selected="true"]::after { opacity:1; transform:scaleX(1); }
-      .results-calendar, .wishlist-news-card { grid-column:1; grid-row:2; height:390px; min-height:390px; max-height:390px; border:0; border-radius:0; box-shadow:none; }
-      .results-calendar[hidden], .wishlist-news-card[hidden] { display:none; }
+      .results-calendar, .wishlist-card, .wishlist-news-card { grid-column:1; grid-row:2; height:390px; min-height:390px; max-height:390px; border:0; border-radius:0; box-shadow:none; }
+      .results-calendar[hidden], .wishlist-card[hidden], .wishlist-news-card[hidden] { display:none; }
       .compact-calendar-controls { display:flex; align-items:flex-start; flex-direction:column; gap:5px; margin-bottom:8px; }
       .compact-calendar-tabs { display:flex; gap:14px; min-width:0; border-bottom:1px solid #edf1f6; }
       .compact-calendar-tabs:first-child { width:100%; }
@@ -797,6 +868,13 @@
       .compact-calendar-category b { margin-left:2px; color:inherit; font-size:7px; }
       .wishlist-signin { margin:auto; color:#64748b; font-size:11px; text-align:center; }
       .wishlist-signin a { color:#175cd3; font-weight:800; }
+      .wishlist-auth-prompt { display:flex; align-items:center; justify-content:center; flex:1 1 auto; flex-direction:column; gap:14px; margin:auto 0; padding:24px; color:#64748b; text-align:center; }
+      .wishlist-auth-prompt p { margin:0; font-size:11px; line-height:1.5; }
+      .wishlist-auth-actions { display:flex; justify-content:center; gap:9px; flex-wrap:wrap; }
+      .wishlist-auth-action { display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:8px 15px; border:1px solid #b2ccff; border-radius:9px; background:#fff; color:#175cd3; font-size:10px; font-weight:850; text-decoration:none; }
+      .wishlist-auth-action.primary { border-color:#2563eb; background:#2563eb; color:#fff; box-shadow:0 6px 14px rgba(37,99,235,.2); }
+      .wishlist-auth-action:hover, .wishlist-auth-action:focus-visible { border-color:#528bff; background:#eff4ff; outline:none; }
+      .wishlist-auth-action.primary:hover, .wishlist-auth-action.primary:focus-visible { background:#175cd3; color:#fff; }
       .results-calendar { height:auto; min-height:390px; max-height:none; }
       .calendar-days.category-boxes { grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:minmax(230px,1fr); }
       .calendar-days.category-boxes .calendar-list { scrollbar-width:none; }
@@ -893,16 +971,15 @@
         .brand-title::before { width: 31px; height: 31px; margin-right: 8px; border-radius: 9px; }
         .beta-badge { margin-left: 6px; }
         .mobile-view-tip { display: none; }
-        .account-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; width: 100%; gap: 7px; }
+        .account-controls { display: grid; grid-template-columns: minmax(0,1fr) auto auto; width: 100%; gap: 7px; }
         .header-plan-status { grid-column: 1 / -1; grid-row: 2; order: initial; width: 100%; }
         .header-plan-field { min-width: 0; padding: 7px 6px; text-align: center; }
         .header-plan-label { font-size: 6.5px; }
         .header-plan-value { overflow: hidden; font-size: 9px; text-overflow: ellipsis; }
         .signed-in-user { grid-column: 1; grid-row: 1; width: 100%; }
         .signed-in-email { max-width: calc(100vw - 245px); }
-        .wishlist-open { grid-column: 2; grid-row: 1; padding: 7px 8px; }
-        .account-link.logout { grid-column: 4; grid-row: 1; }
-        .plan-open { grid-column: 3; grid-row: 1; order: initial; }
+        .account-link.logout { grid-column: 3; grid-row: 1; }
+        .plan-open { grid-column: 2; grid-row: 1; order: initial; }
         .app-main { width: calc(100% - 28px); margin-top: 18px; }
         .search-surface { padding: 20px 16px; border-radius: 15px; }
         .search-kicker { margin-bottom: 6px; font-size: 9px; }
@@ -927,7 +1004,6 @@
         .calendar-days.single-day { grid-template-rows: minmax(0,1fr); }
         .calendar-day { padding: 11px; }
         .calendar-company { font-size: 10px; }
-        .calendar-reopen { width: 100%; justify-content: center; box-sizing: border-box; }
         .advanced-screener-open { width: 100%; justify-content: center; }
         #advanced-screener-overlay { padding: 14px; }
         .advanced-screener-header h2 { font-size: 20px; }
@@ -1023,9 +1099,27 @@
       }
       .home-intelligence-grid.calendar-only { grid-template-columns:minmax(0,1fr); }
       .home-intelligence-tabs { grid-column:1; grid-row:1; }
-      .home-intelligence-grid .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
+      .home-intelligence-grid .results-calendar, .home-intelligence-grid .wishlist-card, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:1; }
       @media (max-width:760px) {
-        .home-intelligence-grid .results-calendar, .home-intelligence-grid.calendar-only .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
+        #advanced-screener-overlay, #screening-overlay { left:14px; }
+        #stock-result-drawer { left:18px; }
+        #info-page-drawer { left:18px; }
+        #advanced-screener-overlay::before, #screening-overlay::before { width:14px; }
+        #stock-result-drawer::before { width:18px; }
+        #info-page-drawer::before { width:18px; }
+        .stock-result-header { min-height:52px; padding:0 12px; }
+        .info-page-header { min-height:52px; padding:0 12px; gap:8px; }
+        .info-page-header h2 { font-size:12px; }
+        #info-page-frame { height:calc(100% - 53px); }
+        .stock-result-tabs { top:auto; gap:19px; padding:0 12px; }
+        .stock-result-tab { min-width:auto; min-height:44px; padding:12px 1px 10px; font-size:10px; }
+        .stock-result-identity { width:100%; padding:0 12px 8px; }
+        .layer-navigation { gap:8px; }
+        .layer-nav-button, .stock-result-header #back-to-screening { width:auto; min-height:34px; padding:7px 9px; font-size:10px; }
+        .stock-result-content { width:calc(100% - 20px); padding-top:12px; }
+        .home-intelligence-tabs { gap:18px; padding:0 12px; }
+        .home-intelligence-tab { min-height:48px; padding:14px 2px 12px; font-size:11px; }
+        .home-intelligence-grid .results-calendar, .home-intelligence-grid.calendar-only .results-calendar, .home-intelligence-grid .wishlist-card, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:1; }
         .home-intelligence-grid .results-calendar { height:auto; min-height:0; max-height:none; }
         .compact-calendar-controls { grid-template-columns:1fr; gap:5px; }
         .compact-calendar-tab { padding:4px 3px; font-size:7.5px; }
@@ -1046,7 +1140,6 @@
             <span class="header-plan-field"><span class="header-plan-label">Stocks quota</span><span id="header-plan-quota" class="header-plan-value">—</span></span>
             <span class="header-plan-field"><span id="header-plan-date-label" class="header-plan-label">Expires on</span><span id="header-plan-expiry" class="header-plan-value">—</span></span>
           </span>
-          <button id="wishlist-open" class="account-link wishlist-open" type="button"><span aria-hidden="true">♥</span> Wishlist</button>
           <button id="subscription-open" class="account-link plan-open" type="button">Upgrade</button>
           <span class="signed-in-user">
             <span class="signed-in-dot" aria-hidden="true"></span>
@@ -1093,7 +1186,14 @@
     <main class="app-main">
     <div id="search-results-layout">
       <div id="results-column">
-        <section class="search-surface" aria-labelledby="search-heading">
+        <div class="home-workspace">
+        <div class="home-intelligence-tabs" role="tablist" aria-label="ResultLens tools">
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="search" aria-selected="true">Stock Search</button>
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="events" aria-selected="false">Market Events</button>
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="wishlist" aria-selected="false">Wishlist</button>
+          <button class="home-intelligence-tab" type="button" data-intelligence-tab="news" aria-selected="false">Wishlist News</button>
+        </div>
+        <section id="workspace-search" class="search-surface" aria-labelledby="search-heading">
         <p class="search-kicker">Indian earnings intelligence</p>
         <h2 id="search-heading" class="search-heading">Understand a company’s latest results in minutes.</h2>
         <p>Search by company name or NSE symbol for an auditable earnings-quality view.</p>
@@ -1129,14 +1229,10 @@
         </div>
         <a class="browse-stocks-link" href="/stocks">Browse stocks</a>
         </section>
-        <div id="home-intelligence-grid" class="home-intelligence-grid{% if not current_user %} calendar-only{% endif %}">
-        <div class="home-intelligence-tabs" role="tablist" aria-label="Market intelligence">
-          <button class="home-intelligence-tab" type="button" data-intelligence-tab="events" aria-selected="true">Market Events</button>
-          <button class="home-intelligence-tab" type="button" data-intelligence-tab="news" aria-selected="false">Wishlist News</button>
-        </div>
+        <div id="home-intelligence-grid" class="home-intelligence-grid{% if not current_user %} calendar-only{% endif %}" hidden>
         <section id="results-calendar" class="results-calendar" aria-labelledby="results-calendar-title">
           <header class="calendar-header">
-            <div><span class="calendar-kicker">Announced dates</span><h2 id="results-calendar-title">Market events calendar</h2><p class="calendar-source">Today and tomorrow · NSE board-meeting filings</p></div>
+            <div><span class="calendar-kicker">Announced dates</span><h2 id="results-calendar-title">Market events calendar</h2><p class="calendar-source">NSE board-meeting filings</p></div>
             <a class="calendar-full-link" href="/events-calendar">Full calendar →</a>
           </header>
           <div class="compact-calendar-controls">
@@ -1148,17 +1244,39 @@
           <p id="calendar-status" class="calendar-status">Loading announced events…</p>
           <div id="calendar-days" class="calendar-days" hidden></div>
         </section>
+        <section id="wishlist-card" class="wishlist-card" hidden aria-labelledby="wishlist-title">
+          <header class="calendar-header">
+            <div><span class="calendar-kicker">Your saved stocks</span><h2 id="wishlist-title">My Wishlist</h2><p class="calendar-source">Stocks saved for quick access</p></div>
+          </header>
+          {% if current_user %}
+          <div id="wishlist-list" class="wishlist-list"><div class="wishlist-empty">Loading your wishlist…</div></div>
+          {% else %}
+          <div class="wishlist-auth-prompt">
+            <p>Sign in or create a free account to save and revisit stocks.</p>
+            <div class="wishlist-auth-actions"><a class="wishlist-auth-action" href="/login?next=/">Sign in</a><a class="wishlist-auth-action primary" href="/signup?next=/">Sign up</a></div>
+          </div>
+          {% endif %}
+        </section>
         <section id="wishlist-news-card" class="wishlist-news-card" hidden aria-labelledby="wishlist-news-title">
           <header class="calendar-header">
             <div><span class="calendar-kicker">Your saved stocks</span><h2 id="wishlist-news-title">Wishlist news</h2><p class="calendar-source">Latest seven days · Upstox News</p></div>
             <span id="wishlist-news-count" class="calendar-count" hidden>0</span>
           </header>
-          <p id="wishlist-news-status" class="wishlist-news-empty">{% if current_user %}Loading recent wishlist news…{% else %}Sign in to see news related to your wishlist stocks.{% endif %}</p>
+          {% if current_user %}
+          <p id="wishlist-news-status" class="wishlist-news-empty">Loading recent wishlist news…</p>
+          {% else %}
+          <div id="wishlist-news-status" class="wishlist-auth-prompt">
+            <p>Sign in or create a free account to see news related to your saved stocks.</p>
+            <div class="wishlist-auth-actions">
+              <a class="wishlist-auth-action" href="/login?next=/">Sign in</a>
+              <a class="wishlist-auth-action primary" href="/signup?next=/">Sign up</a>
+            </div>
+          </div>
+          {% endif %}
           <div id="wishlist-news-list" class="wishlist-news-list" hidden></div>
         </section>
         </div>
-        <button id="calendar-reopen" class="calendar-reopen" type="button" hidden><span aria-hidden="true">▦</span> View today &amp; tomorrow events</button>
-        <button id="back-to-screening" type="button" hidden>← Back to results</button>
+        </div>
         <p id="message"></p>
         <div id="tables" hidden>
       <section id="results-panel">
@@ -1219,14 +1337,36 @@
           </section>
         </aside>
       </div>
-      <button id="result-footer-back" type="button" hidden>↑ Back to search</button>
     </section>
     </main>
-    <footer class="site-footer"><span class="site-footer-links"><a href="/about">About</a><a href="/methodology">Methodology</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refund-policy">Refunds</a></span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
+    <section id="stock-result-drawer" hidden aria-modal="true" role="dialog" aria-label="Stock analysis">
+      <div class="stock-result-sticky">
+      <header class="stock-result-header"><button id="back-to-screening" type="button">← Back to search</button><button id="stock-result-home" class="layer-nav-button layer-home-button" type="button">Home</button></header>
+      <div id="stock-result-identity" class="stock-result-identity"></div>
+      <nav class="stock-result-tabs" role="tablist" aria-label="Stock analysis sections">
+        <button class="stock-result-tab" type="button" data-result-tab="overview" aria-selected="true">Overview</button>
+        <button class="stock-result-tab" type="button" data-result-tab="quality" aria-selected="false">Earnings Quality</button>
+        <button class="stock-result-tab" type="button" data-result-tab="trends" aria-selected="false">Trends</button>
+        <button class="stock-result-tab" type="button" data-result-tab="updates" aria-selected="false">Updates</button>
+      </nav>
+      </div>
+      <div id="stock-result-content" class="stock-result-content">
+        <section id="result-pane-overview" class="stock-result-pane" data-result-pane="overview"></section>
+        <section id="result-pane-quality" class="stock-result-pane" data-result-pane="quality" hidden></section>
+        <section id="result-pane-trends" class="stock-result-pane" data-result-pane="trends" hidden><p id="result-trends-empty" class="result-pane-empty">Trend charts are unavailable for this stock.</p></section>
+        <section id="result-pane-updates" class="stock-result-pane" data-result-pane="updates" hidden></section>
+      </div>
+    </section>
+    <section id="info-page-drawer" hidden aria-modal="true" role="dialog" aria-labelledby="info-page-title">
+      <header class="info-page-header"><button id="info-page-back" class="layer-nav-button" type="button">← Back</button><h2 id="info-page-title">ResultLens</h2><button id="info-page-home" class="layer-nav-button layer-home-button" type="button">Home</button></header>
+      <iframe id="info-page-frame" title="ResultLens information" loading="eager"></iframe>
+    </section>
+    <footer class="site-footer"><span class="site-footer-links"><a href="/about" data-info-page="About">About</a><a href="/methodology" data-info-page="Methodology">Methodology</a><a href="/privacy" data-info-page="Privacy Policy">Privacy</a><a href="/terms" data-info-page="Terms of Use">Terms</a><a href="/refund-policy" data-info-page="Refund Policy">Refunds</a></span><span>ResultLens is an AI enabled analytical aid, not investment advice.</span></footer>
     <section id="screening-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="screening-title">
-      <div class="screening-overlay-header">
+      <div class="screening-overlay-header layer-navigation">
+        <button id="screening-close" class="layer-nav-button" type="button">← Back</button>
         <h2 id="screening-title">Index stock screening</h2>
-        <button id="screening-close" type="button">Close</button>
+        <button id="screening-home" class="layer-nav-button layer-home-button" type="button">Home</button>
       </div>
       <p id="screening-progress">Preparing screening…</p>
       <div class="screening-progress-track"><div id="screening-progress-bar"></div></div>
@@ -1250,9 +1390,10 @@
     </section>
     <section id="advanced-screener-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="advanced-screener-title">
       <div class="advanced-screener-shell">
-        <div class="advanced-screener-header">
+        <div class="advanced-screener-header layer-navigation">
+          <button id="advanced-screener-close" class="layer-nav-button" type="button">← Back</button>
           <div><h2 id="advanced-screener-title">Advanced Stock Screener</h2><p>Find index stocks matching all your selected financial criteria.</p></div>
-          <button id="advanced-screener-close" type="button">Close</button>
+          <button id="advanced-screener-home" class="layer-nav-button layer-home-button" type="button">Home</button>
         </div>
         <div class="advanced-filter-card">
           <div class="advanced-filter-top">
@@ -1270,14 +1411,6 @@
         </div>
       </div>
     </section>
-    {% if current_user %}
-    <section id="wishlist-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="wishlist-title">
-      <div class="wishlist-shell">
-        <div class="wishlist-header"><div><h2 id="wishlist-title">My Wishlist</h2><p>Stocks you saved for quick access.</p></div><button id="wishlist-close" type="button">Close</button></div>
-        <div id="wishlist-list" class="wishlist-list"><div class="wishlist-empty">Loading your wishlist…</div></div>
-      </div>
-    </section>
-    {% endif %}
     <section id="auth-gate" hidden aria-modal="true" role="dialog" aria-labelledby="auth-gate-title">
       <div class="auth-gate-card">
         <button id="auth-gate-close" class="auth-gate-close" type="button" aria-label="Close">×</button>
@@ -1302,11 +1435,11 @@
     <script>
       const form = document.getElementById('search-form');
       const query = document.getElementById('query');
+      const workspaceSearch = document.getElementById('workspace-search');
       const resultsCalendar = document.getElementById('results-calendar');
       const homeIntelligenceGrid = document.getElementById('home-intelligence-grid');
       const calendarStatus = document.getElementById('calendar-status');
       const calendarDays = document.getElementById('calendar-days');
-      const calendarReopen = document.getElementById('calendar-reopen');
       const wishlistNewsCard = document.getElementById('wishlist-news-card');
       const wishlistNewsStatus = document.getElementById('wishlist-news-status');
       const wishlistNewsList = document.getElementById('wishlist-news-list');
@@ -1321,6 +1454,7 @@
       const screeningOverlay = document.getElementById('screening-overlay');
       const screeningTitle = document.getElementById('screening-title');
       const screeningClose = document.getElementById('screening-close');
+      const screeningHome = document.getElementById('screening-home');
       const screeningProgress = document.getElementById('screening-progress');
       const screeningProgressBar = document.getElementById('screening-progress-bar');
       const screeningResultsBody = document.getElementById('screening-results-body');
@@ -1328,6 +1462,7 @@
       const advancedScreenerOpen = document.getElementById('advanced-screener-open');
       const advancedScreenerOverlay = document.getElementById('advanced-screener-overlay');
       const advancedScreenerClose = document.getElementById('advanced-screener-close');
+      const advancedScreenerHome = document.getElementById('advanced-screener-home');
       const advancedIndexSelect = document.getElementById('advanced-index-select');
       const advancedCriteria = document.getElementById('advanced-criteria');
       const advancedFilterError = document.getElementById('advanced-filter-error');
@@ -1337,12 +1472,26 @@
       const advancedProgressBar = document.getElementById('advanced-progress-bar');
       const advancedResultsBody = document.getElementById('advanced-results-body');
       const advancedAddAllWishlist = document.getElementById('advanced-add-all-wishlist');
-      const wishlistOpen = document.getElementById('wishlist-open');
-      const wishlistOverlay = document.getElementById('wishlist-overlay');
-      const wishlistClose = document.getElementById('wishlist-close');
+      const wishlistCard = document.getElementById('wishlist-card');
       const wishlistList = document.getElementById('wishlist-list');
+      const stockResultDrawer = document.getElementById('stock-result-drawer');
+      const stockResultContent = document.getElementById('stock-result-content');
+      const stockResultIdentity = document.getElementById('stock-result-identity');
+      const stockResultHome = document.getElementById('stock-result-home');
+      const infoPageDrawer = document.getElementById('info-page-drawer');
+      const infoPageBack = document.getElementById('info-page-back');
+      const infoPageHome = document.getElementById('info-page-home');
+      const infoPageTitle = document.getElementById('info-page-title');
+      const infoPageFrame = document.getElementById('info-page-frame');
+      const infoPageLinks = document.querySelectorAll('[data-info-page]');
+      const stockResultTabs = document.querySelectorAll('.stock-result-tab');
+      const stockResultPanes = document.querySelectorAll('.stock-result-pane');
+      const resultOverviewPane = document.getElementById('result-pane-overview');
+      const resultQualityPane = document.getElementById('result-pane-quality');
+      const resultTrendsPane = document.getElementById('result-pane-trends');
+      const resultUpdatesPane = document.getElementById('result-pane-updates');
+      const resultTrendsEmpty = document.getElementById('result-trends-empty');
       const backToScreeningButton = document.getElementById('back-to-screening');
-      const resultFooterBack = document.getElementById('result-footer-back');
       const authGate = document.getElementById('auth-gate');
       const authGateClose = document.getElementById('auth-gate-close');
       const authGateTitle = document.getElementById('auth-gate-title');
@@ -1378,6 +1527,12 @@
       const stockNewsStatus = document.getElementById('stock-news-status');
       const stockNewsList = document.getElementById('stock-news-list');
       const stockNewsCount = document.getElementById('stock-news-count');
+      stockResultIdentity.append(message);
+      resultOverviewPane.append(tables, mobileResults, dataNote);
+      resultQualityPane.append(interpretationSection);
+      resultTrendsPane.append(charts);
+      resultUpdatesPane.append(stockUpdatesCard);
+      searchInsightsGrid.hidden = true;
       let currentQuarterlyTable = null;
       let comparisonMode = 'qoq';
       let isCompactTableView = window.matchMedia('(max-width: 760px)').matches;
@@ -1433,7 +1588,7 @@
           if (saved) wishlistItems.delete(symbol);
           else wishlistItems.set(symbol, data.item);
           updateWishlistHearts();
-          if (wishlistOverlay && !wishlistOverlay.hidden) renderWishlist();
+          if (wishlistCard && !wishlistCard.hidden) renderWishlist();
           loadWishlistNews();
         } catch (error) {
           window.alert(error.message);
@@ -1463,6 +1618,7 @@
       }
       function renderWishlist() {
         if (!wishlistList) return;
+        stopCalendarMarquees(wishlistCard);
         wishlistList.replaceChildren();
         const items = [...wishlistItems.values()].sort((a, b) => (a.company || a.symbol).localeCompare(b.company || b.symbol));
         if (!items.length) {
@@ -1480,10 +1636,11 @@
           row.append(company, makeWishlistHeart(item.symbol, item.company), details);
           wishlistList.append(row);
         });
+        showPersistentScrollIndicator(wishlistList);
       }
       async function openWishlist() {
-        wishlistOverlay.hidden = false;
-        document.body.style.overflow = 'hidden';
+        activateIntelligenceTab('wishlist');
+        if (!currentUserAuthenticated || !wishlistList) return;
         wishlistList.innerHTML = '<div class="wishlist-empty">Loading your wishlist…</div>';
         try {
           await loadWishlist(true);
@@ -1493,13 +1650,6 @@
             className: 'wishlist-empty', textContent: error.message,
           }));
         }
-        wishlistClose.focus();
-      }
-      function closeWishlist() {
-        if (!wishlistOverlay) return;
-        wishlistOverlay.hidden = true;
-        document.body.style.removeProperty('overflow');
-        wishlistOpen?.focus();
       }
       function closeSearchMatches() {
         searchMatchOverlay.hidden = true;
@@ -1821,12 +1971,10 @@
         }
       }
       function collapseResultsCalendar() {
-        resultsCalendar.hidden = true;
-        homeIntelligenceGrid.hidden = true;
-        calendarReopen.hidden = false;
+        activateIntelligenceTab('search');
       }
       function stopCalendarMarquees(container = document) {
-        container.querySelectorAll('.calendar-list, .wishlist-news-list, .stock-update-list').forEach((list) => {
+        container.querySelectorAll('.calendar-list, .wishlist-list, .wishlist-news-list, .stock-update-list').forEach((list) => {
           const frame = marqueeAnimationFrames.get(list);
           if (frame) cancelAnimationFrame(frame);
           marqueeAnimationFrames.delete(list);
@@ -1887,7 +2035,7 @@
       function showPersistentScrollIndicator(list) {
         requestAnimationFrame(() => {
           if (!list.isConnected || list.scrollHeight <= list.clientHeight + 1) return;
-          const card = list.closest('.wishlist-news-card, .calendar-day');
+          const card = list.closest('.wishlist-news-card, .wishlist-card, .calendar-day');
           if (!card) return;
           card.classList.add('has-overflow');
           let rail = Array.from(card.children).find((child) => child.classList?.contains('calendar-scroll-rail'));
@@ -1985,16 +2133,23 @@
         }
       }
       function activateIntelligenceTab(tabName) {
+        const showSearch = tabName === 'search';
         const showEvents = tabName === 'events';
+        const showWishlist = tabName === 'wishlist';
+        workspaceSearch.hidden = !showSearch;
+        homeIntelligenceGrid.hidden = showSearch;
         resultsCalendar.hidden = !showEvents;
-        wishlistNewsCard.hidden = showEvents;
+        wishlistCard.hidden = !showWishlist;
+        wishlistNewsCard.hidden = tabName !== 'news';
         intelligenceTabs.forEach((tab) => tab.setAttribute(
           'aria-selected', String(tab.dataset.intelligenceTab === tabName),
         ));
-        if (!showEvents && !wishlistNewsList.hidden) showPersistentScrollIndicator(wishlistNewsList);
+        if (showWishlist && wishlistList && !wishlistList.hidden) showPersistentScrollIndicator(wishlistList);
+        if (tabName === 'news' && !wishlistNewsList.hidden) showPersistentScrollIndicator(wishlistNewsList);
       }
       intelligenceTabs.forEach((tab) => tab.addEventListener('click', () => {
-        activateIntelligenceTab(tab.dataset.intelligenceTab);
+        if (tab.dataset.intelligenceTab === 'wishlist') openWishlist();
+        else activateIntelligenceTab(tab.dataset.intelligenceTab);
       }));
       calendarDayTabs.forEach((tab) => tab.addEventListener('click', () => {
         selectedCalendarDay = Number(tab.dataset.calendarDay);
@@ -2143,18 +2298,6 @@
           stockNewsStatus.textContent = error.message;
         }
       }
-      function openResultsCalendar() {
-        clearDisplayedStock();
-        message.classList.remove('stock-summary', 'loading');
-        message.replaceChildren();
-        resultReturnContext = null;
-        backToScreeningButton.hidden = true;
-        homeIntelligenceGrid.hidden = false;
-        activateIntelligenceTab('events');
-        calendarReopen.hidden = true;
-        resultsCalendar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      calendarReopen.addEventListener('click', openResultsCalendar);
       function formatValue(value, unit) {
         if (value === null || value === undefined) return '—';
         const number = Number(value);
@@ -2362,6 +2505,7 @@
         const quarters = table?.quarters || [];
         const rows = table?.rows || [];
         charts.replaceChildren();
+        resultTrendsEmpty.hidden = false;
         if (!quarters.length || !rows.length) {
           interpretationSection.hidden = analysisBox.hidden;
           return;
@@ -2569,6 +2713,7 @@
         });
         card.append(title, selector, summary, legend, tooltip);
         charts.append(card);
+        resultTrendsEmpty.hidden = true;
         drawChart(options[0].rows);
         startChartRotation();
         interpretationSection.hidden = charts.childElementCount === 0 && analysisBox.hidden;
@@ -2818,8 +2963,8 @@
             scrollElements: [advancedScreenerOverlay, document.querySelector(".advanced-results-wrap")],
           },
           wishlist: {
-            label: "wishlist", overlay: wishlistOverlay, close: closeWishlist,
-            scrollElements: [wishlistOverlay],
+            label: "wishlist", overlay: homeIntelligenceGrid,
+            scrollElements: [wishlistList], activate: () => activateIntelligenceTab('wishlist'),
           },
         };
         const selectedOrigin = origins[origin];
@@ -2833,10 +2978,8 @@
         preserveResultReturnOnSubmit = true;
         backToScreeningButton.textContent = "← Back to " + selectedOrigin.label;
         backToScreeningButton.hidden = false;
-        selectedOrigin.close();
         query.value = symbol;
         query.dataset.confirmedSymbol = symbol;
-        window.scrollTo({ top: 0, behavior: "smooth" });
         form.requestSubmit();
       }
       function openStockDetails(symbol) {
@@ -3076,8 +3219,11 @@
       }
       function returnToScreeningResults() {
         if (!resultReturnContext) return;
-        resultReturnContext.overlay.hidden = false;
-        document.body.style.overflow = "hidden";
+        stockResultDrawer.hidden = true;
+        if (resultReturnContext.activate) resultReturnContext.activate();
+        else resultReturnContext.overlay.hidden = false;
+        if (resultReturnContext.activate) document.body.style.removeProperty('overflow');
+        else document.body.style.overflow = "hidden";
         requestAnimationFrame(() => {
           resultReturnContext.positions.forEach(({ element, top, left }) => {
             element.scrollTop = top;
@@ -3093,8 +3239,61 @@
           returnToScreeningResults();
           return;
         }
+        stockResultDrawer.hidden = true;
+        document.body.style.removeProperty('overflow');
         form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         window.setTimeout(() => query.focus({ preventScroll: true }), 350);
+      }
+      function activateStockResultTab(tabName = 'overview') {
+        stockResultTabs.forEach((tab) => tab.setAttribute(
+          'aria-selected', String(tab.dataset.resultTab === tabName),
+        ));
+        stockResultPanes.forEach((pane) => {
+          pane.hidden = pane.dataset.resultPane !== tabName;
+        });
+        stockResultDrawer.scrollTop = 0;
+      }
+      function openStockResultDrawer() {
+        backToScreeningButton.textContent = resultReturnContext
+          ? `← Back to ${resultReturnContext.label}`
+          : '← Back to search';
+        backToScreeningButton.hidden = false;
+        activateStockResultTab('overview');
+        stockResultDrawer.hidden = false;
+        stockResultDrawer.scrollTop = 0;
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => backToScreeningButton.focus({ preventScroll: true }));
+      }
+      function returnToHome() {
+        screeningRunId += 1;
+        advancedScreenerRunId += 1;
+        stockResultDrawer.hidden = true;
+        infoPageDrawer.hidden = true;
+        infoPageFrame.removeAttribute('src');
+        screeningOverlay.hidden = true;
+        advancedScreenerOverlay.hidden = true;
+        resultReturnContext = null;
+        preserveResultReturnOnSubmit = false;
+        clearDisplayedStock();
+        message.classList.remove('stock-summary', 'loading');
+        message.replaceChildren();
+        activateIntelligenceTab('search');
+        document.body.style.removeProperty('overflow');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.setTimeout(() => query.focus({ preventScroll: true }), 300);
+      }
+      function openInfoPage(link) {
+        infoPageTitle.textContent = link.dataset.infoPage || link.textContent.trim();
+        infoPageFrame.src = link.href;
+        infoPageDrawer.hidden = false;
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => infoPageBack.focus({ preventScroll: true }));
+      }
+      function closeInfoPage() {
+        infoPageDrawer.hidden = true;
+        infoPageFrame.removeAttribute('src');
+        const underlyingLayerOpen = !stockResultDrawer.hidden || !screeningOverlay.hidden || !advancedScreenerOverlay.hidden;
+        if (!underlyingLayerOpen) document.body.style.removeProperty('overflow');
       }
       async function runFullIndexScreening() {
         if (!visibleIndexStocks.length) return;
@@ -3285,17 +3484,49 @@
         advancedScreenerClose.focus();
       });
       advancedScreenerClose.addEventListener('click', closeAdvancedScreener);
+      advancedScreenerHome.addEventListener('click', returnToHome);
       addCriterionButton.addEventListener('click', () => addAdvancedCriterion());
       runAdvancedScreenerButton.addEventListener('click', runAdvancedScreener);
       advancedAddAllWishlist.addEventListener('click', addAllAdvancedMatchesToWishlist);
-      backToScreeningButton.addEventListener('click', returnToScreeningResults);
-      resultFooterBack.addEventListener('click', handleResultFooterBack);
+      backToScreeningButton.addEventListener('click', handleResultFooterBack);
       screeningClose.addEventListener('click', closeFullScreening);
+      screeningHome.addEventListener('click', returnToHome);
+      stockResultHome.addEventListener('click', returnToHome);
+      infoPageBack.addEventListener('click', closeInfoPage);
+      infoPageHome.addEventListener('click', returnToHome);
+      infoPageLinks.forEach((link) => link.addEventListener('click', (event) => {
+        event.preventDefault();
+        openInfoPage(link);
+      }));
+      infoPageFrame.addEventListener('load', () => {
+        try {
+          const frameDocument = infoPageFrame.contentDocument;
+          if (!frameDocument) return;
+          frameDocument.querySelector('body > header')?.setAttribute('hidden', '');
+          frameDocument.querySelector('body > footer')?.setAttribute('hidden', '');
+          const style = frameDocument.createElement('style');
+          style.textContent = 'body > header[hidden], body > footer[hidden] { display:none !important; } main { margin-top:24px !important; }';
+          frameDocument.head.append(style);
+        } catch (_error) {
+          // Direct page navigation remains available if iframe styling is blocked.
+        }
+      });
+      stockResultTabs.forEach((tab) => tab.addEventListener('click', () => {
+        activateStockResultTab(tab.dataset.resultTab);
+      }));
       screeningFilterButtons.forEach((button) => button.addEventListener('click', () => {
         activeScreeningFilter = button.dataset.screeningFilter;
         applyScreeningFilter();
       }));
       document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !infoPageDrawer.hidden) {
+          closeInfoPage();
+          return;
+        }
+        if (event.key === 'Escape' && !stockResultDrawer.hidden) {
+          handleResultFooterBack();
+          return;
+        }
         if (event.key === 'Escape' && !screeningOverlay.hidden) closeFullScreening();
         if (event.key === 'Escape' && !advancedScreenerOverlay.hidden) closeAdvancedScreener();
       });
@@ -3382,10 +3613,6 @@
         }
         renderMetricCharts(data.quarterly_results);
         loadStockUpdates(data.symbol);
-        resultFooterBack.textContent = resultReturnContext
-          ? `← Back to ${resultReturnContext.label}`
-          : '↑ Back to search';
-        resultFooterBack.hidden = false;
       }
       function clearDisplayedStock() {
         stockUpdatesRequestId += 1;
@@ -3405,21 +3632,21 @@
         dataNote.replaceChildren();
         dataNote.hidden = true;
         charts.replaceChildren();
+        resultTrendsEmpty.hidden = false;
         interpretationSection.hidden = true;
-        resultFooterBack.hidden = true;
         renderAnalysis(null);
       }
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!preserveResultReturnOnSubmit) {
           resultReturnContext = null;
-          backToScreeningButton.hidden = true;
-          backToScreeningButton.textContent = "← Back to results";
+          backToScreeningButton.textContent = "← Back to search";
         }
         preserveResultReturnOnSubmit = false;
         query.blur();
         if (!await confirmSearchSelection()) return;
         collapseResultsCalendar();
+        openStockResultDrawer();
         if (chartRotationTimer) {
           clearInterval(chartRotationTimer);
           chartRotationTimer = null;
@@ -3492,14 +3719,11 @@
           // Authentication status is non-critical; the user can search again.
         }
       })();
-      wishlistOpen?.addEventListener('click', openWishlist);
-      wishlistClose?.addEventListener('click', closeWishlist);
       searchMatchClose.addEventListener('click', closeSearchMatches);
       searchMatchOverlay.addEventListener('click', (event) => {
         if (event.target === searchMatchOverlay) closeSearchMatches();
       });
       document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && wishlistOverlay && !wishlistOverlay.hidden) closeWishlist();
         if (event.key === 'Escape' && !searchMatchOverlay.hidden) closeSearchMatches();
       });
       loadWishlist().catch(() => {});
