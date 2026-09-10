@@ -768,8 +768,10 @@
       .calendar-reopen:hover, .calendar-reopen:focus-visible { border-color: #528bff; background: #dbe8ff; outline: none; }
       .wishlist-news-card { position: relative; display: flex; grid-column: 1; grid-row: 1; min-width: 0; height: 390px; min-height: 390px; max-height: 390px; flex-direction: column; box-sizing: border-box; padding: 15px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#fbf9ff); box-shadow: var(--shadow-card); }
       .wishlist-news-card .calendar-header { flex: 0 0 auto; }
-      .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width: none; list-style: none; }
-      .wishlist-news-list::-webkit-scrollbar { width: 0; }
+      .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-color: #84adff #eaf1ff; scrollbar-width: thin; list-style: none; }
+      .wishlist-news-list::-webkit-scrollbar { width: 6px; }
+      .wishlist-news-list::-webkit-scrollbar-track { border-radius: 999px; background: #eaf1ff; }
+      .wishlist-news-list::-webkit-scrollbar-thumb { border-radius: 999px; background: #84adff; }
       .wishlist-news-item { display: block; flex: 0 0 92px; box-sizing: border-box; height: 92px; padding: 10px; overflow: hidden; border: 1px solid #edf1f6; border-radius: 9px; background: #f8fafc; color: inherit; text-decoration: none; }
       .wishlist-news-item:hover, .wishlist-news-item:focus-visible { border-color: #b2ccff; background: #f2f6ff; outline: none; }
       .wishlist-news-heading { display: -webkit-box; overflow: hidden; color: #1e293b; font-size: 10px; font-weight: 800; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -778,9 +780,10 @@
       .wishlist-news-symbols { overflow: hidden; color: #6941c6; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
       .wishlist-news-empty { margin: auto 0; color: #64748b; font-size: 11px; line-height: 1.5; }
       .home-intelligence-grid { grid-template-columns:minmax(0,1fr); gap:0; overflow:hidden; border:1px solid #dbe3ef; border-radius:14px; background:#fff; box-shadow:var(--shadow-card); }
-      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; gap:5px; padding:6px; border-bottom:1px solid #e2e8f0; background:#f8fafc; }
-      .home-intelligence-tab { flex:1; min-height:36px; padding:7px 10px; border:0; border-radius:8px; background:transparent; color:#526075; font-size:10px; font-weight:800; }
-      .home-intelligence-tab[aria-selected="true"] { background:#175cd3; color:#fff; box-shadow:0 4px 10px rgba(21,94,239,.2); }
+      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; justify-content:flex-start; gap:2px; padding:7px 7px 0; border-bottom:1px solid #dbe3ef; background:#eef2f7; }
+      .home-intelligence-tab { position:relative; flex:0 1 175px; min-width:125px; min-height:35px; margin-bottom:-1px; padding:7px 14px; border:1px solid transparent; border-bottom:0; border-radius:10px 10px 0 0; background:#e4e9f0; color:#526075; font-size:10px; font-weight:800; }
+      .home-intelligence-tab:hover, .home-intelligence-tab:focus-visible { background:#f4f7fb; color:#175cd3; outline:none; }
+      .home-intelligence-tab[aria-selected="true"] { z-index:1; border-color:#dbe3ef; background:#fff; color:#175cd3; box-shadow:0 -2px 7px rgba(15,36,71,.05); }
       .results-calendar, .wishlist-news-card { grid-column:1; grid-row:2; height:390px; min-height:390px; max-height:390px; border:0; border-radius:0; box-shadow:none; }
       .results-calendar[hidden], .wishlist-news-card[hidden] { display:none; }
       .compact-calendar-controls { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:7px; margin-bottom:8px; }
@@ -2024,7 +2027,6 @@
         wishlistNewsStatus.hidden = true;
         wishlistNewsCount.textContent = data.count;
         wishlistNewsCount.hidden = false;
-        startCalendarMarquee(wishlistNewsList);
       }
       async function loadWishlistNews() {
         if (!wishlistNewsCard) return;
