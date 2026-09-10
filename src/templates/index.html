@@ -74,10 +74,11 @@
       .header-plan-status.bronze .header-plan-value { color: #854a25; }
       .header-plan-status.gold .header-plan-value { color: #8a5000; }
       .header-plan-status.free .header-plan-value, .header-plan-status.silver .header-plan-value { color: #344054; }
-      #subscription-overlay { position: fixed; z-index: 60; inset: 0; box-sizing: border-box; overflow-y: auto; padding: 28px 22px; background: linear-gradient(145deg,#eef4ff 0%,#f5f0ff 55%,#eef8ff 100%); }
+      #subscription-overlay { position: fixed; z-index: 60; inset: 0 0 0 clamp(28px,5vw,72px); box-sizing: border-box; overflow-y: auto; padding: 28px 22px; background: linear-gradient(145deg,#eef4ff 0%,#f5f0ff 55%,#eef8ff 100%); box-shadow:-18px 0 45px rgba(15,23,42,.2); animation:workspace-drawer-in .58s cubic-bezier(.16,1,.3,1); will-change:transform; }
       #subscription-overlay[hidden] { display: none; }
       .subscription-shell { width: min(920px, 100%); margin: 0 auto; }
-      .subscription-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(105,65,198,.2); }
+      .subscription-header { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:16px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid rgba(105,65,198,.2); }
+      .subscription-header > div { text-align:center; }
       .subscription-header h2 { margin: 0; color: #35265f; font-size: 26px; letter-spacing: -.025em; }
       .subscription-header p { margin: 4px 0 0; color: #655b7c; font-size: 12px; }
       .subscription-back { padding: 8px 12px; border: 1px solid #7f56d9; background: #6941c6; color: #fff; font-size: 12px; font-weight: 750; }
@@ -150,7 +151,7 @@
       .screener-free-badge { padding: 2px 6px; border-radius: 999px; background: #dcfae6; color: #067647; font-size: 8px; letter-spacing: .08em; }
       @keyframes workspace-drawer-in { from { transform:translateX(clamp(38px,6vw,76px)); } to { transform:translateX(0); } }
       #advanced-screener-overlay { position: fixed; z-index: 60; inset: 0 0 0 clamp(28px,5vw,72px); box-sizing: border-box; overflow: auto; padding: 20px; background: #f5f7fb; box-shadow:-18px 0 45px rgba(15,23,42,.2); animation:workspace-drawer-in .58s cubic-bezier(.16,1,.3,1); will-change:transform; }
-      #advanced-screener-overlay::before, #screening-overlay::before, #stock-result-drawer::before { content:""; position:fixed; z-index:-1; top:0; bottom:0; left:0; width:clamp(28px,5vw,72px); background:rgba(255,255,255,.12); backdrop-filter:blur(7px) saturate(.85); -webkit-backdrop-filter:blur(7px) saturate(.85); }
+      #subscription-overlay::before, #advanced-screener-overlay::before, #screening-overlay::before, #stock-result-drawer::before { content:""; position:fixed; z-index:-1; top:0; bottom:0; left:0; width:clamp(28px,5vw,72px); background:rgba(255,255,255,.12); backdrop-filter:blur(7px) saturate(.85); -webkit-backdrop-filter:blur(7px) saturate(.85); }
       #advanced-screener-overlay[hidden] { display: none; }
       .advanced-screener-shell { width: min(1100px,100%); margin: 0 auto; }
       .advanced-screener-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
@@ -239,6 +240,9 @@
       body:has(#advanced-screener-overlay:not([hidden])) > .page-header,
       body:has(#advanced-screener-overlay:not([hidden])) > .app-main,
       body:has(#advanced-screener-overlay:not([hidden])) > .site-footer { filter:blur(6px); }
+      body:has(#subscription-overlay:not([hidden])) > .page-header,
+      body:has(#subscription-overlay:not([hidden])) > .app-main,
+      body:has(#subscription-overlay:not([hidden])) > .site-footer { filter:blur(6px); }
       body:has(#stock-result-drawer:not([hidden])) > .page-header,
       body:has(#stock-result-drawer:not([hidden])) > .app-main,
       body:has(#stock-result-drawer:not([hidden])) > .site-footer,
@@ -1105,9 +1109,12 @@
       .home-intelligence-grid .results-calendar, .home-intelligence-grid .wishlist-card, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:1; }
       @media (max-width:760px) {
         #advanced-screener-overlay, #screening-overlay { left:14px; }
+        #subscription-overlay { left:14px; }
+        .subscription-header { align-items:center; gap:8px; }
+        .subscription-header p { display:none; }
         #stock-result-drawer { left:18px; }
         #info-page-drawer { left:18px; }
-        #advanced-screener-overlay::before, #screening-overlay::before { width:14px; }
+        #subscription-overlay::before, #advanced-screener-overlay::before, #screening-overlay::before { width:14px; }
         #stock-result-drawer::before { width:18px; }
         #info-page-drawer::before { width:18px; }
         .stock-result-header { min-height:52px; padding:0 12px; }
@@ -1162,11 +1169,12 @@
       <section id="subscription-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="subscription-title">
         <div class="subscription-shell">
           <header class="subscription-header">
+            <button id="subscription-back" class="subscription-back layer-nav-button" type="button">← Back</button>
             <div>
               <h2 id="subscription-title">Subscription plan</h2>
               <p>Choose a plan with secure Razorpay checkout. Each purchase is valid for 30 days.</p>
             </div>
-            <button id="subscription-back" class="subscription-back" type="button">← Back to home</button>
+            <button id="subscription-home" class="layer-nav-button layer-home-button" type="button">Home</button>
           </header>
           <section id="plan-card" class="plan-card" aria-live="polite">
             <span id="plan-tier" class="plan-tier">Plan</span>
@@ -1716,6 +1724,7 @@
       const subscriptionOpen = document.getElementById('subscription-open');
       const subscriptionOverlay = document.getElementById('subscription-overlay');
       const subscriptionBack = document.getElementById('subscription-back');
+      const subscriptionHome = document.getElementById('subscription-home');
       const headerPlanTier = document.getElementById('header-plan-tier');
       const headerPlanQuota = document.getElementById('header-plan-quota');
       const headerPlanExpiry = document.getElementById('header-plan-expiry');
@@ -1913,6 +1922,7 @@
         }
       });
       subscriptionBack?.addEventListener('click', closeSubscription);
+      subscriptionHome?.addEventListener('click', returnToHome);
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && subscriptionOverlay && !subscriptionOverlay.hidden) closeSubscription();
       });
@@ -3223,6 +3233,7 @@
       function returnToScreeningResults() {
         if (!resultReturnContext) return;
         stockResultDrawer.hidden = true;
+        if (subscriptionOverlay) subscriptionOverlay.hidden = true;
         if (resultReturnContext.activate) resultReturnContext.activate();
         else resultReturnContext.overlay.hidden = false;
         if (resultReturnContext.activate) document.body.style.removeProperty('overflow');
