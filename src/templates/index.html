@@ -1890,10 +1890,13 @@
           const card = list.closest('.wishlist-news-card, .calendar-day');
           if (!card) return;
           card.classList.add('has-overflow');
-          const rail = Object.assign(document.createElement('span'), { className: 'calendar-scroll-rail' });
-          const thumb = Object.assign(document.createElement('span'), { className: 'calendar-scroll-thumb' });
-          rail.append(thumb);
-          card.append(rail);
+          let rail = Array.from(card.children).find((child) => child.classList?.contains('calendar-scroll-rail'));
+          if (!rail) {
+            rail = Object.assign(document.createElement('span'), { className: 'calendar-scroll-rail' });
+            rail.append(Object.assign(document.createElement('span'), { className: 'calendar-scroll-thumb' }));
+            card.append(rail);
+          }
+          const thumb = rail.querySelector('.calendar-scroll-thumb');
           const update = () => {
             const thumbHeight = Math.max(20, rail.clientHeight * (list.clientHeight / list.scrollHeight));
             const travel = Math.max(0, rail.clientHeight - thumbHeight);
@@ -1901,6 +1904,8 @@
             thumb.style.height = `${thumbHeight}px`;
             thumb.style.transform = `translateY(${(list.scrollTop / maxScroll) * travel}px)`;
           };
+          if (list._persistentScrollHandler) list.removeEventListener('scroll', list._persistentScrollHandler);
+          list._persistentScrollHandler = update;
           list.addEventListener('scroll', update, { passive: true });
           update();
         });
@@ -1986,6 +1991,7 @@
         intelligenceTabs.forEach((tab) => tab.setAttribute(
           'aria-selected', String(tab.dataset.intelligenceTab === tabName),
         ));
+        if (!showEvents && !wishlistNewsList.hidden) showPersistentScrollIndicator(wishlistNewsList);
       }
       intelligenceTabs.forEach((tab) => tab.addEventListener('click', () => {
         activateIntelligenceTab(tab.dataset.intelligenceTab);
