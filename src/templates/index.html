@@ -768,10 +768,9 @@
       .calendar-reopen:hover, .calendar-reopen:focus-visible { border-color: #528bff; background: #dbe8ff; outline: none; }
       .wishlist-news-card { position: relative; display: flex; grid-column: 1; grid-row: 1; min-width: 0; height: 390px; min-height: 390px; max-height: 390px; flex-direction: column; box-sizing: border-box; padding: 15px; overflow: hidden; border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(145deg,#fff,#fbf9ff); box-shadow: var(--shadow-card); }
       .wishlist-news-card .calendar-header { flex: 0 0 auto; }
-      .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-color: #84adff #eaf1ff; scrollbar-width: thin; list-style: none; }
-      .wishlist-news-list::-webkit-scrollbar { width: 6px; }
-      .wishlist-news-list::-webkit-scrollbar-track { border-radius: 999px; background: #eaf1ff; }
-      .wishlist-news-list::-webkit-scrollbar-thumb { border-radius: 999px; background: #84adff; }
+      .wishlist-news-list { display: grid; flex: 1 1 auto; min-height: 0; gap: 7px; margin: 2px -3px 0 0; padding: 0 7px 0 0; overflow-x: hidden; overflow-y: scroll; overscroll-behavior: contain; scrollbar-width:none; list-style: none; }
+      .wishlist-news-list::-webkit-scrollbar { width:0; }
+      .wishlist-news-card .calendar-scroll-rail { top:68px; right:5px; bottom:12px; }
       .wishlist-news-item { display: block; flex: 0 0 92px; box-sizing: border-box; height: 92px; padding: 10px; overflow: hidden; border: 1px solid #edf1f6; border-radius: 9px; background: #f8fafc; color: inherit; text-decoration: none; }
       .wishlist-news-item:hover, .wishlist-news-item:focus-visible { border-color: #b2ccff; background: #f2f6ff; outline: none; }
       .wishlist-news-heading { display: -webkit-box; overflow: hidden; color: #1e293b; font-size: 10px; font-weight: 800; line-height: 1.35; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
@@ -794,15 +793,14 @@
       .compact-calendar-tabs:last-child { width:100%; padding-left:12px; }
       .compact-calendar-tab { position:relative; flex:0 0 auto; min-width:0; min-height:29px; padding:5px 1px 7px; border:0; border-radius:0; background:transparent; color:#64748b; font-size:8px; font-weight:800; white-space:nowrap; }
       .compact-calendar-tab:hover, .compact-calendar-tab:focus-visible, .compact-calendar-tab[aria-selected="true"] { color:#175cd3; outline:none; }
+      .compact-calendar-day { min-height:35px; padding:7px 3px 9px; font-size:11px; }
       .compact-calendar-category b { margin-left:2px; color:inherit; font-size:7px; }
       .wishlist-signin { margin:auto; color:#64748b; font-size:11px; text-align:center; }
       .wishlist-signin a { color:#175cd3; font-weight:800; }
       .results-calendar { height:auto; min-height:390px; max-height:none; }
       .calendar-days.category-boxes { grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:minmax(230px,1fr); }
-      .calendar-days.category-boxes .calendar-list { scrollbar-color:#84adff #eaf1ff; scrollbar-gutter:stable; scrollbar-width:thin; }
-      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar { width:6px; }
-      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar-track { border-radius:999px; background:#eaf1ff; }
-      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar-thumb { border-radius:999px; background:#84adff; }
+      .calendar-days.category-boxes .calendar-list { scrollbar-width:none; }
+      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar { width:0; }
       #nifty-picker { margin-top: 10px; padding: 12px; border-color: #dbe3ef; border-radius: 12px; background: #f8fafc; }
       #message { margin: 22px 0 10px; }
       #message.stock-summary { width: 100%; margin: 20px 0 0; padding: 10px; border-color: #dbe3ef; border-radius: 14px; background: #fff; box-shadow: var(--shadow-card); }
@@ -1031,6 +1029,7 @@
         .home-intelligence-grid .results-calendar { height:auto; min-height:0; max-height:none; }
         .compact-calendar-controls { grid-template-columns:1fr; gap:5px; }
         .compact-calendar-tab { padding:4px 3px; font-size:7.5px; }
+        .compact-calendar-day { min-height:34px; padding:7px 3px 9px; font-size:10.5px; }
         .calendar-days.category-boxes { grid-template-columns:1fr; grid-template-rows:repeat(3,170px); }
       }
     </style>
@@ -1885,6 +1884,27 @@
         });
         marqueeAnimationFrames.set(list, setupFrame);
       }
+      function showPersistentScrollIndicator(list) {
+        requestAnimationFrame(() => {
+          if (!list.isConnected || list.scrollHeight <= list.clientHeight + 1) return;
+          const card = list.closest('.wishlist-news-card, .calendar-day');
+          if (!card) return;
+          card.classList.add('has-overflow');
+          const rail = Object.assign(document.createElement('span'), { className: 'calendar-scroll-rail' });
+          const thumb = Object.assign(document.createElement('span'), { className: 'calendar-scroll-thumb' });
+          rail.append(thumb);
+          card.append(rail);
+          const update = () => {
+            const thumbHeight = Math.max(20, rail.clientHeight * (list.clientHeight / list.scrollHeight));
+            const travel = Math.max(0, rail.clientHeight - thumbHeight);
+            const maxScroll = Math.max(1, list.scrollHeight - list.clientHeight);
+            thumb.style.height = `${thumbHeight}px`;
+            thumb.style.transform = `translateY(${(list.scrollTop / maxScroll) * travel}px)`;
+          };
+          list.addEventListener('scroll', update, { passive: true });
+          update();
+        });
+      }
       let homeCalendarData = null;
       let selectedCalendarDay = 0;
       function renderResultsCalendar(data = homeCalendarData) {
@@ -1938,6 +1958,7 @@
             list.append(item);
           });
           card.append(list);
+          showPersistentScrollIndicator(list);
           return card;
         });
         calendarDays.replaceChildren(...cards);
@@ -2018,6 +2039,7 @@
         wishlistNewsStatus.hidden = true;
         wishlistNewsCount.textContent = data.count;
         wishlistNewsCount.hidden = false;
+        showPersistentScrollIndicator(wishlistNewsList);
       }
       async function loadWishlistNews() {
         if (!wishlistNewsCard) return;
