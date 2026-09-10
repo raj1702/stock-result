@@ -166,16 +166,21 @@ class StockService:
                 "rights issue", "preferential issue", "merger", "amalgamation",
                 "acquisition", "disinvestment",
             )
-            if "dividend" in f"{purpose_text} {description_text}":
+            is_board_meeting = any(term in purpose_text for term in (
+                "board meeting", "meeting of the board", "board of directors",
+            ))
+            if is_board_meeting:
+                category = "board_meetings"
+            elif "dividend" in purpose_text:
                 category = "dividends"
-            elif any(term in f"{purpose_text} {description_text}" for term in other_agenda_terms):
+            elif any(term in purpose_text for term in other_agenda_terms):
                 category = "other"
             elif "result" in purpose_text or "earning" in purpose_text:
                 category = "results"
-            elif any(term in purpose_text for term in (
-                "board meeting", "meeting of the board", "board of directors",
-            )):
-                category = "board_meetings"
+            elif "dividend" in description_text:
+                category = "dividends"
+            elif any(term in description_text for term in other_agenda_terms):
+                category = "other"
             elif "result" in description_text or "earning" in description_text:
                 category = "results"
             else:
