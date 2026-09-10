@@ -158,13 +158,24 @@ class StockService:
             company = str(meeting.get("sm_name") or symbol).strip()
             purpose = str(meeting.get("bm_purpose") or "Board meeting").strip()
             description = str(meeting.get("bm_desc") or "").strip()
-            event_text = f"{purpose} {description}".casefold()
-            if "result" in event_text or "earning" in event_text:
+            purpose_text = purpose.casefold()
+            description_text = description.casefold()
+            other_agenda_terms = (
+                "fund raising", "fundraising", "raise funds", "raising of funds",
+                "dividend", "buyback", "bonus issue", "stock split", "sub-division",
+                "rights issue", "preferential issue", "merger", "amalgamation",
+                "acquisition", "disinvestment",
+            )
+            if any(term in f"{purpose_text} {description_text}" for term in other_agenda_terms):
+                category = "other"
+            elif "result" in purpose_text or "earning" in purpose_text:
                 category = "results"
-            elif any(term in event_text for term in (
+            elif any(term in purpose_text for term in (
                 "board meeting", "meeting of the board", "board of directors",
             )):
                 category = "board_meetings"
+            elif "result" in description_text or "earning" in description_text:
+                category = "results"
             else:
                 category = "other"
             unique_key = (meeting_date, symbol, purpose.casefold(), description.casefold())

@@ -65,7 +65,8 @@ def test_calendar_keeps_all_board_meeting_events():
     assert calendar["days"][1]["count"] == 2
     assert calendar["days"][1]["results"][1]["purpose"] == "Fund Raising"
     assert calendar["days"][0]["results"][0]["category"] == "results"
-    assert calendar["days"][0]["results"][1]["category"] == "results"
+    assert calendar["days"][0]["results"][1]["category"] == "board_meetings"
+    assert calendar["days"][1]["results"][0]["category"] == "board_meetings"
     assert calendar["days"][1]["results"][1]["category"] == "other"
     assert service._nse_session.calls[0][1]["from_date"] == "08-09-2026"
     assert service._nse_session.calls[0][1]["to_date"] == "09-09-2026"
@@ -86,6 +87,20 @@ def test_calendar_can_fetch_the_next_seven_days_for_the_full_page():
     assert len(calendar["days"]) == 9
     assert calendar["days"][8]["results"][0]["symbol"] == "WEEK"
     assert service._nse_session.calls[0][1]["to_date"] == "16-09-2026"
+
+
+def test_specific_fund_raising_agenda_is_not_grouped_as_a_generic_board_meeting():
+    service = StockService()
+    service._nse_session = FakeSession([{
+        "bm_symbol": "RAISE", "bm_date": "08-Sep-2026",
+        "bm_purpose": "Board Meeting Intimation",
+        "bm_desc": "To consider raising of funds through a preferential issue",
+        "sm_name": "Raise Limited",
+    }])
+
+    calendar = service.results_calendar(datetime(2026, 9, 8, 10, 0))
+
+    assert calendar["days"][0]["results"][0]["category"] == "other"
 
 
 def test_wishlist_news_uses_exact_nse_instrument_keys(monkeypatch):
