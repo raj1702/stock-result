@@ -1362,7 +1362,7 @@
       </nav>
       </div>
       <div id="stock-result-content" class="stock-result-content">
-        <section id="result-pane-overview" class="stock-result-pane" data-result-pane="overview"></section>
+        <section id="result-pane-overview" class="stock-result-pane" data-result-pane="overview"><p id="overview-quarterly-empty" class="result-pane-empty" hidden>No reported quarterly results are available yet. This may be a newly listed company that has not published its first quarterly result.</p></section>
         <section id="result-pane-quality" class="stock-result-pane" data-result-pane="quality" hidden></section>
         <section id="result-pane-trends" class="stock-result-pane" data-result-pane="trends" hidden><p id="result-trends-empty" class="result-pane-empty">Trend charts are unavailable for this stock.</p></section>
         <section id="result-pane-updates" class="stock-result-pane" data-result-pane="updates" hidden></section>
@@ -1498,6 +1498,7 @@
       const stockResultTabs = document.querySelectorAll('.stock-result-tab');
       const stockResultPanes = document.querySelectorAll('.stock-result-pane');
       const resultOverviewPane = document.getElementById('result-pane-overview');
+      const overviewQuarterlyEmpty = document.getElementById('overview-quarterly-empty');
       const resultQualityPane = document.getElementById('result-pane-quality');
       const resultTrendsPane = document.getElementById('result-pane-trends');
       const resultUpdatesPane = document.getElementById('result-pane-updates');
@@ -2735,6 +2736,7 @@
         const quarters = table?.quarters || [];
         const rows = table?.rows || [];
         if (!quarters.length || !rows.length) {
+          overviewQuarterlyEmpty.hidden = false;
           resultsHead.replaceChildren();
           resultsBody.replaceChildren();
           mobileMetricCards.replaceChildren();
@@ -2742,6 +2744,7 @@
           tables.hidden = true;
           return;
         }
+        overviewQuarterlyEmpty.hidden = true;
         currentQuarterlyTable = table;
         const displayQuarters = isCompactTableView
           ? quarters.map((quarter) => ({
