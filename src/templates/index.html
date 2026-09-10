@@ -780,19 +780,29 @@
       .wishlist-news-symbols { overflow: hidden; color: #6941c6; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
       .wishlist-news-empty { margin: auto 0; color: #64748b; font-size: 11px; line-height: 1.5; }
       .home-intelligence-grid { grid-template-columns:minmax(0,1fr); gap:0; overflow:hidden; border:1px solid #dbe3ef; border-radius:14px; background:#fff; box-shadow:var(--shadow-card); }
-      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; justify-content:flex-start; gap:2px; padding:7px 7px 0; border-bottom:1px solid #dbe3ef; background:#eef2f7; }
-      .home-intelligence-tab { position:relative; flex:0 1 175px; min-width:125px; min-height:35px; margin-bottom:-1px; padding:7px 14px; border:1px solid transparent; border-bottom:0; border-radius:10px 10px 0 0; background:#e4e9f0; color:#526075; font-size:10px; font-weight:800; }
-      .home-intelligence-tab:hover, .home-intelligence-tab:focus-visible { background:#f4f7fb; color:#175cd3; outline:none; }
-      .home-intelligence-tab[aria-selected="true"] { z-index:1; border-color:#dbe3ef; background:#fff; color:#175cd3; box-shadow:0 -2px 7px rgba(15,36,71,.05); }
+      .home-intelligence-tabs { display:flex; grid-column:1; grid-row:1; justify-content:flex-start; gap:24px; padding:0 16px; border-bottom:1px solid #e2e8f0; background:#fff; }
+      .home-intelligence-tab { position:relative; flex:0 0 auto; min-width:0; min-height:42px; padding:12px 2px 10px; border:0; border-radius:0; background:transparent; color:#64748b; font-size:11px; font-weight:800; }
+      .home-intelligence-tab::after, .compact-calendar-tab::after { content:""; position:absolute; right:0; bottom:-1px; left:0; height:2px; border-radius:2px 2px 0 0; background:#2563eb; opacity:0; transform:scaleX(.45); transition:opacity .18s ease,transform .18s ease; }
+      .home-intelligence-tab:hover, .home-intelligence-tab:focus-visible { color:#175cd3; outline:none; }
+      .home-intelligence-tab[aria-selected="true"] { color:#175cd3; }
+      .home-intelligence-tab[aria-selected="true"]::after, .compact-calendar-tab[aria-selected="true"]::after { opacity:1; transform:scaleX(1); }
       .results-calendar, .wishlist-news-card { grid-column:1; grid-row:2; height:390px; min-height:390px; max-height:390px; border:0; border-radius:0; box-shadow:none; }
       .results-calendar[hidden], .wishlist-news-card[hidden] { display:none; }
-      .compact-calendar-controls { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:7px; margin-bottom:8px; }
-      .compact-calendar-tabs { display:flex; gap:4px; min-width:0; }
-      .compact-calendar-tab { flex:1 1 0; min-width:0; min-height:28px; padding:4px 6px; border:1px solid #dbe3ef; border-radius:7px; background:#fff; color:#526075; font-size:8px; font-weight:800; white-space:nowrap; }
-      .compact-calendar-tab[aria-selected="true"] { border-color:#84adff; background:#eff4ff; color:#175cd3; }
-      .compact-calendar-category b { margin-left:2px; font-size:7px; }
+      .compact-calendar-controls { display:flex; align-items:flex-start; flex-direction:column; gap:5px; margin-bottom:8px; }
+      .compact-calendar-tabs { display:flex; gap:14px; min-width:0; border-bottom:1px solid #edf1f6; }
+      .compact-calendar-tabs:first-child { width:100%; }
+      .compact-calendar-tabs:last-child { width:100%; padding-left:12px; }
+      .compact-calendar-tab { position:relative; flex:0 0 auto; min-width:0; min-height:29px; padding:5px 1px 7px; border:0; border-radius:0; background:transparent; color:#64748b; font-size:8px; font-weight:800; white-space:nowrap; }
+      .compact-calendar-tab:hover, .compact-calendar-tab:focus-visible, .compact-calendar-tab[aria-selected="true"] { color:#175cd3; outline:none; }
+      .compact-calendar-category b { margin-left:2px; color:inherit; font-size:7px; }
       .wishlist-signin { margin:auto; color:#64748b; font-size:11px; text-align:center; }
       .wishlist-signin a { color:#175cd3; font-weight:800; }
+      .results-calendar { height:auto; min-height:390px; max-height:none; }
+      .calendar-days.category-boxes { grid-template-columns:repeat(3,minmax(0,1fr)); grid-template-rows:minmax(230px,1fr); }
+      .calendar-days.category-boxes .calendar-list { scrollbar-color:#84adff #eaf1ff; scrollbar-gutter:stable; scrollbar-width:thin; }
+      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar { width:6px; }
+      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar-track { border-radius:999px; background:#eaf1ff; }
+      .calendar-days.category-boxes .calendar-list::-webkit-scrollbar-thumb { border-radius:999px; background:#84adff; }
       #nifty-picker { margin-top: 10px; padding: 12px; border-color: #dbe3ef; border-radius: 12px; background: #f8fafc; }
       #message { margin: 22px 0 10px; }
       #message.stock-summary { width: 100%; margin: 20px 0 0; padding: 10px; border-color: #dbe3ef; border-radius: 14px; background: #fff; box-shadow: var(--shadow-card); }
@@ -1018,8 +1028,10 @@
       .home-intelligence-grid .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
       @media (max-width:760px) {
         .home-intelligence-grid .results-calendar, .home-intelligence-grid.calendar-only .results-calendar, .home-intelligence-grid .wishlist-news-card { grid-column:1; grid-row:2; }
+        .home-intelligence-grid .results-calendar { height:auto; min-height:0; max-height:none; }
         .compact-calendar-controls { grid-template-columns:1fr; gap:5px; }
         .compact-calendar-tab { padding:4px 3px; font-size:7.5px; }
+        .calendar-days.category-boxes { grid-template-columns:1fr; grid-template-rows:repeat(3,170px); }
       }
     </style>
     {% include '_analytics_head.html' %}
@@ -1132,11 +1144,6 @@
             <div class="compact-calendar-tabs" role="tablist" aria-label="Event day">
               <button class="compact-calendar-tab compact-calendar-day" type="button" data-calendar-day="0" aria-selected="true">Today</button>
               <button class="compact-calendar-tab compact-calendar-day" type="button" data-calendar-day="1" aria-selected="false">Tomorrow</button>
-            </div>
-            <div class="compact-calendar-tabs" role="tablist" aria-label="Event type">
-              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="results" aria-selected="true">Results <b>0</b></button>
-              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="board_meetings" aria-selected="false">Meetings <b>0</b></button>
-              <button class="compact-calendar-tab compact-calendar-category" type="button" data-calendar-category="dividends" aria-selected="false">Dividends <b>0</b></button>
             </div>
           </div>
           <p id="calendar-status" class="calendar-status">Loading announced events…</p>
@@ -1307,7 +1314,6 @@
       const wishlistNewsCount = document.getElementById('wishlist-news-count');
       const intelligenceTabs = document.querySelectorAll('.home-intelligence-tab');
       const calendarDayTabs = document.querySelectorAll('.compact-calendar-day');
-      const calendarCategoryTabs = document.querySelectorAll('.compact-calendar-category');
       const indexScreeningButtons = document.querySelectorAll('.index-screening-button');
       const niftyPicker = document.getElementById('nifty-picker');
       const niftySelect = document.getElementById('nifty-select');
@@ -1881,7 +1887,6 @@
       }
       let homeCalendarData = null;
       let selectedCalendarDay = 0;
-      let selectedCalendarCategory = 'results';
       function renderResultsCalendar(data = homeCalendarData) {
         if (data) homeCalendarData = data;
         stopCalendarMarquees(calendarDays);
@@ -1890,39 +1895,30 @@
         calendarDayTabs.forEach((tab) => tab.setAttribute(
           'aria-selected', String(Number(tab.dataset.calendarDay) === selectedCalendarDay),
         ));
-        const categoryCounts = { results: 0, board_meetings: 0, dividends: 0 };
-        (selectedDay?.results || []).forEach((result) => {
-          if (Object.hasOwn(categoryCounts, result.category)) categoryCounts[result.category] += 1;
-        });
-        calendarCategoryTabs.forEach((tab) => {
-          tab.setAttribute('aria-selected', String(tab.dataset.calendarCategory === selectedCalendarCategory));
-          tab.querySelector('b').textContent = categoryCounts[tab.dataset.calendarCategory] || 0;
-        });
-        const filteredResults = (selectedDay?.results || []).filter(
-          (result) => result.category === selectedCalendarCategory,
-        );
-        const days = selectedDay ? [{ ...selectedDay, results: filteredResults, count: filteredResults.length }] : [];
-        const listsToAnimate = [];
-        const cards = days.map((day) => {
+        const categories = [
+          ['results', 'Results'], ['board_meetings', 'Meetings'], ['dividends', 'Dividends'],
+        ];
+        const cards = categories.map(([categoryKey, categoryLabel]) => {
+          const results = (selectedDay?.results || []).filter((result) => result.category === categoryKey);
           const card = Object.assign(document.createElement('article'), { className: 'calendar-day' });
           const head = Object.assign(document.createElement('div'), { className: 'calendar-day-head' });
           const heading = document.createElement('div');
           heading.append(
-            Object.assign(document.createElement('span'), { className: 'calendar-day-title', textContent: day.label }),
+            Object.assign(document.createElement('span'), { className: 'calendar-day-title', textContent: categoryLabel }),
             document.createTextNode(' '),
-            Object.assign(document.createElement('span'), { className: 'calendar-day-date', textContent: day.display_date }),
+            Object.assign(document.createElement('span'), { className: 'calendar-day-date', textContent: selectedDay?.display_date || '' }),
           );
-          head.append(heading, Object.assign(document.createElement('span'), { className: 'calendar-count', textContent: day.count }));
+          head.append(heading, Object.assign(document.createElement('span'), { className: 'calendar-count', textContent: results.length }));
           card.append(head);
-          if (!day.results?.length) {
+          if (!results.length) {
             card.append(Object.assign(document.createElement('p'), {
               className: 'calendar-empty',
-              textContent: `No ${selectedCalendarCategory === 'results' ? 'results' : selectedCalendarCategory === 'dividends' ? 'dividends' : 'meetings'} listed for ${day.label.toLowerCase()}.`,
+              textContent: `No ${categoryLabel.toLowerCase()} listed for ${(selectedDay?.label || 'this day').toLowerCase()}.`,
             }));
             return card;
           }
           const list = Object.assign(document.createElement('ul'), { className: 'calendar-list' });
-          day.results.forEach((result) => {
+          results.forEach((result) => {
             const item = Object.assign(document.createElement('li'), { className: 'calendar-stock' });
             const eventCopy = Object.assign(document.createElement('span'), { className: 'calendar-event-copy' });
             const category = ['results', 'board_meetings', 'dividends', 'other'].includes(result.category)
@@ -1942,14 +1938,13 @@
             list.append(item);
           });
           card.append(list);
-          listsToAnimate.push(list);
           return card;
         });
         calendarDays.replaceChildren(...cards);
-        calendarDays.classList.toggle('single-day', cards.length === 1);
+        calendarDays.classList.remove('single-day');
+        calendarDays.classList.add('category-boxes');
         calendarDays.hidden = false;
         calendarStatus.hidden = true;
-        listsToAnimate.forEach(startCalendarMarquee);
       }
       async function loadResultsCalendar() {
         try {
@@ -1976,10 +1971,6 @@
       }));
       calendarDayTabs.forEach((tab) => tab.addEventListener('click', () => {
         selectedCalendarDay = Number(tab.dataset.calendarDay);
-        renderResultsCalendar();
-      }));
-      calendarCategoryTabs.forEach((tab) => tab.addEventListener('click', () => {
-        selectedCalendarCategory = tab.dataset.calendarCategory;
         renderResultsCalendar();
       }));
       function newsTimeLabel(publishedAt) {
