@@ -3285,6 +3285,7 @@
       function returnToHome() {
         screeningRunId += 1;
         advancedScreenerRunId += 1;
+        if (subscriptionOverlay) subscriptionOverlay.hidden = true;
         stockResultDrawer.hidden = true;
         infoPageDrawer.hidden = true;
         infoPageFrame.removeAttribute('src');
