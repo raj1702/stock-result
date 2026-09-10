@@ -2035,7 +2035,7 @@
       function showPersistentScrollIndicator(list) {
         requestAnimationFrame(() => {
           if (!list.isConnected || list.scrollHeight <= list.clientHeight + 1) return;
-          const card = list.closest('.wishlist-news-card, .wishlist-card, .calendar-day');
+          const card = list.closest('.wishlist-news-card, .wishlist-card, .calendar-day, .stock-update-section');
           if (!card) return;
           card.classList.add('has-overflow');
           let rail = Array.from(card.children).find((child) => child.classList?.contains('calendar-scroll-rail'));
@@ -2242,7 +2242,7 @@
         stockEventsStatus.hidden = true;
         stockEventsCount.textContent = events.count;
         stockEventsCount.hidden = false;
-        startCalendarMarquee(stockEventsList);
+        showPersistentScrollIndicator(stockEventsList);
       }
       function renderStockUpdateNews(news) {
         stopCalendarMarquees(stockNewsList.closest('.stock-update-section'));
@@ -2270,7 +2270,7 @@
         stockNewsStatus.hidden = true;
         stockNewsCount.textContent = news.count;
         stockNewsCount.hidden = false;
-        startCalendarMarquee(stockNewsList);
+        showPersistentScrollIndicator(stockNewsList);
       }
       async function loadStockUpdates(symbol) {
         const requestId = ++stockUpdatesRequestId;
@@ -3251,6 +3251,10 @@
         stockResultPanes.forEach((pane) => {
           pane.hidden = pane.dataset.resultPane !== tabName;
         });
+        if (tabName === 'updates') {
+          if (!stockNewsList.hidden) showPersistentScrollIndicator(stockNewsList);
+          if (!stockEventsList.hidden) showPersistentScrollIndicator(stockEventsList);
+        }
         stockResultDrawer.scrollTop = 0;
       }
       function openStockResultDrawer() {
