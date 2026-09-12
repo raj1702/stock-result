@@ -9,7 +9,7 @@
       <link rel="canonical" href="https://resultlens.in/stocks/{{ selected_stock.slug }}">
     {% else %}
       <title>Indian Stock Earnings Directory | ResultLens</title>
-      <meta name="description" content="Browse Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 companies and open transparent quarterly earnings-quality analysis on ResultLens.">
+      <meta name="description" content="Browse Nifty 50, Next 50, Midcap 150, Smallcap 250 and Microcap 250 stocks for transparent quarterly earnings-quality analysis on ResultLens.">
       <link rel="canonical" href="https://resultlens.in/stocks">
     {% endif %}
     <meta name="robots" content="index, follow">
@@ -44,13 +44,13 @@
           <p class="note">Opening the full analysis is subject to your existing ResultLens stock quota. This page itself does not consume quota.</p>
         </article>
       {% else %}
-        <article class="hero"><p class="eyebrow">Company directory</p><h1>Explore Indian company earnings</h1><p class="lead">Browse the current Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 universe, then open a company’s ResultLens earnings-quality analysis.</p></article>
+        <article class="hero"><p class="eyebrow">Company directory</p><h1>Explore Indian company earnings</h1><p class="lead">Browse the current Nifty 50, Nifty Next 50, Midcap 150, Smallcap 250 and Nifty Microcap 250 universes, then open a company’s ResultLens earnings-quality analysis.</p></article>
       {% endif %}
       <section class="directory">
-        <h2>{% if selected_stock %}Explore more companies{% else %}Nifty 50, Nifty Next 50, Midcap 150 and Smallcap 250 companies{% endif %}</h2>
+        <h2>{% if selected_stock %}Explore more companies{% else %}Browse companies by index{% endif %}</h2>
         <p class="directory-intro">Constituent membership is sourced from the current NSE index lists.</p>
         <div class="index-tabs" role="tablist" aria-label="Stock index">
-          {% for index_name in ['Nifty 50', 'Nifty Next 50', 'Midcap 150', 'Smallcap 250'] %}<button class="index-tab" type="button" role="tab" data-index="{{ index_name }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ index_name }}</button>{% endfor %}
+          {% for index_name in ['Nifty 50', 'Nifty Next 50', 'Midcap 150', 'Smallcap 250', 'Nifty Microcap 250'] %}<button class="index-tab" type="button" role="tab" data-index="{{ index_name }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ index_name }}</button>{% endfor %}
         </div>
         <div class="stock-grid">
           {% for stock in stocks %}<a class="stock-card" data-indices="{{ stock.indices|join('|') }}" href="/stocks/{{ stock.slug }}"><strong>{{ stock.company }}</strong><span>NSE: {{ stock.symbol }}</span></a>{% endfor %}

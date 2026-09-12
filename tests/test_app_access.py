@@ -68,6 +68,12 @@ class FakeStockService:
     def smallcap_250_constituents(self):
         return [{"symbol": "CESC", "company": "CESC Limited"}]
 
+    def microcap_250_constituents(self):
+        return [
+            {"symbol": f"MICRO{index}", "company": f"Microcap Company {index}"}
+            for index in range(1, 5)
+        ]
+
 
 class FakePlanService:
     def __init__(self, allowed=True):
@@ -311,6 +317,56 @@ def test_wishlist_actions_do_not_consume_stock_quota(client):
     assert plan.recorded == []
 
 
+def test_microcap_screening_and_details_preserve_quota_rules(client):
+    browser, stock, plan = client
+    plan.allowed = False
+    listing = browser.get("/microcap-250")
+    assert listing.status_code == 200
+    assert listing.get_json()["count"] == 4
+    assert stock.fetch_calls == 0
+
+    screening = browser.get("/screening/microcap-250/MICRO1")
+    advanced = browser.get("/screener-data/microcap-250/MICRO1")
+    assert screening.status_code == 200
+    assert advanced.status_code == 200
+    assert advanced.get_json()["metrics"]["pe_ratio"] == 24.5
+    assert plan.recorded == []
+
+    details = browser.get("/search?query=MICRO1")
+    assert details.status_code == 403
+    assert details.get_json()["plan_limit_reached"] is True
+    assert stock.fetch_calls == 2
+    plan.allowed = True
+    assert browser.get("/search?query=MICRO1").status_code == 200
+    assert plan.recorded == ["MICRO1"]
+
+
+def test_microcap_guest_preview_limit_does_not_restrict_advanced_screener(client):
+    browser, stock, plan = client
+    with browser.session_transaction() as session:
+        session.clear()
+
+    assert browser.get("/microcap-250").status_code == 200
+    assert browser.get("/screening/microcap-250/MICRO3").status_code == 200
+    locked = browser.get("/screening/microcap-250/MICRO4")
+    assert locked.status_code == 403
+    assert locked.get_json()["screening_locked"] is True
+    assert stock.fetch_calls == 1
+    assert browser.get("/screener-data/microcap-250/MICRO4").status_code == 200
+    assert plan.recorded == []
+
+
+@pytest.mark.parametrize(("endpoint", "status"), [
+    ("screening", 403), ("screener-data", 404),
+])
+def test_microcap_screeners_reject_nonmembers_before_fetching(client, endpoint, status):
+    browser, stock, plan = client
+    response = browser.get(f"/{endpoint}/microcap-250/RELIANCE")
+    assert response.status_code == status
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
 def test_wishlist_can_be_screened_and_results_bulk_saved_without_quota(client):
     browser, stock, plan = client
     screened = browser.get("/screener-data/wishlist/INFY")
@@ -361,6 +417,7 @@ def test_sitemap_contains_canonical_homepage(client):
     assert "<loc>https://resultlens.in/stocks</loc>" in response.text
     assert "<loc>https://resultlens.in/stocks/reliance</loc>" in response.text
     assert "<loc>https://resultlens.in/stocks/pidilitind</loc>" in response.text
+    assert "<loc>https://resultlens.in/stocks/micro1</loc>" in response.text
 
 
 def test_public_stock_pages_are_indexable_without_fetching_financial_data(client):
@@ -368,6 +425,8 @@ def test_public_stock_pages_are_indexable_without_fetching_financial_data(client
     directory = browser.get("/stocks")
     assert directory.status_code == 200
     assert 'href="/stocks/reliance"' in directory.text
+    assert 'data-index="Nifty Microcap 250"' in directory.text
+    assert 'data-indices="Nifty Microcap 250" href="/stocks/micro1"' in directory.text
     assert stock.fetch_calls == 0
     assert plan.recorded == []
 
@@ -376,6 +435,19 @@ def test_public_stock_pages_are_indexable_without_fetching_financial_data(client
     assert "Reliance Industries Quarterly Results Analysis" in page.text
     assert '<link rel="canonical" href="https://resultlens.in/stocks/reliance">' in page.text
     assert 'href="/?query=RELIANCE"' in page.text
+    assert stock.fetch_calls == 0
+    assert plan.recorded == []
+
+
+def test_microcap_public_company_page_opens_correct_symbol_without_quota(client):
+    browser, stock, plan = client
+    with browser.session_transaction() as session:
+        session.clear()
+    page = browser.get("/stocks/micro1")
+    assert page.status_code == 200
+    assert "Microcap Company 1" in page.text
+    assert "Nifty Microcap 250" in page.text
+    assert 'href="/?query=MICRO1"' in page.text
     assert stock.fetch_calls == 0
     assert plan.recorded == []
 
@@ -400,6 +472,8 @@ def test_homepage_exposes_canonical_search_metadata(client):
     assert 'href="/refund-policy"' in response.text
     assert 'href="/stocks"' in response.text
     assert "By purchasing, you agree to our" in response.text
+    assert 'data-index-endpoint="/microcap-250"' in response.text
+    assert '<option value="microcap-250">Nifty Microcap 250</option>' in response.text
 
 
 def test_methodology_page_is_public_and_canonical(client):
