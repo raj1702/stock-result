@@ -173,8 +173,9 @@
       .advanced-filter-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
       #add-criterion { border: 1px solid #b2ccff; background: #eff4ff; color: #175cd3; font-size: 11px; }
       #reset-advanced-screener { margin-left: auto; border: 1px solid #d0d5dd; background: #fff; color: #475467; font-size: 12px; font-weight: 750; }
-      #reset-advanced-screener:hover, #reset-advanced-screener:focus-visible { border-color: #98a2b3; background: #f2f4f7; }
+      #reset-advanced-screener:not(:disabled):hover, #reset-advanced-screener:focus-visible { border-color: #98a2b3; background: #f2f4f7; }
       #run-advanced-screener { background: linear-gradient(135deg,#7f56d9,#155eef); font-size: 12px; font-weight: 800; }
+      #reset-advanced-screener:disabled, #run-advanced-screener:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
       .advanced-results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0 7px; }
       #advanced-screener-status { margin: 0; color: #475467; font-size: 12px; font-weight: 700; }
       #advanced-add-all-wishlist { flex: 0 0 auto; border: 1px solid #fda29b; background: #fff5f4; color: #b42318; font-size: 11px; font-weight: 800; }
@@ -3072,7 +3073,12 @@
         advancedCriteria.append(row);
         refreshAdvancedMetricOptions();
       }
+      function setAdvancedScreenerRunning(running) {
+        resetAdvancedScreenerButton.disabled = running;
+        runAdvancedScreenerButton.disabled = running;
+      }
       function resetAdvancedScreener() {
+        if (resetAdvancedScreenerButton.disabled) return;
         advancedScreenerRunId += 1;
         advancedCriteria.replaceChildren();
         addAdvancedCriterion('pe_ratio', 'lte');
@@ -3085,7 +3091,7 @@
         advancedProgressBar.style.width = '0%';
         advancedResultsBody.innerHTML = '<tr><td colspan="3" class="advanced-empty">Your matching stocks will appear here.</td></tr>';
         advancedScreenerStatus.textContent = 'Criteria reset. Choose your filters and run the screener.';
-        runAdvancedScreenerButton.disabled = false;
+        setAdvancedScreenerRunning(false);
       }
       function readAdvancedCriteria() {
         return [...advancedCriteria.children].map((row) => {
@@ -3106,6 +3112,7 @@
       }
       function closeAdvancedScreener() {
         advancedScreenerRunId += 1;
+        setAdvancedScreenerRunning(false);
         advancedScreenerOverlay.hidden = true;
         document.body.style.removeProperty('overflow');
       }
@@ -3189,6 +3196,7 @@
       }
 
       async function runAdvancedScreener() {
+        if (runAdvancedScreenerButton.disabled) return;
         const criteria = readAdvancedCriteria();
         const valueInputs = [...advancedCriteria.querySelectorAll('.criterion-value')];
         const invalidInputs = valueInputs.filter((input) => input.value.trim() === '' || !Number.isFinite(Number(input.value)));
@@ -3206,7 +3214,7 @@
         advancedAddAllWishlist.hidden = true;
         const indexName = advancedIndexSelect.value;
         const endpoint = `/${indexName}`;
-        runAdvancedScreenerButton.disabled = true;
+        setAdvancedScreenerRunning(true);
         advancedProgressBar.style.width = '0%';
         advancedResultsBody.innerHTML = '<tr><td colspan="3" class="advanced-empty">Loading current index constituents…</td></tr>';
         try {
@@ -3254,7 +3262,9 @@
               }
             }
           };
-          await Promise.all(Array.from({ length: Math.min(5, stocks.length) }, worker));
+          const workerResults = await Promise.allSettled(Array.from({ length: Math.min(5, stocks.length) }, worker));
+          const failedWorker = workerResults.find((result) => result.status === 'rejected');
+          if (failedWorker) throw failedWorker.reason;
           if (runId === advancedScreenerRunId) {
             advancedScreenerStatus.textContent = `Complete · ${matches.length} of ${stocks.length} stocks match all criteria`;
             renderAdvancedMatches(matches, criteria, true);
@@ -3262,7 +3272,7 @@
         } catch (error) {
           if (runId === advancedScreenerRunId) advancedScreenerStatus.textContent = error.message;
         } finally {
-          if (runId === advancedScreenerRunId) runAdvancedScreenerButton.disabled = false;
+          if (runId === advancedScreenerRunId) setAdvancedScreenerRunning(false);
         }
       }
       function returnToScreeningResults() {
@@ -3320,6 +3330,7 @@
       function returnToHome() {
         screeningRunId += 1;
         advancedScreenerRunId += 1;
+        setAdvancedScreenerRunning(false);
         if (subscriptionOverlay) subscriptionOverlay.hidden = true;
         stockResultDrawer.hidden = true;
         infoPageDrawer.hidden = true;
